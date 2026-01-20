@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getReports } from "@/services/reportService";
+import { getReports, ReportWithDetails } from "@/services/reportService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faEye, faFileAlt } from "@fortawesome/free-solid-svg-icons";
 
@@ -10,7 +10,7 @@ const periodLabels: Record<string, string> = {
 };
 
 export default async function ReportsPage() {
-    const reports = await getReports();
+    const reports = await getReports() as ReportWithDetails[];
 
     return (
         <div className="space-y-6">
@@ -57,7 +57,7 @@ export default async function ReportsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {reports.map((report) => (
+                            {reports.map((report: ReportWithDetails) => (
                                 <tr key={report.id} className="hover">
                                     <td className="font-medium">
                                         <div>
