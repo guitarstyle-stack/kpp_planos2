@@ -13,6 +13,16 @@ const ReportSchema = z.object({
     issues: z.string().optional(),
     resolutionPlan: z.string().optional(),
     overallProgressPercent: z.coerce.number().min(0).max(100).optional(),
+
+    // Budget tracking fields
+    budgetSpentInPeriod: z.coerce.number().optional(),
+    budgetSpentCumulative: z.coerce.number().optional(),
+    budgetProgressPercent: z.coerce.number().min(0).max(100).optional(),
+
+    // KPI tracking fields
+    kpiAchievedCount: z.coerce.number().min(0).optional(),
+    kpiTotalCount: z.coerce.number().min(0).optional(),
+    kpiAchievementPercent: z.coerce.number().min(0).max(100).optional(),
 });
 
 export async function createReportAction(prevState: any, formData: FormData) {
@@ -30,6 +40,16 @@ export async function createReportAction(prevState: any, formData: FormData) {
             issues: formData.get("issues"),
             resolutionPlan: formData.get("resolutionPlan"),
             overallProgressPercent: formData.get("overallProgressPercent"),
+
+            // Budget fields
+            budgetSpentInPeriod: formData.get("budgetSpentInPeriod"),
+            budgetSpentCumulative: formData.get("budgetSpentCumulative"),
+            budgetProgressPercent: formData.get("budgetProgressPercent"),
+
+            // KPI fields
+            kpiAchievedCount: formData.get("kpiAchievedCount"),
+            kpiTotalCount: formData.get("kpiTotalCount"),
+            kpiAchievementPercent: formData.get("kpiAchievementPercent"),
         };
 
         const validatedData = ReportSchema.parse(rawData);
@@ -59,6 +79,16 @@ export async function updateReportAction(id: number, formData: FormData) {
             issues: formData.get("issues"),
             resolutionPlan: formData.get("resolutionPlan"),
             overallProgressPercent: formData.get("overallProgressPercent"),
+
+            // Budget fields
+            budgetSpentInPeriod: formData.get("budgetSpentInPeriod"),
+            budgetSpentCumulative: formData.get("budgetSpentCumulative"),
+            budgetProgressPercent: formData.get("budgetProgressPercent"),
+
+            // KPI fields
+            kpiAchievedCount: formData.get("kpiAchievedCount"),
+            kpiTotalCount: formData.get("kpiTotalCount"),
+            kpiAchievementPercent: formData.get("kpiAchievementPercent"),
         };
 
         const validatedData = ReportSchema.parse(rawData);

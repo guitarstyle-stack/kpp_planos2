@@ -22,6 +22,16 @@ interface ReportFormProps {
         issues?: string | null;
         resolutionPlan?: string | null;
         overallProgressPercent?: number | null;
+
+        // Budget fields
+        budgetSpentInPeriod?: number | null;
+        budgetSpentCumulative?: number | null;
+        budgetProgressPercent?: number | null;
+
+        // KPI fields
+        kpiAchievedCount?: number | null;
+        kpiTotalCount?: number | null;
+        kpiAchievementPercent?: number | null;
     };
     projects: Project[];
 }
@@ -137,7 +147,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                         {/* Progress */}
                         <div className="form-control">
                             <label className="label">
-                                <span className="label-text">ความก้าวหน้า (%)</span>
+                                <span className="label-text">ความก้าวหน้าโครงการ (%)</span>
                             </label>
                             <input
                                 type="number"
@@ -149,6 +159,105 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                             />
                         </div>
                     </div>
+
+                    {/* Budget Section */}
+                    <div className="divider mt-6">ข้อมูลงบประมาณ</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">งบที่เบิกในรอบนี้ (บาท)</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="budgetSpentInPeriod"
+                                min="0"
+                                step="0.01"
+                                defaultValue={initialData?.budgetSpentInPeriod || ""}
+                                placeholder="0.00"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">งบที่เบิกสะสม (บาท)</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="budgetSpentCumulative"
+                                min="0"
+                                step="0.01"
+                                defaultValue={initialData?.budgetSpentCumulative || ""}
+                                placeholder="0.00"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">ร้อยละความคืบหน้า (%)</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="budgetProgressPercent"
+                                min="0"
+                                max="100"
+                                defaultValue={initialData?.budgetProgressPercent || ""}
+                                placeholder="0"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* KPI Section */}
+                    <div className="divider mt-6">ข้อมูลตัวชี้วัด (KPI)</div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">จำนวนที่บรรลุ</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="kpiAchievedCount"
+                                min="0"
+                                defaultValue={initialData?.kpiAchievedCount || ""}
+                                placeholder="0"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">จำนวนทั้งหมด</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="kpiTotalCount"
+                                min="0"
+                                defaultValue={initialData?.kpiTotalCount || ""}
+                                placeholder="0"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+
+                        <div className="form-control">
+                            <label className="label">
+                                <span className="label-text">ร้อยละความสำเร็จ (%)</span>
+                            </label>
+                            <input
+                                type="number"
+                                name="kpiAchievementPercent"
+                                min="0"
+                                max="100"
+                                defaultValue={initialData?.kpiAchievementPercent || ""}
+                                placeholder="0"
+                                className="input input-bordered w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Details Section */}
+                    <div className="divider mt-6">รายละเอียดการดำเนินงาน</div>
 
                     {/* Summary */}
                     <div className="form-control mt-4">

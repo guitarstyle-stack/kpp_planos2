@@ -304,6 +304,16 @@ model Report {
   resolutionPlan         String?
   overallProgressPercent Int?
 
+  // Budget tracking fields
+  budgetSpentInPeriod    Float?   // งบประมาณที่เบิกจ่ายในรอบนี้
+  budgetSpentCumulative  Float?   // งบประมาณที่เบิกจ่ายสะสม
+  budgetProgressPercent  Int?     // ร้อยละความคืบหน้าการเบิกจ่าย
+
+  // KPI tracking fields
+  kpiAchievedCount       Int?     // จำนวนตัวชี้วัดที่บรรลุ
+  kpiTotalCount          Int?     // จำนวนตัวชี้วัดทั้งหมด
+  kpiAchievementPercent  Int?     // ร้อยละความสำเร็จของตัวชี้วัด
+
   createdById            Int
   createdBy              User     @relation("ReportCreator", fields: [createdById], references: [id])
 
