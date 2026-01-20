@@ -1,0 +1,449 @@
+// -------------------------------------------------
+// Datasource & Generator
+// -------------------------------------------------
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -------------------------------------------------
+// โครงสร้างองค์กร / ผู้ใช้ / RBAC (Role + UserRole)
+// -------------------------------------------------
+
+// ประเภทหน่วยงาน
+model DepartmentType {
+  id          Int          @id @default(autoincrement())
+  code        String       @unique  // "GOV", "PRIVATE", "CIVIL", "LOCAL"
+  name        String                // "หน่วยงานภาครัฐ", "ภาคเอกชน", etc.
+  
+  departments Department[]
+  
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Department {
+  id        Int              @id @default(autoincrement())
+  typeId    Int?
+  type      DepartmentType?  @relation(fields: [typeId], references: [id])
+  
+  code      String           @unique
+  name      String
+  parentId  Int?
+  parent    Department?      @relation("DepartmentHierarchy", fields: [parentId], references: [id])
+  children  Department[]     @relation("DepartmentHierarchy")
+
+  users     User[]
+  projects  Project[]
+
+  isActive  Boolean          @default(true)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  
+  @@index([typeId], map: "idx_department_type")
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  departmentId  Int
+  department    Department @relation(fields: [departmentId], references: [id])
+
+  lineUserId    String     @unique
+  name          String
+  email         String?    @unique
+
+  firstName     String?
+  lastName      String?
+  phoneNumber   String?
+  image         String?
+
+  isActive      Boolean    @default(true)
+  lastLoginAt   DateTime?
+
+  sessions      UserSession[]
+  roles         UserRole[]
+
+  ownedProjects Project[]  @relation("ProjectOwner")
+  reports       Report[]   @relation("ReportCreator")
+  indicatorResults IndicatorResult[] @relation("IndicatorReporter")
+  attachments   ProjectAttachment[] @relation("AttachmentUploader")
+  auditLogs     AuditLog[]
+  loginAudits   LoginAudit[]
+  backupJobs    SheetSyncLog[] @relation("BackupTriggeredBy")
+  notifications Notification[]
+
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  @@index([departmentId], map: "idx_user_department")
+  @@index([isActive], map: "idx_user_active")
+}
+
+model UserSession {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  user             User     @relation(fields: [userId], references: [id])
+
+  accessTokenHash  String
+  refreshTokenHash String?
+  expiresAt        DateTime
+
+  createdAt        DateTime @default(now())
+
+  @@index([userId], map: "idx_session_user")
+  @@index([expiresAt], map: "idx_session_expires")
+}
+
+model Role {
+  id        Int       @id @default(autoincrement())
+  // ใช้ String แทน enum เพื่อลดปัญหา migration ระหว่าง Prisma & Supabase [web:43][web:46]
+  name      String    @unique   // "ADMIN" | "DEPT_MANAGER" | "EDITOR" | "VIEWER"
+  label     String?   // ชื่อที่ใช้แสดงใน UI
+
+  users     UserRole[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model UserRole {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  roleId     Int
+
+  user       User     @relation(fields: [userId], references: [id])
+  role       Role     @relation(fields: [roleId], references: [id])
+
+  assignedAt DateTime @default(now())
+
+  @@unique([userId, roleId], map: "uq_user_role")
+  @@index([roleId], map: "idx_userrole_role")
+}
+
+// -------------------------------------------------
+// แผนพัฒนาสังคม / ประเด็นการพัฒนา / เป้าหมาย / ตัวชี้วัด
+// -------------------------------------------------
+
+// แผนพัฒนาสังคมประจำปี (แผนสูงสุด)
+model AnnualPlan {
+  id          Int                @id @default(autoincrement())
+  name        String             // ชื่อแผน เช่น "แผนพัฒนาสังคม พ.ศ. 2568"
+  fiscalYear  Int                // ปีงบประมาณ
+  isActive    Boolean            @default(true)
+  
+  issues      DevelopmentIssue[]
+  
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+}
+
+// ประเด็นการพัฒนา (ภายใต้แผนพัฒนาสังคมประจำปี)
+model DevelopmentIssue {
+  id           Int               @id @default(autoincrement())
+  annualPlanId Int
+  annualPlan   AnnualPlan        @relation(fields: [annualPlanId], references: [id])
+  
+  code         String            // รหัสประเด็น เช่น "D1", "D2"
+  name         String            // ชื่อประเด็น
+  description  String?           // รายละเอียดประเด็น
+  
+  goals        DevelopmentGoal[]
+  
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  
+  @@index([annualPlanId], map: "idx_issue_plan")
+}
+
+// เป้าหมาย/เป้าประสงค์ (ภายใต้ประเด็นการพัฒนา)
+model DevelopmentGoal {
+  id          Int                    @id @default(autoincrement())
+  issueId     Int
+  issue       DevelopmentIssue       @relation(fields: [issueId], references: [id])
+  
+  code        String                 // รหัสเป้าหมาย เช่น "G1.1"
+  name        String                 // ชื่อเป้าหมาย
+  description String?
+  
+  indicators  DevelopmentIndicator[]
+  projects    Project[]              // โครงการที่เชื่อมกับเป้าหมายนี้
+  
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+  
+  @@index([issueId], map: "idx_goal_issue")
+}
+
+// ตัวชี้วัด (ภายใต้เป้าหมาย)
+model DevelopmentIndicator {
+  id            Int             @id @default(autoincrement())
+  goalId        Int
+  goal          DevelopmentGoal @relation(fields: [goalId], references: [id])
+  
+  name          String          // ชื่อตัวชี้วัด
+  unit          String          // หน่วยวัด เช่น %, คน, บาท
+  baselineValue Float?          // ค่าเริ่มต้น
+  targetValue   Float?          // ค่าเป้าหมาย
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  @@index([goalId], map: "idx_indicator_goal")
+}
+
+// -------------------------------------------------
+// Project / KPI / Report / Attachment
+// -------------------------------------------------
+model Project {
+  id               Int            @id @default(autoincrement())
+  departmentId     Int
+  department       Department     @relation(fields: [departmentId], references: [id])
+
+  ownerUserId      Int
+  ownerUser        User           @relation("ProjectOwner", fields: [ownerUserId], references: [id])
+
+  developmentGoalId   Int?
+  developmentGoal     DevelopmentGoal?  @relation(fields: [developmentGoalId], references: [id])
+
+  code             String         @unique
+  name             String
+  description      String?
+
+  fiscalYear       Int
+  targetGroup      String?
+
+  startDate        DateTime?
+  endDate          DateTime?
+
+  // ใช้ String แทน enum เพื่อลดปัญหา migration
+  // แนะนำให้กำหนดค่าคงที่ในโค้ด เช่น "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" [web:36][web:46]
+  status           String         @default("NOT_STARTED")
+  progressPercent  Int            @default(0)
+
+  budgetTotal      Float?
+  budgetSpent      Float?         @default(0)
+
+  indicators       Indicator[]
+
+
+  reports          Report[]
+  attachments      ProjectAttachment[]
+
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([departmentId], map: "idx_project_department")
+  @@index([fiscalYear], map: "idx_project_fiscal_year")
+  @@index([status], map: "idx_project_status")
+}
+
+model Indicator {
+  id             Int              @id @default(autoincrement())
+  projectId      Int
+  project        Project          @relation(fields: [projectId], references: [id])
+
+  name           String
+  description    String?
+  unit           String
+  baselineValue  Float?
+  targetValue    Float?
+
+  results        IndicatorResult[]
+
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([projectId], map: "idx_indicator_project")
+}
+
+model IndicatorResult {
+  id           Int       @id @default(autoincrement())
+  indicatorId  Int
+  indicator    Indicator @relation(fields: [indicatorId], references: [id])
+
+  fiscalYear   Int
+  // ใช้ String แทน enum: "MID_6M" | "MID_9M" | "FULL_12M"
+  periodType   String
+
+  actualValue  Float?
+  narrative    String?
+
+  reportedAt   DateTime
+  reportedById Int
+  reportedBy   User      @relation("IndicatorReporter", fields: [reportedById], references: [id])
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([indicatorId], map: "idx_indicator_result_indicator")
+  @@index([indicatorId, fiscalYear, periodType], map: "idx_indicator_result_indicator_period")
+}
+
+
+
+
+
+model Report {
+  id                     Int      @id @default(autoincrement())
+  projectId              Int
+  project                Project  @relation(fields: [projectId], references: [id])
+
+  fiscalYear             Int
+  // periodType ใช้รูปแบบเดียวกับ IndicatorResult เพื่อหลีกเลี่ยงข้อมูลซ้ำซ้อน [web:34]
+  periodType             String
+
+  summary                String?
+  issues                 String?
+  resolutionPlan         String?
+  overallProgressPercent Int?
+
+  createdById            Int
+  createdBy              User     @relation("ReportCreator", fields: [createdById], references: [id])
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  attachments            ProjectAttachment[]
+
+  @@index([projectId], map: "idx_report_project")
+  @@index([fiscalYear, periodType], map: "idx_report_period")
+}
+
+model ProjectAttachment {
+  id           Int      @id @default(autoincrement())
+  projectId    Int
+  project      Project  @relation(fields: [projectId], references: [id])
+
+  reportId     Int?
+  report       Report?  @relation(fields: [reportId], references: [id])
+
+  fileName     String
+  fileUrl      String
+  fileType     String?
+
+  uploadedById Int
+  uploadedBy   User     @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+
+  uploadedAt   DateTime @default(now())
+
+  @@index([projectId], map: "idx_attachment_project")
+  @@index([reportId], map: "idx_attachment_report")
+}
+
+// -------------------------------------------------
+// Audit / Log / SystemConfig (JSON เฉพาะที่จำเป็น)
+// -------------------------------------------------
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  user        User?    @relation(fields: [userId], references: [id])
+
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, EXPORT...
+  entityType  String   // "Project", "Indicator", "Report", ...
+  entityId    Int?
+
+  requestId   String?
+  description String?
+
+  // ใช้ JSONB สำหรับ diff ตาม best practice ในการ audit [web:24][web:45]
+  diffBefore  Json?
+  diffAfter   Json?
+
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId], map: "idx_audit_user")
+  @@index([entityType, entityId], map: "idx_audit_entity")
+}
+
+model LoginAudit {
+  id           Int      @id @default(autoincrement())
+  userId       Int?
+  user         User?    @relation(fields: [userId], references: [id])
+
+  provider     String   // "LINE"
+  success      Boolean
+  failureReason String?
+  ipAddress    String?
+  userAgent    String?
+  loggedAt     DateTime @default(now())
+
+  @@index([userId], map: "idx_loginaudit_user")
+  @@index([loggedAt], map: "idx_loginaudit_logged_at")
+}
+
+model SystemConfig {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       Json     // ใช้ JSON เฉพาะค่าที่ต้องการความยืดหยุ่น [web:54]
+  description String?
+
+  updatedAt   DateTime @default(now())
+}
+
+// -------------------------------------------------
+// Integration / Backup (Google Sheets, LINE, ฯลฯ)
+// -------------------------------------------------
+model ExternalIntegration {
+  id        Int      @id @default(autoincrement())
+  // ใช้ String แทน enum: "LINE" | "GOOGLE_SHEETS" | ...
+  type      String
+  config    Json     // ex: { spreadsheetId, sheetName, range }
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type], map: "idx_integration_type")
+}
+
+model SheetSyncLog {
+  id           Int      @id @default(autoincrement())
+  jobType      String   // "FULL_EXPORT" | "DAILY_EXPORT" ...
+  target       String   // "PROJECTS" | "INDICATORS" | ...
+  sheetId      String?
+
+  status       String   // "SUCCESS" | "FAILED"
+  errorMessage String?
+
+  startedAt    DateTime @default(now())
+  finishedAt   DateTime?
+
+  triggeredById Int?
+  triggeredBy   User?   @relation("BackupTriggeredBy", fields: [triggeredById], references: [id])
+
+  @@index([jobType], map: "idx_sheet_sync_jobtype")
+  @@index([status], map: "idx_sheet_sync_status")
+}
+
+// -------------------------------------------------
+// Notification System
+// -------------------------------------------------
+model Notification {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  user         User     @relation(fields: [userId], references: [id])
+
+  title        String
+  message      String
+  type         String   @default("INFO") // "INFO" | "WARNING" | "SUCCESS" | "ERROR"
+  link         String?  // Optional link to navigate to
+  
+  isRead       Boolean  @default(false)
+  readAt       DateTime?
+  
+  createdAt    DateTime @default(now())
+
+  @@index([userId], map: "idx_notification_user")
+  @@index([isRead], map: "idx_notification_read")
+  @@index([createdAt], map: "idx_notification_created")
+}
