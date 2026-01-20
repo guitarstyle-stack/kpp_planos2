@@ -5,7 +5,7 @@
 
 /**
  * Get the base URL of the application based on the current environment
- * @returns The base URL (e.g., http://localhost:3000 or https://your-app.vercel.app)
+ * @returns The base URL (e.g., http://localhost:3000 or https://kpp-planos2.vercel.app)
  */
 export function getBaseUrl(): string {
   // Client-side: use NEXT_PUBLIC_APP_URL if available
@@ -13,18 +13,18 @@ export function getBaseUrl(): string {
     return process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
   }
 
-  // Server-side: check various environment variables
-  // Vercel provides VERCEL_URL automatically
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}`;
-  }
-
-  // Use NEXT_PUBLIC_APP_URL if set
+  // Server-side: Priority order
+  // 1. Use NEXT_PUBLIC_APP_URL if explicitly set (production domain)
   if (process.env.NEXT_PUBLIC_APP_URL) {
     return process.env.NEXT_PUBLIC_APP_URL;
   }
 
-  // Fallback to localhost for development
+  // 2. Vercel provides VERCEL_URL automatically (deployment-specific URL)
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+
+  // 3. Fallback to localhost for development
   return 'http://localhost:3000';
 }
 
