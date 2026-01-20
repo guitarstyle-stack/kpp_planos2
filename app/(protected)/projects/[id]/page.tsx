@@ -15,6 +15,8 @@ import {
     faQuoteLeft
 } from "@fortawesome/free-solid-svg-icons";
 import { deleteProjectAction } from "@/actions/projectActions";
+import { getCurrentUser } from "@/lib/auth";
+import { hasRole } from "@/services/userRoleService";
 
 // Map status to Thai label and color
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -40,6 +42,12 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
         console.log("Project not found for ID:", id);
         notFound();
     }
+
+    // Check permissions
+    const currentUser = await getCurrentUser();
+    const isOwner = currentUser && project.ownerUserId === currentUser.id;
+    const isAdmin = currentUser ? await hasRole(currentUser.id, "ADMIN") : false;
+    const canDelete = isOwner || isAdmin;
 
     const { label: statusLabel, color: statusColor } = STATUS_MAP[project.status] || { label: project.status, color: "badge-ghost" };
 
@@ -71,20 +79,17 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     <Link href={`/projects/${project.id}/edit`} className="btn btn-primary btn-outline gap-2">
                         <FontAwesomeIcon icon={faEdit} /> แก้ไข
                     </Link>
-                    {/* Delete is tricky in server component without client interaction. 
-                        Ideally we use a client component for delete button, 
-                        or a form action. For now, let's keep it simple or omit delete here.
-                        Actually, let's make it a form.
-                    */}
-                    <form action={async () => {
-                        "use server";
-                        await deleteProjectAction(project.id);
-                        redirect("/projects");
-                    }}>
-                        <button className="btn btn-error btn-outline gap-2" type="submit">
-                            <FontAwesomeIcon icon={faTrash} /> ลบ
-                        </button>
-                    </form>
+                    {canDelete && (
+                        <form action={async () => {
+                            "use server";
+                            await deleteProjectAction(project.id);
+                            redirect("/projects");
+                        }}>
+                            <button className="btn btn-error btn-outline gap-2" type="submit">
+                                <FontAwesomeIcon icon={faTrash} /> ลบ
+                            </button>
+                        </form>
+                    )}
                 </div>
             </div>
 
