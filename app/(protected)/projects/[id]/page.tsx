@@ -76,19 +76,21 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <Link href={`/projects/${project.id}/edit`} className="btn btn-primary btn-outline gap-2">
-                        <FontAwesomeIcon icon={faEdit} /> แก้ไข
-                    </Link>
                     {canDelete && (
-                        <form action={async () => {
-                            "use server";
-                            await deleteProjectAction(project.id);
-                            redirect("/projects");
-                        }}>
-                            <button className="btn btn-error btn-outline gap-2" type="submit">
-                                <FontAwesomeIcon icon={faTrash} /> ลบ
-                            </button>
-                        </form>
+                        <>
+                            <Link href={`/projects/${project.id}/edit`} className="btn btn-primary btn-outline gap-2">
+                                <FontAwesomeIcon icon={faEdit} /> แก้ไข
+                            </Link>
+                            <form action={async () => {
+                                "use server";
+                                await deleteProjectAction(project.id);
+                                redirect("/projects");
+                            }}>
+                                <button className="btn btn-error btn-outline gap-2" type="submit">
+                                    <FontAwesomeIcon icon={faTrash} /> ลบ
+                                </button>
+                            </form>
+                        </>
                     )}
                 </div>
             </div>

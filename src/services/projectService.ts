@@ -35,6 +35,37 @@ export async function getProjects() {
     });
 }
 
+// Get projects owned by a specific user (for reports)
+export async function getProjectsByOwner(userId: number) {
+    return await db.project.findMany({
+        where: {
+            ownerUserId: userId,
+        },
+        include: {
+            department: true,
+            developmentGoal: {
+                include: {
+                    issue: {
+                        include: {
+                            annualPlan: true,
+                        },
+                    },
+                },
+            },
+            ownerUser: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+        },
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+}
+
+
 export async function getProjectById(id: number) {
     return await db.project.findUnique({
         where: { id },
