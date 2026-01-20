@@ -18,13 +18,16 @@ PlanOS คือแพลตฟอร์มสำหรับบริหาร�
 
 ## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
 
-*   **Framework:** [Next.js 15+](https://nextjs.org/) (App Router)
+*   **Framework:** [Next.js 16.1.4](https://nextjs.org/) (App Router, Turbopack)
+*   **Frontend Library:** [React 19.2.3](https://react.dev/)
 *   **Language:** Typescript
 *   **Database:** PostgreSQL (via [Supabase](https://supabase.com/))
-*   **ORM:** [Prisma](https://www.prisma.io/)
-*   **Authentication:** Custom JWT with LINE Login API
-*   **UI Library:** [DaisyUI](https://daisyui.com/) & [Tailwind CSS 4](https://tailwindcss.com/)
-*   **Icons:** [FontAwesome](https://fontawesome.com/)
+*   **ORM:** [Prisma 6.19.2](https://www.prisma.io/)
+*   **Authentication:** Custom JWT (Jose 6.1.3) with LINE Login API
+*   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/) & [DaisyUI 5.5.14](https://daisyui.com/)
+*   **Icons:** [FontAwesome 7.1.0](https://fontawesome.com/)
+*   **Monitoring:** [Vercel Analytics 1.6.1](https://vercel.com/analytics) & [Vercel Speed Insights 1.3.1](https://vercel.com/speed-insights)
+*   **UI Components:** [Sonner 2.0.7](https://lgp-sonner.vercel.app/) (Toast Notifications)
 *   **Deployment:** [Vercel](https://vercel.com/)
 
 ## 🛠 การติดตั้ง (Installation)
