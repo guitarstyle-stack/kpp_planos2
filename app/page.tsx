@@ -1,4 +1,5 @@
 import { LoginCard } from "@/components/auth/LoginCard";
+import { getBaseUrl } from "@/lib/env";
 import crypto from 'crypto';
 
 export default function Home() {
@@ -7,7 +8,7 @@ export default function Home() {
 
   // Construct LINE Login URL
   const channelId = process.env.LINE_CHANNEL_ID;
-  const redirectUri = `${process.env.NEXTAUTH_URL}/api/auth/line`; // Ensure this matches existing route
+  const redirectUri = `${getBaseUrl()}/api/auth/line`; // Use dynamic URL based on environment
 
   // Helper to build URL (ensures proper encoding)
   const params = new URLSearchParams({
