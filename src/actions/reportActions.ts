@@ -52,13 +52,30 @@ export async function createReportAction(prevState: any, formData: FormData) {
             kpiAchievementPercent: formData.get("kpiAchievementPercent"),
         };
 
+        const indicatorResultsRaw = formData.get("indicatorResults");
+        const indicatorResults = indicatorResultsRaw ? JSON.parse(indicatorResultsRaw as string) : [];
+
         const validatedData = ReportSchema.parse(rawData);
 
-        await db.report.create({
-            data: {
-                ...validatedData,
-                createdById: user.id,
-            },
+        // Create report within a transaction to ensure all results are saved
+        await db.$transaction(async (tx) => {
+            const report = await tx.report.create({
+                data: {
+                    ...validatedData,
+                    createdById: user.id,
+                },
+            });
+
+            if (indicatorResults.length > 0) {
+                await tx.reportIndicatorResult.createMany({
+                    data: indicatorResults.map((res: any) => ({
+                        reportId: report.id,
+                        indicatorId: res.indicatorId,
+                        actualValue: res.actualValue,
+                        achievementPercent: res.achievementPercent,
+                    })),
+                });
+            }
         });
 
         revalidatePath("/reports");
@@ -91,11 +108,32 @@ export async function updateReportAction(id: number, formData: FormData) {
             kpiAchievementPercent: formData.get("kpiAchievementPercent"),
         };
 
+        const indicatorResultsRaw = formData.get("indicatorResults");
+        const indicatorResults = indicatorResultsRaw ? JSON.parse(indicatorResultsRaw as string) : [];
+
         const validatedData = ReportSchema.parse(rawData);
 
-        await db.report.update({
-            where: { id },
-            data: validatedData,
+        await db.$transaction(async (tx) => {
+            await tx.report.update({
+                where: { id },
+                data: validatedData,
+            });
+
+            if (indicatorResults.length > 0) {
+                // Delete old results and set new ones
+                await tx.reportIndicatorResult.deleteMany({
+                    where: { reportId: id }
+                });
+
+                await tx.reportIndicatorResult.createMany({
+                    data: indicatorResults.map((res: any) => ({
+                        reportId: id,
+                        indicatorId: res.indicatorId,
+                        actualValue: res.actualValue,
+                        achievementPercent: res.achievementPercent,
+                    })),
+                });
+            }
         });
 
         revalidatePath("/reports");
@@ -105,6 +143,7 @@ export async function updateReportAction(id: number, formData: FormData) {
         return { message: "Failed to update report" };
     }
 }
+
 
 export async function deleteReportAction(id: number) {
     try {

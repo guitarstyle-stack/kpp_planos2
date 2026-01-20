@@ -256,6 +256,7 @@ model Indicator {
   targetValue    Float?
 
   results        IndicatorResult[]
+  reportResults  ReportIndicatorResult[]
 
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -321,10 +322,32 @@ model Report {
   updatedAt              DateTime @updatedAt
 
   attachments            ProjectAttachment[]
+  indicatorResults       ReportIndicatorResult[]
 
   @@index([projectId], map: "idx_report_project")
   @@index([fiscalYear, periodType], map: "idx_report_period")
 }
+
+// รายละเอียดผลลัพธ์ตัวชี้วัดในแต่ละรายงาน
+model ReportIndicatorResult {
+  id                 Int       @id @default(autoincrement())
+  reportId           Int
+  report             Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  indicatorId        Int
+  indicator          Indicator @relation(fields: [indicatorId], references: [id])
+  
+  actualValue        Float?    // ค่าที่บรรลุได้จริง
+  achievementPercent Int?      // ร้อยละความสำเร็จ (คำนวณอัตโนมัติ)
+  
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  
+  @@unique([reportId, indicatorId], map: "uq_report_indicator")
+  @@index([reportId], map: "idx_report_indicator_result_report")
+  @@index([indicatorId], map: "idx_report_indicator_result_indicator")
+}
+
 
 model ProjectAttachment {
   id           Int      @id @default(autoincrement())

@@ -62,6 +62,9 @@ export async function getProjectsByOwner(userId: number) {
                 select: {
                     id: true,
                     name: true,
+                    unit: true,
+                    targetValue: true,
+                    baselineValue: true,
                 },
             },
         },

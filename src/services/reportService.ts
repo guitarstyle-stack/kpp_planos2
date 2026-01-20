@@ -34,6 +34,11 @@ export async function getReportById(id: number) {
                 select: { id: true, name: true },
             },
             attachments: true,
+            indicatorResults: {
+                include: {
+                    indicator: true
+                }
+            }
         },
     });
 }
