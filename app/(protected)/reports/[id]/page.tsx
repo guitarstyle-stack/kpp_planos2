@@ -22,6 +22,8 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
         notFound();
     }
 
+    const r = report as any;
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -32,10 +34,10 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            รายงาน: {report.project.name}
+                            รายงาน: {r.project?.name}
                         </h1>
                         <p className="text-sm opacity-70">
-                            {periodLabels[report.periodType]} ปีงบประมาณ {report.fiscalYear}
+                            {periodLabels[r.periodType]} ปีงบประมาณ {r.fiscalYear}
                         </p>
                     </div>
                 </div>
@@ -59,14 +61,14 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                 <div className="p-6 border-r border-base-200 last:border-0">
                                     <div className="text-xs opacity-60 uppercase mb-1">เบิกจ่ายในรอบนี้</div>
                                     <div className="text-xl font-bold">
-                                        {(report.budgetSpentInPeriod || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                                        {(r.budgetSpentInPeriod || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                                         <span className="text-sm font-normal ml-1">บาท</span>
                                     </div>
                                 </div>
                                 <div className="p-6 border-r border-base-200 last:border-0">
                                     <div className="text-xs opacity-60 uppercase mb-1">เบิกจ่ายสะสมทั้งหมด</div>
                                     <div className="text-xl font-bold">
-                                        {(report.budgetSpentCumulative || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                                        {(r.budgetSpentCumulative || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
                                         <span className="text-sm font-normal ml-1">บาท</span>
                                     </div>
                                 </div>
@@ -74,9 +76,9 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     <div className="text-xs opacity-60 uppercase mb-1">ความคืบหน้างบประมาณ</div>
                                     <div className="flex items-center gap-3">
                                         <div className="text-2xl font-black text-primary">
-                                            {report.budgetProgressPercent || 0}%
+                                            {r.budgetProgressPercent || 0}%
                                         </div>
-                                        <progress className="progress progress-primary w-full" value={report.budgetProgressPercent || 0} max="100"></progress>
+                                        <progress className="progress progress-primary w-full" value={r.budgetProgressPercent || 0} max="100"></progress>
                                     </div>
                                 </div>
                             </div>
@@ -88,7 +90,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         <div className="card-header bg-base-200/50 p-4 border-b border-base-300 flex justify-between items-center">
                             <h2 className="font-bold">ผลการดำเนินงานตามตัวชี้วัด (KPIs)</h2>
                             <div className="badge badge-primary gap-2 p-3">
-                                บรรลุ {report.kpiAchievedCount}/{report.kpiTotalCount} ตัวชี้วัด
+                                บรรลุ {r.kpiAchievedCount}/{r.kpiTotalCount} ตัวชี้วัด
                             </div>
                         </div>
                         <div className="overflow-x-auto">
@@ -103,7 +105,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {(report as any).indicatorResults?.map((res: any, index: number) => (
+                                    {r.indicatorResults?.map((res: any, index: number) => (
                                         <tr key={res.id}>
                                             <td>{index + 1}</td>
                                             <td>
@@ -129,7 +131,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                             </td>
                                         </tr>
                                     ))}
-                                    {(!(report as any).indicatorResults || (report as any).indicatorResults.length === 0) && (
+                                    {(!r.indicatorResults || r.indicatorResults.length === 0) && (
                                         <tr>
                                             <td colSpan={5} className="text-center py-8 opacity-50 italic">
                                                 ไม่มีข้อมูลตัวชี้วัดแบบละเอียด
@@ -146,7 +148,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         <div className="card-body">
                             <h2 className="card-title text-lg border-b pb-2">สรุปผลการดำเนินงาน</h2>
                             <p className="whitespace-pre-wrap leading-relaxed">
-                                {report.summary || <span className="italic opacity-50">ไม่มีข้อมูล</span>}
+                                {r.summary || <span className="italic opacity-50">ไม่มีข้อมูล</span>}
                             </p>
                         </div>
                     </div>
@@ -157,7 +159,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                             <div className="card-body">
                                 <h2 className="card-title text-lg border-b pb-2 text-error">ปัญหาอุปสรรค</h2>
                                 <p className="whitespace-pre-wrap text-sm">
-                                    {report.issues || <span className="italic opacity-50">ไม่มีปัญหา</span>}
+                                    {r.issues || <span className="italic opacity-50">ไม่มีปัญหา</span>}
                                 </p>
                             </div>
                         </div>
@@ -166,7 +168,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                             <div className="card-body">
                                 <h2 className="card-title text-lg border-b pb-2 text-success">แนวทางแก้ไข</h2>
                                 <p className="whitespace-pre-wrap text-sm">
-                                    {report.resolutionPlan || <span className="italic opacity-50">ไม่มีข้อมูล</span>}
+                                    {r.resolutionPlan || <span className="italic opacity-50">ไม่มีข้อมูล</span>}
                                 </p>
                             </div>
                         </div>
@@ -180,12 +182,12 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         <div className="card-body text-center">
                             <h2 className="card-title text-lg justify-center mb-4">ความก้าวหน้าโครงการรวม</h2>
                             <div className="flex flex-col items-center py-2">
-                                <div className="radial-progress text-primary border-4 border-primary/10" style={{ "--value": report.overallProgressPercent || 0, "--size": "10rem", "--thickness": "0.8rem" } as React.CSSProperties}>
-                                    <span className="text-2xl font-black">{report.overallProgressPercent || 0}%</span>
+                                <div className="radial-progress text-primary border-4 border-primary/10" style={{ "--value": r.overallProgressPercent || 0, "--size": "10rem", "--thickness": "0.8rem" } as React.CSSProperties}>
+                                    <span className="text-2xl font-black">{r.overallProgressPercent || 0}%</span>
                                 </div>
                             </div>
                             <div className="text-xs opacity-50 mt-4">
-                                ประเมินโดย {report.createdBy.name}
+                                ประเมินโดย {r.createdBy?.name || "ไม่ระบุ"}
                             </div>
                         </div>
                     </div>
@@ -201,7 +203,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     </div>
                                     <div>
                                         <div className="text-xs opacity-50">รหัสโครงการ</div>
-                                        <div className="font-mono font-bold">{report.project.code}</div>
+                                        <div className="font-mono font-bold">{r.project?.code}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -210,7 +212,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     </div>
                                     <div>
                                         <div className="text-xs opacity-50">วันที่รายงาน</div>
-                                        <div className="font-medium">{new Date(report.createdAt).toLocaleDateString("th-TH", { dateStyle: "long" })}</div>
+                                        <div className="font-medium">{new Date(r.createdAt).toLocaleDateString("th-TH", { dateStyle: "long" })}</div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -219,7 +221,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     </div>
                                     <div>
                                         <div className="text-xs opacity-50">ผู้นำเสนอ</div>
-                                        <div className="font-medium">{report.createdBy.name}</div>
+                                        <div className="font-medium">{r.createdBy?.name || "ไม่ระบุ"}</div>
                                     </div>
                                 </div>
                             </div>
@@ -227,6 +229,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                     </div>
                 </div>
             </div>
+
 
         </div>
     );
