@@ -78,13 +78,14 @@ export async function GET(req: NextRequest) {
         const user = await db.user.upsert({
             where: { lineUserId },
             update: {
-                name: displayName,
-                image: pictureUrl, // Sync latest picture
+                // Don't update name - preserve user's custom display name
+                // Only sync profile picture and last login time
+                image: pictureUrl,
                 lastLoginAt: new Date(),
             },
             create: {
                 lineUserId,
-                name: displayName,
+                name: displayName, // Use LINE display name only for new users
                 image: pictureUrl,
                 departmentId: defaultDept!.id,
                 isActive: true, // Default active
