@@ -133,6 +133,7 @@ export default async function ProjectsPage() {
                                 <th>รหัสโครงการ</th>
                                 <th>ชื่อโครงการ</th>
                                 <th className="text-center">สถานะ</th>
+                                <th className="text-center">ความคืบหน้า</th>
                                 <th>เป้าประสงค์</th>
                                 <th>หน่วยงาน</th>
                                 <th>งบประมาณ</th>
@@ -154,6 +155,16 @@ export default async function ProjectsPage() {
                                         <span className={`badge ${STATUS_MAP[project.status]?.color || 'badge-ghost'} badge-sm`}>
                                             {STATUS_MAP[project.status]?.label || project.status}
                                         </span>
+                                    </td>
+                                    <td className="text-center">
+                                        <div className="flex items-center gap-2 justify-center">
+                                            <progress
+                                                className="progress progress-primary w-20"
+                                                value={project.progressPercent || 0}
+                                                max="100"
+                                            />
+                                            <span className="text-xs font-medium">{project.progressPercent || 0}%</span>
+                                        </div>
                                     </td>
                                     <td className="whitespace-nowrap max-w-[200px]">
                                         <div className="truncate text-xs opacity-70" title={project.developmentGoal?.name || ""}>
@@ -178,7 +189,7 @@ export default async function ProjectsPage() {
                             ))}
                             {projects.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="text-center py-24">
+                                    <td colSpan={8} className="text-center py-24">
                                         <div className="flex flex-col items-center justify-center opacity-50">
                                             <FontAwesomeIcon icon={faFolderOpen} className="h-12 w-12 mb-4" />
                                             <p className="text-lg font-medium">ยังไม่มีโครงการ</p>

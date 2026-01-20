@@ -76,6 +76,43 @@ export async function createReportAction(prevState: any, formData: FormData) {
                     })),
                 });
             }
+
+            // Update project with latest report data
+            const project = await tx.project.findUnique({
+                where: { id: validatedData.projectId },
+                select: { budgetTotal: true },
+            });
+
+            if (project) {
+                // Calculate progress from budget or KPI
+                let calculatedProgress = validatedData.overallProgressPercent || 0;
+
+                // If no overall progress specified, calculate from budget
+                if (!calculatedProgress && validatedData.budgetProgressPercent) {
+                    calculatedProgress = validatedData.budgetProgressPercent;
+                } else if (!calculatedProgress && validatedData.kpiAchievementPercent) {
+                    calculatedProgress = validatedData.kpiAchievementPercent;
+                }
+
+                // Determine status based on progress
+                let newStatus = "NOT_STARTED";
+                if (calculatedProgress > 0 && calculatedProgress < 100) {
+                    newStatus = "IN_PROGRESS";
+                } else if (calculatedProgress >= 100) {
+                    newStatus = "COMPLETED";
+                }
+
+                // Update project
+                await tx.project.update({
+                    where: { id: validatedData.projectId },
+                    data: {
+                        budgetSpent: validatedData.budgetSpentCumulative || 0,
+                        progressPercent: Math.round(calculatedProgress),
+                        status: newStatus,
+                        lastReportedAt: new Date(),
+                    },
+                });
+            }
         });
 
         revalidatePath("/reports");

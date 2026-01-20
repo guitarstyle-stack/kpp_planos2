@@ -228,6 +228,7 @@ model Project {
 
   budgetTotal      Float?
   budgetSpent      Float?         @default(0)
+  lastReportedAt   DateTime?      // วันที่รายงานล่าสุด
 
   indicators       Indicator[]
 
