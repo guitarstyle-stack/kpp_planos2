@@ -34,13 +34,13 @@ export function DevelopmentIssueForm({ initialData, annualPlans }: DevelopmentIs
         const formData = new FormData(event.currentTarget);
 
         try {
-            const { createDevelopmentIssueAction, updateDevelopmentIssueAction } = await import("@/actions/developmentPlanActions");
+            const { createIssueAction, updateIssueAction } = await import("@/actions/developmentPlanActions");
 
             if (isEdit && initialData?.id) {
-                await updateDevelopmentIssueAction(initialData.id, formData);
+                await updateIssueAction(initialData.id, formData);
                 toast.success("อัปเดตประเด็นสำเร็จ");
             } else {
-                await createDevelopmentIssueAction(null, formData);
+                await createIssueAction(null, formData);
                 toast.success("สร้างประเด็นสำเร็จ");
             }
         } catch (error) {

@@ -35,13 +35,13 @@ export function DevelopmentGoalForm({ initialData, issues }: DevelopmentGoalForm
         const formData = new FormData(event.currentTarget);
 
         try {
-            const { createDevelopmentGoalAction, updateDevelopmentGoalAction } = await import("@/actions/developmentPlanActions");
+            const { createGoalAction, updateGoalAction } = await import("@/actions/developmentPlanActions");
 
             if (isEdit && initialData?.id) {
-                await updateDevelopmentGoalAction(initialData.id, formData);
+                await updateGoalAction(initialData.id, formData);
                 toast.success("อัปเดตเป้าหมายสำเร็จ");
             } else {
-                await createDevelopmentGoalAction(null, formData);
+                await createGoalAction(null, formData);
                 toast.success("สร้างเป้าหมายสำเร็จ");
             }
         } catch (error) {
