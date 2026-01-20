@@ -66,3 +66,13 @@ export async function updateReport(id: number, data: Prisma.ReportUncheckedUpdat
 export async function deleteReport(id: number) {
     return await db.report.delete({ where: { id } });
 }
+
+export async function getPreviousCumulativeBudget(projectId: number, fiscalYear: number): Promise<number> {
+    const latestReport = await db.report.findFirst({
+        where: { projectId, fiscalYear },
+        orderBy: { createdAt: 'desc' },
+        select: { budgetSpentCumulative: true },
+    });
+
+    return latestReport?.budgetSpentCumulative || 0;
+}

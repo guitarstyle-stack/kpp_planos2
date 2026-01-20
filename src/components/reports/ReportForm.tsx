@@ -149,6 +149,26 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
         }));
     }
 
+    // Budget in period change handler - auto-calculate cumulative and progress
+    function handleBudgetInPeriodChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const inPeriod = parseFloat(e.target.value) || 0;
+        const previousCumulative = selectedProject?.budgetSpent || 0;
+        const newCumulative = previousCumulative + inPeriod;
+
+        setBudgetSpentCumulative(newCumulative);
+
+        // Calculate progress percentage
+        if (selectedProject?.budgetTotal && selectedProject.budgetTotal > 0) {
+            const percent = Math.min(
+                Math.round((newCumulative / selectedProject.budgetTotal) * 100),
+                100
+            );
+            setBudgetProgressPercent(percent);
+        } else {
+            setBudgetProgressPercent(0);
+        }
+    }
+
     // Auto-calculate summary KPI counts
     const kpiTotal = selectedProject?.indicators?.length || 0;
     const kpiAchieved = Object.values(indicatorValues).filter(v => v.achievementPercent >= 80).length;
@@ -320,6 +340,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                                 min="0"
                                 step="0.01"
                                 defaultValue={initialData?.budgetSpentInPeriod || ""}
+                                onChange={handleBudgetInPeriodChange}
                                 placeholder="0.00"
                                 className="input input-bordered w-full"
                             />
