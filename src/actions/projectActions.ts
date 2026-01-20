@@ -224,6 +224,23 @@ export async function deleteProjectAction(id: number) {
             return { message: "Unauthorized: You can only delete projects you own" };
         }
 
+        // Delete related data first to avoid foreign key constraints
+        // Delete indicators (and their results will cascade if configured)
+        await db.indicator.deleteMany({
+            where: { projectId: id }
+        });
+
+        // Delete reports
+        await db.report.deleteMany({
+            where: { projectId: id }
+        });
+
+        // Delete attachments
+        await db.projectAttachment.deleteMany({
+            where: { projectId: id }
+        });
+
+        // Now delete the project
         await db.project.delete({
             where: { id },
         });
