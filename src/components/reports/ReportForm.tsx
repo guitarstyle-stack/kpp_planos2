@@ -10,6 +10,10 @@ interface Project {
     id: number;
     name: string;
     code: string;
+    budgetTotal?: number | null;
+    budgetSpent?: number | null;
+    progressPercent?: number | null;
+    indicators?: Array<{ id: number; name: string }>;
 }
 
 interface ReportFormProps {
@@ -45,11 +49,23 @@ const periodOptions = [
 export function ReportForm({ initialData, projects }: ReportFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(
+        initialData?.projectId
+            ? projects.find(p => p.id === initialData.projectId) || null
+            : null
+    );
     const isEdit = !!initialData?.id;
 
     // Generate fiscal year options (current year +/- 2)
     const currentYear = new Date().getFullYear() + 543; // Convert to Buddhist year
     const fiscalYears = [currentYear - 1, currentYear, currentYear + 1];
+
+    // Handle project selection
+    function handleProjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
+        const projectId = parseInt(e.target.value);
+        const project = projects.find(p => p.id === projectId);
+        setSelectedProject(project || null);
+    }
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -94,6 +110,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                                 name="projectId"
                                 required
                                 defaultValue={initialData?.projectId || ""}
+                                onChange={handleProjectChange}
                                 className="select select-bordered w-full"
                             >
                                 <option value="">-- เลือกโครงการ --</option>
@@ -159,6 +176,35 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                             />
                         </div>
                     </div>
+
+                    {/* Project Information Display */}
+                    {selectedProject && (
+                        <div className="alert alert-info mt-6">
+                            <div className="w-full">
+                                <h3 className="font-bold mb-2">ข้อมูลโครงการ</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                                    <div>
+                                        <span className="opacity-70">งบประมาณทั้งหมด:</span>
+                                        <div className="font-semibold">
+                                            {selectedProject.budgetTotal?.toLocaleString('th-TH', { minimumFractionDigits: 2 }) || '0.00'} บาท
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="opacity-70">งบที่เบิกไปแล้ว:</span>
+                                        <div className="font-semibold">
+                                            {selectedProject.budgetSpent?.toLocaleString('th-TH', { minimumFractionDigits: 2 }) || '0.00'} บาท
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <span className="opacity-70">จำนวนตัวชี้วัด:</span>
+                                        <div className="font-semibold">
+                                            {selectedProject.indicators?.length || 0} ตัว
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Budget Section */}
                     <div className="divider mt-6">ข้อมูลงบประมาณ</div>

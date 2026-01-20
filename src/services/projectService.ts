@@ -58,6 +58,12 @@ export async function getProjectsByOwner(userId: number) {
                     name: true,
                 },
             },
+            indicators: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
         },
         orderBy: {
             createdAt: "desc",
