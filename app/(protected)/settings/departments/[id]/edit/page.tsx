@@ -1,12 +1,17 @@
 import { DepartmentForm } from "@/components/settings/DepartmentForm";
 import db from "@/lib/db";
 import { notFound } from "next/navigation";
+import { getDepartmentTypes } from "@/services/masterDataService";
 
 export default async function EditDepartmentPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
-    const department = await db.department.findUnique({
-        where: { id: Number(id) },
-    });
+
+    const [department, departmentTypes] = await Promise.all([
+        db.department.findUnique({
+            where: { id: Number(id) },
+        }),
+        getDepartmentTypes()
+    ]);
 
     if (!department) {
         notFound();
@@ -23,7 +28,7 @@ export default async function EditDepartmentPage({ params }: { params: Promise<{
                 </p>
             </div>
 
-            <DepartmentForm initialData={department} />
+            <DepartmentForm initialData={department} departmentTypes={departmentTypes} />
         </div>
     );
 }
