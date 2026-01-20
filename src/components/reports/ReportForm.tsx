@@ -27,9 +27,9 @@ interface ReportFormProps {
 }
 
 const periodOptions = [
-    { value: "MID_6M", label: "รอบ 6 เดือน (เมษายน - กันยายน)" },
-    { value: "MID_9M", label: "รอบ 9 เดือน (ตุลาคม - มิถุนายน)" },
-    { value: "FULL_12M", label: "รอบ 12 เดือน (ตุลาคม - กันยายน)" },
+    { value: "MID_6M", label: "รอบ 6 เดือน (ต.ค. - มี.ค.)" },
+    { value: "MID_9M", label: "รอบ 9 เดือน (ต.ค. - มิ.ย.)" },
+    { value: "FULL_12M", label: "รอบ 12 เดือน (ต.ค. - ก.ย.)" },
 ];
 
 export function ReportForm({ initialData, projects }: ReportFormProps) {
