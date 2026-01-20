@@ -17,6 +17,7 @@ interface User {
     id: number;
     name: string;
     email: string | null;
+    image: string | null;
     isActive: boolean;
     lastLoginAt: Date | null;
     department: { id: number; name: string } | null;
@@ -161,10 +162,18 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
                                 <tr key={user.id} className="hover">
                                     <td className="whitespace-nowrap">
                                         <div className="flex items-center gap-3">
-                                            <div className="avatar placeholder">
-                                                <div className="bg-neutral text-neutral-content rounded-full w-10">
-                                                    <span className="text-xl">{user.name.charAt(0).toUpperCase()}</span>
-                                                </div>
+                                            <div className="avatar">
+                                                {user.image ? (
+                                                    <div className="w-10 rounded-full">
+                                                        <img src={user.image} alt={user.name} />
+                                                    </div>
+                                                ) : (
+                                                    <div className="avatar placeholder">
+                                                        <div className="bg-neutral text-neutral-content rounded-full w-10">
+                                                            <span className="text-xl">{user.name.charAt(0).toUpperCase()}</span>
+                                                        </div>
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <div className="font-bold">{user.name}</div>

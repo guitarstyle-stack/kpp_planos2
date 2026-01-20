@@ -15,47 +15,57 @@ import { SidebarClient } from "./SidebarClient";
 async function getMenuItems() {
     const admin = await isAdmin();
 
-    const baseItems = [
+    const menuGroups = [
         {
-            title: "ภาพรวม",
-            href: "/dashboard",
-            icon: faChartPie,
-        },
-        {
-            title: "โครงการ",
-            href: "/projects",
-            icon: faFolderOpen,
-        },
-        {
-            title: "รายงาน",
-            href: "/reports",
-            icon: faFileAlt,
-        },
-        {
-            title: "โปรไฟล์",
-            href: "/settings/profile",
-            icon: faUser,
-        },
+            label: "เมนูหลัก",
+            items: [
+                {
+                    title: "ภาพรวม",
+                    href: "/dashboard",
+                    icon: faChartPie,
+                },
+                {
+                    title: "โครงการ",
+                    href: "/projects",
+                    icon: faFolderOpen,
+                },
+                {
+                    title: "รายงาน",
+                    href: "/reports",
+                    icon: faFileAlt,
+                },
+                {
+                    title: "โปรไฟล์",
+                    href: "/settings/profile",
+                    icon: faUser,
+                },
+            ]
+        }
     ];
 
-    const adminItems = [
-        {
-            title: "ผู้ใช้งาน",
-            href: "/users",
-            icon: faUsers,
-        },
-        {
-            title: "ตั้งค่า",
-            href: "/settings",
-            icon: faCog,
-        },
-    ];
+    if (admin) {
+        menuGroups.push({
+            label: "การจัดการระบบ",
+            items: [
+                {
+                    title: "ผู้ใช้งาน",
+                    href: "/users",
+                    icon: faUsers,
+                },
+                {
+                    title: "ตั้งค่า",
+                    href: "/settings",
+                    icon: faCog,
+                },
+            ]
+        });
+    }
 
-    return admin ? [...baseItems, ...adminItems] : baseItems;
+    return menuGroups;
 }
 
 export async function Sidebar() {
-    const menuItems = await getMenuItems();
+    const menuGroups = await getMenuItems();
 
-    return <SidebarClient menuItems={menuItems} />;
+    return <SidebarClient menuGroups={menuGroups} />;
 }
