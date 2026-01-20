@@ -2,29 +2,19 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { getCurrentUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/rbac";
 import {
     createRole,
     updateRole,
     deleteRole,
     assignRole,
     removeRole,
-    hasRole
 } from "@/services/userRoleService";
 
 const RoleSchema = z.object({
     name: z.string().min(1, "Name is required"),
     label: z.string().min(1, "Label is required"),
 });
-
-// Helper check for admin (optional implementation for now, assuming settings page is protected)
-async function requireAdmin() {
-    const user = await getCurrentUser();
-    if (!user) throw new Error("Unauthorized");
-    // const isAdmin = await hasRole(user.id, "ADMIN");
-    // if (!isAdmin) throw new Error("Forbidden");
-    return user;
-}
 
 export async function createRoleAction(formData: FormData) {
     try {
