@@ -39,7 +39,7 @@ export default async function DepartmentsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {departments.map((dept) => (
+                            {departments.map((dept: any) => (
                                 <tr key={dept.id} className="hover">
                                     <td className="font-medium whitespace-nowrap">
                                         {dept.code}

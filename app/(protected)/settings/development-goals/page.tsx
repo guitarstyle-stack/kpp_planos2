@@ -36,7 +36,7 @@ export default async function DevelopmentGoalsPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {goals.map((goal) => (
+                            {goals.map((goal: any) => (
                                 <tr key={goal.id} className="hover">
                                     <td>
                                         <span className="badge badge-primary badge-outline">{goal.code}</span>

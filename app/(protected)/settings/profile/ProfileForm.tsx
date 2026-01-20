@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { User, Department, DepartmentType } from "@prisma/client";
+import { User, Department } from "@prisma/client";
 import { updateProfileAction, createDepartmentAction } from "@/actions/userActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faBuilding, faUser, faPlus, faSpinner } from "@fortawesome/free-solid-svg-icons";
@@ -10,9 +10,9 @@ import { toast } from "sonner";
 import Image from "next/image";
 
 interface ProfileFormProps {
-    user: User & { department: Department };
-    departments: Department[];
-    departmentTypes: DepartmentType[];
+    user: any;
+    departments: any[];
+    departmentTypes: any[];
 }
 
 export default function ProfileForm({ user, departments: initialDepartments, departmentTypes }: ProfileFormProps) {
@@ -177,7 +177,7 @@ export default function ProfileForm({ user, departments: initialDepartments, dep
                                         value={selectedDeptId}
                                         onChange={(e) => setSelectedDeptId(Number(e.target.value))}
                                     >
-                                        {departments.map((dept) => (
+                                        {departments.map((dept: any) => (
                                             <option key={dept.id} value={dept.id}>
                                                 {dept.name} ({dept.code})
                                             </option>
@@ -208,7 +208,7 @@ export default function ProfileForm({ user, departments: initialDepartments, dep
                                             onChange={(e) => setNewDeptTypeId(Number(e.target.value))}
                                         >
                                             <option value="">-- เลือกประเภท --</option>
-                                            {departmentTypes.map(type => (
+                                            {departmentTypes.map((type: any) => (
                                                 <option key={type.id} value={type.id}>{type.name}</option>
                                             ))}
                                         </select>

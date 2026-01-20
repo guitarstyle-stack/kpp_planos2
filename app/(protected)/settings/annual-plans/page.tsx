@@ -36,7 +36,7 @@ export default async function AnnualPlansPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {plans.map((plan) => (
+                            {plans.map((plan: any) => (
                                 <tr key={plan.id} className="hover">
                                     <td className="font-medium">{plan.name}</td>
                                     <td>

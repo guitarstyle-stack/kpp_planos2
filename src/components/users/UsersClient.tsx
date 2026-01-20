@@ -103,7 +103,7 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
                         className="select select-bordered"
                     >
                         <option value="">ทุกหน่วยงาน</option>
-                        {departments.map((dept) => (
+                        {departments.map((dept: any) => (
                             <option key={dept.id} value={dept.id}>
                                 {dept.name}
                             </option>
@@ -117,7 +117,7 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
                         className="select select-bordered"
                     >
                         <option value="">ทุกสิทธิ์</option>
-                        {roles.map((role) => (
+                        {roles.map((role: any) => (
                             <option key={role.id} value={role.id}>
                                 {role.label || role.name}
                             </option>
@@ -157,7 +157,7 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredUsers.map((user) => (
+                            {filteredUsers.map((user: any) => (
                                 <tr key={user.id} className="hover">
                                     <td className="whitespace-nowrap">
                                         <div className="flex items-center gap-3">
@@ -184,7 +184,7 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
                                     <td className="whitespace-nowrap">
                                         <div className="flex flex-wrap gap-1">
                                             {user.roles.length > 0 ? (
-                                                user.roles.map(({ role }) => (
+                                                user.roles.map(({ role }: any) => (
                                                     <span
                                                         key={role.id}
                                                         className="badge badge-info badge-sm"

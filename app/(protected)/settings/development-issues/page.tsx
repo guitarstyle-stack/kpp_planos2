@@ -36,7 +36,7 @@ export default async function DevelopmentIssuesPage() {
                             </tr>
                         </thead>
                         <tbody>
-                            {issues.map((issue) => (
+                            {issues.map((issue: any) => (
                                 <tr key={issue.id} className="hover">
                                     <td>
                                         <span className="badge badge-outline">{issue.code}</span>

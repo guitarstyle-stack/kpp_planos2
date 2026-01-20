@@ -156,7 +156,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
             </div>
 
             <div className="divide-y divide-base-200 border border-base-200 rounded-lg bg-base-100">
-                {initialPlans.map((plan) => (
+                {initialPlans.map((plan: any) => (
                     <div key={plan.id} className="collapse collapse-arrow rounded-none group">
                         <input type="checkbox" className="peer" />
 
