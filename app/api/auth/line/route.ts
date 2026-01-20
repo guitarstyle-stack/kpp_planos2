@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { createSession } from '@/lib/auth'
+import { getBaseUrl } from '@/lib/env'
 
 export async function GET(req: NextRequest) {
     const searchParams = req.nextUrl.searchParams
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
     try {
         const CHANNEL_ID = process.env.LINE_CHANNEL_ID!
         const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET!
-        const REDIRECT_URI = `${process.env.NEXTAUTH_URL}/api/auth/line`
+        const REDIRECT_URI = `${getBaseUrl()}/api/auth/line`
 
         // 1. Exchange code for access token
         const tokenResponse = await fetch('https://api.line.me/oauth2/v2.1/token', {
