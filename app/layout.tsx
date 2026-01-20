@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Kanit, Sarabun } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import "@/lib/fontawesome";
 import { Toaster } from "sonner";
@@ -35,6 +36,7 @@ export default function RootLayout({
       >
         {children}
         <Toaster position="top-right" />
+        <Analytics />
       </body>
     </html>
   );
