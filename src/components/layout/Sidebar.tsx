@@ -7,6 +7,7 @@ import {
     faUsers,
     faCog,
     faUser,
+    faBullhorn,
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 import { isAdmin } from "@/lib/rbac";
@@ -56,6 +57,11 @@ async function getMenuItems() {
                     title: "ตั้งค่า",
                     href: "/settings",
                     icon: faCog,
+                },
+                {
+                    title: "จัดการแจ้งเตือน",
+                    href: "/admin/notifications",
+                    icon: faBullhorn,
                 },
             ]
         });
