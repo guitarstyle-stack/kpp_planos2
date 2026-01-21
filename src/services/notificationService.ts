@@ -153,6 +153,37 @@ export async function getAllNotifications(limit: number = 20) {
     });
 }
 
+export async function getNotificationStats() {
+    const [total, byType] = await Promise.all([
+        db.notification.count(),
+        db.notification.groupBy({
+            by: ['type'],
+            _count: {
+                type: true
+            }
+        })
+    ]);
+
+    const stats = {
+        total,
+        byType: {
+            INFO: 0,
+            WARNING: 0,
+            SUCCESS: 0,
+            ERROR: 0,
+        },
+        recentcount: 0 // Placeholder if needed
+    };
+
+    byType.forEach(group => {
+        if (group.type in stats.byType) {
+            stats.byType[group.type as keyof typeof stats.byType] = group._count.type;
+        }
+    });
+
+    return stats;
+}
+
 // --- Templates ---
 export async function getTemplates() {
     return await db.notificationTemplate.findMany({
