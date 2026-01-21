@@ -61,13 +61,13 @@ export default async function ReportsPage() {
                                 <tr key={report.id} className="hover">
                                     <td className="font-medium">
                                         <div>
-                                            <div className="font-bold">{report.project.name}</div>
+                                            <div className="font-bold truncate max-w-[250px]" title={report.project.name}>{report.project.name}</div>
                                             <div className="text-xs opacity-50">{report.project.code}</div>
                                         </div>
                                     </td>
                                     <td>{report.fiscalYear}</td>
                                     <td>
-                                        <span className="badge badge-outline">
+                                        <span className="badge badge-outline whitespace-nowrap min-w-max h-auto py-1">
                                             {periodLabels[report.periodType] || report.periodType}
                                         </span>
                                     </td>
