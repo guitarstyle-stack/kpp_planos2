@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { pushMessage } from "./lineService";
 
 export async function getNotifications(userId: number, limit: number = 10) {
     return await db.notification.findMany({
@@ -35,7 +36,7 @@ export async function createNotification(data: {
     type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
     link?: string;
 }) {
-    return await db.notification.create({
+    const notification = await db.notification.create({
         data: {
             userId: data.userId,
             title: data.title,
@@ -44,6 +45,24 @@ export async function createNotification(data: {
             link: data.link,
         },
     });
+
+    // Send LINE Notification if user has lineUserId
+    try {
+        const user = await db.user.findUnique({
+            where: { id: data.userId },
+            select: { lineUserId: true },
+        });
+
+        if (user?.lineUserId) {
+            const lineMessage = `${data.title}\n\n${data.message}\n\n${data.link ? `ดูรายละเอียด: ${process.env.NEXT_PUBLIC_APP_URL || ""}${data.link}` : ""}`;
+            await pushMessage(user.lineUserId, lineMessage);
+        }
+    } catch (error) {
+        console.error("Background LINE notification failed:", error);
+        // Do not fail the main request just because notification failed
+    }
+
+    return notification;
 }
 
 export async function deleteNotification(notificationId: number) {
