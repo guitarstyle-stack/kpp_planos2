@@ -5,7 +5,7 @@ import { getDevelopmentIssues } from "@/services/developmentPlanService";
 import db from "@/lib/db";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolder, faChartLine, faMoneyBillTrendUp, faClock, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { StatusChart, DepartmentChart, FiscalYearChart } from "@/components/dashboard/Charts";
+import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart } from "@/components/dashboard/Charts";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -111,6 +111,19 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                     <div className="card-body">
                         <h3 className="card-title text-base mb-4">โครงการตามปีงบประมาณ</h3>
                         <FiscalYearChart yearlyCounts={stats.yearlyCounts} />
+                    </div>
+                </div>
+                {/* Advanced Charts: Budget & Progress */}
+                <div className="card bg-base-100 shadow-sm border border-base-300">
+                    <div className="card-body">
+                        <h3 className="card-title text-base mb-4">การเบิกจ่ายงบประมาณ (Top 6 หน่วยงาน)</h3>
+                        <BudgetChart budgetByDepartment={stats.budgetByDepartment} />
+                    </div>
+                </div>
+                <div className="card bg-base-100 shadow-sm border border-base-300">
+                    <div className="card-body">
+                        <h3 className="card-title text-base mb-4">การกระจายตัวความก้าวหน้า</h3>
+                        <ProgressDistributionChart distribution={stats.progressDistribution} />
                     </div>
                 </div>
                 <div className="card bg-base-100 shadow-sm border border-base-300 lg:col-span-2">

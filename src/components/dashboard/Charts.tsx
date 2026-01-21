@@ -17,6 +17,14 @@ interface FiscalYearChartProps {
     yearlyCounts: Record<string, number>;
 }
 
+interface BudgetChartProps {
+    budgetByDepartment: Record<string, { total: number; spent: number }>;
+}
+
+interface ProgressDistributionChartProps {
+    distribution: Record<string, number>;
+}
+
 const statusLabels: Record<string, { label: string; color: string }> = {
     NOT_STARTED: { label: "ยังไม่เริ่ม", color: "bg-base-300" },
     IN_PROGRESS: { label: "กำลังดำเนินการ", color: "bg-info" },
@@ -112,6 +120,80 @@ export function FiscalYearChart({ yearlyCounts }: FiscalYearChartProps) {
                             </div>
                         </div>
                         <div className="text-sm font-medium">{year}</div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+export function BudgetChart({ budgetByDepartment }: BudgetChartProps) {
+    const entries = Object.entries(budgetByDepartment)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 6); // Top 6 departments by budget
+
+    if (entries.length === 0) return <div className="text-center text-base-content/50 py-8">ไม่มีข้อมูลงบประมาณ</div>;
+
+    const maxBudget = Math.max(...entries.map(([, data]) => data.total));
+
+    const formatMoney = (amount: number) => {
+        if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
+        if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`;
+        return amount.toLocaleString();
+    };
+
+    return (
+        <div className="space-y-4">
+            {entries.map(([dept, data]) => {
+                const spentPercent = data.total > 0 ? Math.min(100, Math.round((data.spent / data.total) * 100)) : 0;
+
+                return (
+                    <div key={dept} className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                            <span className="truncate max-w-[150px] font-medium" title={dept}>{dept}</span>
+                            <div className="text-right flex flex-col items-end">
+                                <span className="text-xs opacity-70">งบ: {formatMoney(data.total)}</span>
+                                <span className="text-xs font-bold text-info">ใช้: {formatMoney(data.spent)} ({spentPercent}%)</span>
+                            </div>
+                        </div>
+                        <div className="relative h-2 bg-base-200 rounded-full w-full">
+                            {/* Bar representing spent budget */}
+                            <div className="absolute top-0 left-0 h-full bg-info rounded-full z-10" style={{ width: `${spentPercent}%` }}></div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+export function ProgressDistributionChart({ distribution }: ProgressDistributionChartProps) {
+    const total = Object.values(distribution).reduce((sum, count) => sum + count, 0);
+
+    if (total === 0) return <div className="text-center text-base-content/50 py-8">ไม่มีข้อมูลความก้าวหน้า</div>;
+
+    const colors: Record<string, string> = {
+        "0-25%": "bg-error",
+        "26-50%": "bg-warning",
+        "51-75%": "bg-info",
+        "76-100%": "bg-success",
+    };
+
+    return (
+        <div className="grid grid-cols-4 gap-2 h-40 items-end">
+            {Object.entries(distribution).map(([range, count]) => {
+                const height = total > 0 ? Math.max(10, Math.round((count / total) * 100)) : 0;
+                return (
+                    <div key={range} className="flex flex-col items-center gap-2">
+                        <div className="relative w-full flex justify-center items-end h-full">
+                            <div
+                                className={`w-full max-w-[40px] ${colors[range]} rounded-t-lg transition-all duration-500`}
+                                style={{ height: `${height}%` }}
+                            >
+                                <div className="text-center text-xs font-bold -mt-5 text-base-content/70">{count}</div>
+                            </div>
+                        </div>
+                        <div className="text-xs text-center font-medium">{range}</div>
                     </div>
                 );
             })}

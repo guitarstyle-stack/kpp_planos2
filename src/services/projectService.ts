@@ -176,6 +176,31 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         const year = p.fiscalYear.toString();
         yearlyCounts[year] = (yearlyCounts[year] || 0) + 1;
     });
+    // Aggregations for Budget and Progress
+    const budgetByDepartment: Record<string, { total: number; spent: number }> = {};
+    const progressDistribution = {
+        "0-25%": 0,
+        "26-50%": 0,
+        "51-75%": 0,
+        "76-100%": 0,
+    };
+
+    projects.forEach(p => {
+        // Budget by Department
+        const deptName = p.department?.name || "ไม่ระบุ";
+        if (!budgetByDepartment[deptName]) {
+            budgetByDepartment[deptName] = { total: 0, spent: 0 };
+        }
+        budgetByDepartment[deptName].total += p.budgetTotal || 0;
+        budgetByDepartment[deptName].spent += p.budgetSpent || 0;
+
+        // Progress Distribution
+        const progress = p.progressPercent || 0;
+        if (progress <= 25) progressDistribution["0-25%"]++;
+        else if (progress <= 50) progressDistribution["26-50%"]++;
+        else if (progress <= 75) progressDistribution["51-75%"]++;
+        else progressDistribution["76-100%"]++;
+    });
 
     return {
         totalProjects,
@@ -185,6 +210,8 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         statusCounts,
         departmentCounts,
         yearlyCounts,
+        budgetByDepartment,
+        progressDistribution,
         pendingReports: statusCounts.IN_PROGRESS, // Projects in progress need updates
     };
 }
