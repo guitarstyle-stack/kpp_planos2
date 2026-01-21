@@ -1,9 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { broadcastNotificationAction, sendDepartmentNotificationAction, sendUserNotificationAction } from "@/actions/notificationActions";
+import {
+    broadcastNotificationAction,
+    sendDepartmentNotificationAction,
+    sendUserNotificationAction,
+    createTemplateAction
+} from "@/actions/notificationActions";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPaperPlane, faBullhorn, faUser, faBuilding, faHistory, faCheckCircle, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
+import {
+    faPaperPlane,
+    faBullhorn,
+    faUser,
+    faBuilding,
+    faHistory,
+    faSave,
+    faClock,
+    faFileAlt
+} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 
 interface User {
@@ -19,13 +33,23 @@ interface Department {
     name: string;
 }
 
+interface Template {
+    id: number;
+    name: string;
+    title: string;
+    message: string;
+    link?: string | null;
+    type: string;
+}
+
 interface NotificationManagerProps {
     users: User[];
     departments: Department[];
     history: any[];
+    templates: Template[];
 }
 
-export function NotificationManager({ users, departments, history }: NotificationManagerProps) {
+export function NotificationManager({ users, departments, history, templates }: NotificationManagerProps) {
     const [activeTab, setActiveTab] = useState<"send" | "history">("send");
     const [targetType, setTargetType] = useState<"broadcast" | "department" | "user">("broadcast");
     const [targetId, setTargetId] = useState<number | "">("");
@@ -37,18 +61,64 @@ export function NotificationManager({ users, departments, history }: Notificatio
     const [link, setLink] = useState("");
     const [type, setType] = useState<"INFO" | "WARNING" | "SUCCESS" | "ERROR">("INFO");
 
+    // Advanced Features
+    const [isScheduled, setIsScheduled] = useState(false);
+    const [scheduledFor, setScheduledFor] = useState("");
+    const [templateName, setTemplateName] = useState("");
+    const [showTemplateSave, setShowTemplateSave] = useState(false);
+
+    const loadTemplate = (templateId: string) => {
+        const template = templates.find(t => t.id === Number(templateId));
+        if (template) {
+            setTitle(template.title);
+            setMessage(template.message);
+            setLink(template.link || "");
+            setType(template.type as any);
+            toast.success(`โหลด Template: ${template.name}`);
+        }
+    };
+
+    const handleSaveTemplate = () => {
+        if (!templateName) return toast.error("กรุณาตั้งชื่อ Template");
+
+        const formData = new FormData();
+        formData.append("name", templateName);
+        formData.append("title", title);
+        formData.append("message", message);
+        formData.append("link", link);
+        formData.append("type", type);
+
+        startTransition(async () => {
+            try {
+                const result = await createTemplateAction(formData);
+                if (result.success) {
+                    toast.success("บันทึก Template สำเร็จ");
+                    setShowTemplateSave(false);
+                    setTemplateName("");
+                }
+            } catch (error) {
+                toast.error("บันทึกไม่สำเร็จ");
+            }
+        });
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!confirm("ยืนยันการส่งการแจ้งเตือน? ข้อความจะถูกส่งไปยัง LINE ของผู้ใช้ทันที")) {
-            return;
-        }
+        const confirmMsg = isScheduled
+            ? `ยืนยันการตั้งเวลาส่งในวันที่ ${new Date(scheduledFor).toLocaleString()}?`
+            : "ยืนยันการส่งการแจ้งเตือน? ข้อความจะถูกส่งไปยัง LINE ของผู้ใช้ทันที";
+
+        if (!confirm(confirmMsg)) return;
 
         const formData = new FormData();
         formData.append("title", title);
         formData.append("message", message);
         formData.append("link", link);
         formData.append("type", type);
+        if (isScheduled && scheduledFor) {
+            formData.append("scheduledFor", scheduledFor);
+        }
 
         startTransition(async () => {
             try {
@@ -65,17 +135,28 @@ export function NotificationManager({ users, departments, history }: Notificatio
                 }
 
                 if (result?.success) {
-                    toast.success(`ส่งข้อความสำเร็จ (${result.count} คน)`);
-                    setTitle("");
-                    setMessage("");
-                    setLink("");
-                    setTargetId("");
+                    toast.success(result.scheduled ? "ตั้งเวลาส่งสำเร็จ" : `ส่งข้อความสำเร็จ (${result.count} คน)`);
+                    if (!result.scheduled) {
+                        setTitle("");
+                        setMessage("");
+                        setLink("");
+                        setTargetId("");
+                    }
                 }
             } catch (error) {
                 console.error(error);
                 toast.error("เกิดข้อผิดพลาดในการส่งข้อความ");
             }
         });
+    };
+
+    const getHeaderColor = (t: string) => {
+        switch (t) {
+            case "WARNING": return "bg-yellow-500";
+            case "SUCCESS": return "bg-green-500";
+            case "ERROR": return "bg-red-500";
+            default: return "bg-blue-500";
+        }
     };
 
     return (
@@ -94,41 +175,49 @@ export function NotificationManager({ users, departments, history }: Notificatio
                 {activeTab === "send" && (
                     <div className="card bg-base-100 shadow-xl border border-base-200">
                         <div className="card-body">
-                            <h2 className="card-title mb-4">สร้างการแจ้งเตือนใหม่</h2>
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="card-title">สร้างการแจ้งเตือนใหม่</h2>
+                                <div className="flex gap-2">
+                                    <select className="select select-sm select-bordered" onChange={(e) => loadTemplate(e.target.value)} defaultValue="">
+                                        <option value="" disabled>โหลด Template...</option>
+                                        {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
 
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 {/* Target Selection */}
-                                <div className="form-control">
+                                <div className="form-control bg-base-200/50 p-4 rounded-lg">
                                     <label className="label cursor-pointer justify-start gap-4">
                                         <span className="label-text font-bold w-24">ส่งถึง:</span>
                                         <label className="cursor-pointer flex items-center gap-2">
                                             <input type="radio" name="target" className="radio radio-primary" checked={targetType === "broadcast"} onChange={() => setTargetType("broadcast")} />
-                                            <span className="label-text"><FontAwesomeIcon icon={faBullhorn} /> ทุกคน (Broadcast)</span>
+                                            <span className="label-text"><FontAwesomeIcon icon={faBullhorn} /> ทุกคน</span>
                                         </label>
                                         <label className="cursor-pointer flex items-center gap-2">
                                             <input type="radio" name="target" className="radio radio-primary" checked={targetType === "department"} onChange={() => setTargetType("department")} />
-                                            <span className="label-text"><FontAwesomeIcon icon={faBuilding} /> แผนก/หน่วยงาน</span>
+                                            <span className="label-text"><FontAwesomeIcon icon={faBuilding} /> แผนก</span>
                                         </label>
                                         <label className="cursor-pointer flex items-center gap-2">
                                             <input type="radio" name="target" className="radio radio-primary" checked={targetType === "user"} onChange={() => setTargetType("user")} />
                                             <span className="label-text"><FontAwesomeIcon icon={faUser} /> รายบุคคล</span>
                                         </label>
                                     </label>
+
+                                    {targetType === "department" && (
+                                        <select className="select select-bordered w-full mt-2" value={targetId} onChange={(e) => setTargetId(Number(e.target.value))} required>
+                                            <option value="">เลือกหน่วยงาน...</option>
+                                            {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                                        </select>
+                                    )}
+
+                                    {targetType === "user" && (
+                                        <select className="select select-bordered w-full mt-2" value={targetId} onChange={(e) => setTargetId(Number(e.target.value))} required>
+                                            <option value="">เลือกผู้ใช้...</option>
+                                            {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.department?.name})</option>)}
+                                        </select>
+                                    )}
                                 </div>
-
-                                {targetType === "department" && (
-                                    <select className="select select-bordered w-full" value={targetId} onChange={(e) => setTargetId(Number(e.target.value))} required>
-                                        <option value="">เลือกหน่วยงาน...</option>
-                                        {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                                    </select>
-                                )}
-
-                                {targetType === "user" && (
-                                    <select className="select select-bordered w-full" value={targetId} onChange={(e) => setTargetId(Number(e.target.value))} required>
-                                        <option value="">เลือกผู้ใช้...</option>
-                                        {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.department?.name})</option>)}
-                                    </select>
-                                )}
 
                                 {/* Content */}
                                 <div className="form-control">
@@ -157,10 +246,40 @@ export function NotificationManager({ users, departments, history }: Notificatio
                                     </div>
                                 </div>
 
-                                <div className="card-actions justify-end mt-6">
+                                {/* Scheduling */}
+                                <div className="form-control">
+                                    <label className="label cursor-pointer justify-start gap-2">
+                                        <input type="checkbox" className="toggle toggle-primary" checked={isScheduled} onChange={(e) => setIsScheduled(e.target.checked)} />
+                                        <span className="label-text flex items-center gap-2"><FontAwesomeIcon icon={faClock} /> ตั้งเวลาส่งล่วงหน้า</span>
+                                    </label>
+                                    {isScheduled && (
+                                        <input
+                                            type="datetime-local"
+                                            className="input input-bordered mt-2 w-full max-w-xs"
+                                            value={scheduledFor}
+                                            onChange={(e) => setScheduledFor(e.target.value)}
+                                            required={isScheduled}
+                                        />
+                                    )}
+                                </div>
+
+                                <div className="card-actions justify-between mt-6 items-center">
+                                    <div>
+                                        {!showTemplateSave ? (
+                                            <button type="button" className="btn btn-ghost btn-sm text-xs" onClick={() => setShowTemplateSave(true)}>
+                                                <FontAwesomeIcon icon={faSave} /> บันทึกเป็น Template
+                                            </button>
+                                        ) : (
+                                            <div className="join">
+                                                <input className="input input-xs input-bordered join-item" placeholder="ชื่อ Template..." value={templateName} onChange={e => setTemplateName(e.target.value)} />
+                                                <button type="button" className="btn btn-xs btn-primary join-item" onClick={handleSaveTemplate}>Save</button>
+                                                <button type="button" className="btn btn-xs btn-ghost join-item" onClick={() => setShowTemplateSave(false)}>Cancel</button>
+                                            </div>
+                                        )}
+                                    </div>
                                     <button type="submit" className="btn btn-primary" disabled={isPending}>
                                         {isPending ? <span className="loading loading-spinner"></span> : <FontAwesomeIcon icon={faPaperPlane} />}
-                                        ส่งข้อความ
+                                        {isScheduled ? "บันทึกกำหนดการส่ง" : "ส่งข้อความทันที"}
                                     </button>
                                 </div>
                             </form>
@@ -204,34 +323,39 @@ export function NotificationManager({ users, departments, history }: Notificatio
                 <div className="mockup-phone border-primary">
                     <div className="camera"></div>
                     <div className="display">
-                        <div className="artboard artboard-demo phone-1 bg-[#849bcf] justify-start pt-12 px-4 gap-4">
+                        <div className="artboard artboard-demo phone-1 bg-[#849bcf] justify-start pt-12 px-4 gap-4 overflow-y-auto">
                             <div className="text-white text-sm font-bold opacity-80 mb-4 self-center">LINE Application</div>
 
-                            {/* Line Bubble Mockup */}
-                            <div className="chat chat-start w-full">
-                                <div className="chat-image avatar">
-                                    <div className="w-10 rounded-full">
-                                        <div className="bg-white w-full h-full flex items-center justify-center font-bold text-primary">KPP</div>
+                            {/* Flex Bubble Mockup */}
+                            <div className="w-full">
+                                <div className="text-[10px] text-white/70 mb-1 ml-2">PlanOS Bot</div>
+                                <div className="bg-white rounded-lg shadow-sm overflow-hidden w-full max-w-[260px]">
+                                    {/* Header */}
+                                    <div className={`${getHeaderColor(type)} p-2 flex justify-center`}>
+                                        <span className="text-white text-[10px] font-bold uppercase tracking-wider">{type}</span>
                                     </div>
+                                    {/* Body */}
+                                    <div className="p-4">
+                                        <div className="font-bold text-gray-900 text-sm mb-1">{title || "หัวข้อการแจ้งเตือน"}</div>
+                                        <div className="text-gray-500 text-xs">{message || "รายละเอียดเนื้อหาจะแสดงตรงนี้..."}</div>
+                                    </div>
+                                    {/* Footer */}
+                                    {link && (
+                                        <div className="p-3 pt-0">
+                                            <button className={`btn btn-sm btn-block ${type === 'WARNING' ? 'btn-warning' : type === 'ERROR' ? 'btn-error' : 'btn-info'} text-white no-animation h-8 min-h-0`}>
+                                                ดูรายละเอียด
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
-                                <div className="chat-header text-xs text-white opacity-70 mb-1">
-                                    PlanOS Bot
-                                </div>
-                                <div className="chat-bubble bg-white text-black text-sm p-4 shadow-sm flex flex-col gap-2">
-                                    <div className="font-bold text-primary">{title || "หัวข้อการแจ้งเตือน"}</div>
-                                    <div className="whitespace-pre-wrap">{message || "รายละเอียดเนื้อหาจะแสดงตรงนี้..."}</div>
-                                    {link && <div className="text-blue-500 underline text-xs mt-2">ดูรายละเอียดเพิ่มเติม</div>}
-                                </div>
-                                <div className="chat-footer opacity-50 text-xs text-white mt-1">
-                                    Read 09:41 PM
-                                </div>
+                                <div className="text-[9px] text-white/50 mt-1 ml-1">Read 09:41 PM</div>
                             </div>
 
                         </div>
                     </div>
                 </div>
                 <div className="text-center mt-4 text-sm opacity-50">
-                    ตัวอย่างการแสดงผลบน LINE (อาจแตกต่างกันไปตามอุปกรณ์)
+                    ตัวอย่าง Flex Message บน LINE
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import { pushMessage } from "./lineService";
+import { pushMessage, pushFlexMessage } from "./lineService";
 
 export async function getNotifications(userId: number, limit: number = 10) {
     return await db.notification.findMany({
@@ -54,8 +54,7 @@ export async function createNotification(data: {
         });
 
         if (user?.lineUserId) {
-            const lineMessage = `${data.title}\n\n${data.message}\n\n${data.link ? `ดูรายละเอียด: ${process.env.NEXT_PUBLIC_APP_URL || ""}${data.link}` : ""}`;
-            await pushMessage(user.lineUserId, lineMessage);
+            await pushFlexMessage(user.lineUserId, data.title, data.message, data.link, data.type);
         }
     } catch (error) {
         console.error("Background LINE notification failed:", error);
@@ -99,11 +98,9 @@ export async function broadcastNotification(data: {
 
     // 3. Send LINE messages (Async)
     const lineUsers = users.filter(u => u.lineUserId);
-    const lineMessage = `${data.title}\n\n${data.message}\n\n${data.link ? `ดูรายละเอียด: ${process.env.NEXT_PUBLIC_APP_URL || ""}${data.link}` : ""}`;
 
-    // Note: In a real production system, we should use a queue or LINE Multicast API.
-    // For now, we'll loop pushMessage (Limit 2000 requests/sec, should be fine for now)
-    Promise.allSettled(lineUsers.map(u => pushMessage(u.lineUserId, lineMessage)))
+    // Use Flex Message
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type)))
         .then(() => console.log(`Broadcasted to ${lineUsers.length} LINE users`))
         .catch(err => console.error("Broadcast LINE failed", err));
 
@@ -137,9 +134,8 @@ export async function sendNotificationToDepartment(departmentId: number, data: {
 
     // 3. Send LINE
     const lineUsers = users.filter(u => u.lineUserId);
-    const lineMessage = `${data.title}\n\n${data.message}\n\n${data.link ? `ดูรายละเอียด: ${process.env.NEXT_PUBLIC_APP_URL || ""}${data.link}` : ""}`;
 
-    Promise.allSettled(lineUsers.map(u => pushMessage(u.lineUserId, lineMessage)))
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type)))
         .then(() => console.log(`Department broadcast to ${lineUsers.length} LINE users`));
 
     return { count: users.length };
@@ -155,4 +151,88 @@ export async function getAllNotifications(limit: number = 20) {
             }
         }
     });
+}
+
+// --- Templates ---
+export async function getTemplates() {
+    return await db.notificationTemplate.findMany({
+        orderBy: { name: "asc" },
+    });
+}
+
+export async function createTemplate(data: { name: string; title: string; message: string; link?: string; type?: string }) {
+    return await db.notificationTemplate.create({
+        data: {
+            ...data,
+            type: data.type || "INFO",
+        }
+    });
+}
+
+// --- Scheduling ---
+export async function createSchedule(data: {
+    title: string;
+    message: string;
+    link?: string;
+    type?: string;
+    targetType: string;
+    targetId?: number;
+    scheduledFor: Date;
+}) {
+    return await db.notificationSchedule.create({
+        data: {
+            ...data,
+            type: data.type || "INFO",
+            status: "PENDING",
+        }
+    });
+}
+
+export async function processDueSchedules() {
+    const now = new Date();
+    const dueSchedules = await db.notificationSchedule.findMany({
+        where: {
+            status: "PENDING",
+            scheduledFor: { lte: now }
+        }
+    });
+
+    console.log(`Processing ${dueSchedules.length} due schedules`);
+
+    for (const schedule of dueSchedules) {
+        try {
+            // Update status first to prevent double sending if process takes long
+            await db.notificationSchedule.update({
+                where: { id: schedule.id },
+                data: { status: "PROCESSING" }
+            });
+
+            const payload = {
+                title: schedule.title,
+                message: schedule.message,
+                link: schedule.link || "",
+                type: schedule.type as any
+            };
+
+            if (schedule.targetType === "BROADCAST") {
+                await broadcastNotification(payload);
+            } else if (schedule.targetType === "DEPARTMENT" && schedule.targetId) {
+                await sendNotificationToDepartment(schedule.targetId, payload);
+            } else if (schedule.targetType === "USER" && schedule.targetId) {
+                await createNotification({ userId: schedule.targetId, ...payload });
+            }
+
+            await db.notificationSchedule.update({
+                where: { id: schedule.id },
+                data: { status: "SENT", sentAt: new Date() }
+            });
+
+        } catch (error) {
+            console.error(`Failed to process schedule ${schedule.id}`, error);
+            await db.notificationSchedule.update({
+                where: { id: schedule.id },
+                data: { status: "FAILED" }
+            });
+        }
+    }
 }

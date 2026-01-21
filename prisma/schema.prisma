@@ -481,3 +481,39 @@ model Notification {
   @@index([isRead], map: "idx_notification_read")
   @@index([createdAt], map: "idx_notification_created")
 }
+
+// -------------------------------------------------
+// Advanced Notification Features
+// -------------------------------------------------
+model NotificationTemplate {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  title       String
+  message     String
+  type        String   @default("INFO")
+  link        String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model NotificationSchedule {
+  id           Int      @id @default(autoincrement())
+  title        String
+  message      String
+  type         String   @default("INFO")
+  link         String?
+
+  targetType   String   // "BROADCAST", "DEPARTMENT", "USER"
+  targetId     Int?     // DepartmentId or UserId (null if BROADCAST)
+
+  scheduledFor DateTime
+  status       String   @default("PENDING") // "PENDING", "SENT", "FAILED"
+  sentAt       DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([scheduledFor], map: "idx_schedule_time")
+  @@index([status], map: "idx_schedule_status")
+}
