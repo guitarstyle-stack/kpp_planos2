@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
             {/* Header */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary-focus bg-clip-text text-transparent">
+                    <h1 className="text-3xl font-bold tracking-tight text-primary">
                         โครงการ {userDepartmentName}
                     </h1>
                     <p className="text-sm opacity-70">
