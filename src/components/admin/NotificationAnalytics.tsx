@@ -14,9 +14,35 @@ interface NotificationStats {
     recentcount: number;
 }
 
-export function NotificationAnalytics({ stats }: { stats: NotificationStats }) {
+interface LineQuota {
+    type: string;
+    value?: number;
+    limit?: number;
+    totalUsage?: number;
+}
+
+export function NotificationAnalytics({ stats, lineQuota }: { stats: NotificationStats; lineQuota?: LineQuota | null }) {
+    const usagePercent = lineQuota && lineQuota.value
+        ? ((lineQuota.totalUsage || 0) / lineQuota.value) * 100
+        : 0;
+
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+            <div className={`stats shadow text-primary-content ${usagePercent > 90 ? 'bg-error' : 'bg-primary'}`}>
+                <div className="stat">
+                    <div className="stat-title text-primary-content opacity-90">LINE Quota</div>
+                    <div className="stat-value text-2xl">
+                        {lineQuota?.totalUsage?.toLocaleString() || 0}
+                        <span className="text-sm opacity-70"> / {lineQuota?.value?.toLocaleString() || "∞"}</span>
+                    </div>
+                    <div className="stat-desc text-primary-content opacity-80">
+                        {lineQuota?.type === 'limited' ? `เหลือ ${((lineQuota.value || 0) - (lineQuota.totalUsage || 0)).toLocaleString()}` : 'ไม่จำกัด'}
+                    </div>
+                    {lineQuota?.type === 'limited' && (
+                        <progress className="progress progress-warning w-full mt-2" value={usagePercent} max="100"></progress>
+                    )}
+                </div>
+            </div>
             <div className="stats shadow bg-info text-info-content">
                 <div className="stat">
                     <div className="stat-figure text-info-content">

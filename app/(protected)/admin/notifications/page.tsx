@@ -4,17 +4,26 @@ import { NotificationAnalytics } from "@/components/admin/NotificationAnalytics"
 import { getUsers } from "@/services/userService";
 import { getDepartments } from "@/services/masterDataService";
 import { getAllNotifications, getTemplates, getNotificationStats } from "@/services/notificationService";
+import { getLineQuota, getLineConsumption } from "@/services/lineService";
 
 export default async function AdminNotificationsPage() {
     await requireAdmin();
 
-    const [users, departments, history, templates, stats] = await Promise.all([
+    const [users, departments, history, templates, stats, quota, consumption] = await Promise.all([
         getUsers(),
         getDepartments(),
         getAllNotifications(20),
         getTemplates(),
         getNotificationStats(),
+        getLineQuota(),
+        getLineConsumption(),
     ]);
+
+    const lineStats = quota ? {
+        type: quota.type,
+        value: quota.value,
+        totalUsage: consumption?.totalUsage || 0
+    } : null;
 
     return (
         <div className="space-y-6">
@@ -25,7 +34,7 @@ export default async function AdminNotificationsPage() {
                 </p>
             </div>
 
-            <NotificationAnalytics stats={stats} />
+            <NotificationAnalytics stats={stats} lineQuota={lineStats} />
 
             <NotificationManager
                 users={users}
