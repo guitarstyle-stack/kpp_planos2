@@ -8,8 +8,21 @@ export type ProjectWithDetails = Project & {
     developmentGoal: { name: string } | null;
 };
 
-export async function getProjects() {
+export interface ProjectFilters {
+    departmentId?: number;
+}
+
+export async function getProjects(filters: ProjectFilters = {}) {
+    const where: Prisma.ProjectWhereInput = {
+        isActive: true,
+    };
+
+    if (filters.departmentId) {
+        where.departmentId = filters.departmentId;
+    }
+
     return await db.project.findMany({
+        where,
         include: {
             department: true,
 

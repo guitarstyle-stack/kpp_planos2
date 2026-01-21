@@ -3,7 +3,8 @@ import { getProjects, getProjectStats } from "@/services/projectService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faSearch, faFolder, faChartLine, faFolderOpen, faMoneyBillTrendUp, faClock } from "@fortawesome/free-solid-svg-icons";
 import { StatusChart, DepartmentChart } from "@/components/dashboard/Charts";
-
+import { getSession } from "@/lib/auth";
+import { getUserById } from "@/services/userService";
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
     "NOT_STARTED": { label: "ยังไม่เริ่ม", color: "badge-ghost" },
     "IN_PROGRESS": { label: "กำลังดำเนินการ", color: "badge-info" },
@@ -12,9 +13,18 @@ const STATUS_MAP: Record<string, { label: string, color: string }> = {
 };
 
 export default async function ProjectsPage() {
+    const session = await getSession();
+    if (!session || !session.user) {
+        return <div>Access Denied</div>;
+    }
+
+    const user = await getUserById(Number(session.user.id));
+    const userDepartmentId = user?.departmentId;
+    const userDepartmentName = user?.department?.name;
+
     const [projects, stats] = await Promise.all([
-        getProjects(),
-        getProjectStats(),
+        getProjects({ departmentId: userDepartmentId }),
+        getProjectStats({ departmentId: userDepartmentId }),
     ]);
 
     // Format helpers
@@ -31,7 +41,7 @@ export default async function ProjectsPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary-focus bg-clip-text text-transparent">
-                        โครงการทั้งหมด
+                        โครงการ {userDepartmentName}
                     </h1>
                     <p className="text-sm opacity-70">
                         บริหารจัดการโครงการและติดตามความคืบหน้า
