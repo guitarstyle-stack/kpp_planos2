@@ -167,9 +167,19 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
     }
 
     // Auto-calculate summary KPI counts
+    // Auto-calculate summary KPI counts
     const kpiTotal = selectedProject?.indicators?.length || 0;
     const kpiAchieved = Object.values(indicatorValues).filter(v => v.achievementPercent >= 100).length;
     const kpiPercent = kpiTotal > 0 ? Math.round((kpiAchieved / kpiTotal) * 100) : 0;
+
+    const [overallProgressPercent, setOverallProgressPercent] = useState<number | "">(
+        initialData?.overallProgressPercent ?? ""
+    );
+
+    // Calculate Average KPI Achievement
+    const kpiAverageAchievement = kpiTotal > 0
+        ? Math.round(Object.values(indicatorValues).reduce((sum, v) => sum + v.achievementPercent, 0) / kpiTotal)
+        : 0;
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -284,14 +294,34 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                             <label className="label">
                                 <span className="label-text">ความก้าวหน้าโครงการ (%)</span>
                             </label>
-                            <input
-                                type="number"
-                                name="overallProgressPercent"
-                                min="0"
-                                max="100"
-                                defaultValue={initialData?.overallProgressPercent || 0}
-                                className="input input-bordered w-full"
-                            />
+                            <div className="flex flex-col gap-2">
+                                <input
+                                    type="number"
+                                    name="overallProgressPercent"
+                                    min="0"
+                                    value={overallProgressPercent}
+                                    onChange={(e) => setOverallProgressPercent(e.target.value === "" ? "" : parseFloat(e.target.value))}
+                                    className="input input-bordered w-full"
+                                />
+                                <div className="flex gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOverallProgressPercent(typeof budgetProgressPercent === 'number' ? budgetProgressPercent : 0)}
+                                        className="btn btn-xs btn-outline"
+                                        disabled={typeof budgetProgressPercent !== 'number'}
+                                    >
+                                        ใช้ตามงบฯ ({budgetProgressPercent || 0}%)
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setOverallProgressPercent(kpiAverageAchievement)}
+                                        className="btn btn-xs btn-outline"
+                                        disabled={kpiTotal === 0}
+                                    >
+                                        ใช้ตาม KPI ({kpiAverageAchievement}%)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
