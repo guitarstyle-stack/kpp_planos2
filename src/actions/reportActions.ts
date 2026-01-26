@@ -196,11 +196,13 @@ export async function updateReportAction(id: number, formData: FormData) {
         const validatedData = ReportSchema.parse(rawData);
 
         await db.$transaction(async (tx) => {
+            // 1. Update the Report itself
             await tx.report.update({
                 where: { id },
                 data: validatedData,
             });
 
+            // 2. Update Indicator Results
             if (indicatorResults.length > 0) {
                 // Delete old results and set new ones
                 await tx.reportIndicatorResult.deleteMany({
@@ -215,6 +217,55 @@ export async function updateReportAction(id: number, formData: FormData) {
                         achievementPercent: res.achievementPercent,
                     })),
                 });
+            }
+
+            // 3. Sync Project Status (Only if this is the latest report)
+            // Find the latest report for this project
+            const latestReport = await tx.report.findFirst({
+                where: { projectId: Number(validatedData.projectId) },
+                orderBy: { createdAt: 'desc' },
+                select: { id: true, createdAt: true } // We only need date to check
+            });
+
+            // If the report we just updated determines the project's current state (it's the latest one)
+            // Note: If we just updated its date, it might now BE the latest, or still be the latest.
+            // Simple check: If this report's ID matches the latest ID found, OR if there's no other later report.
+
+            // Actually, we should just always recalculate from the "True Latest" after update.
+            if (latestReport && latestReport.id === id) {
+                const project = await tx.project.findUnique({
+                    where: { id: Number(validatedData.projectId) },
+                    select: { budgetTotal: true },
+                });
+
+                if (project) {
+                    // Logic similar to createReportAction
+                    let calculatedProgress = validatedData.overallProgressPercent || 0;
+
+                    if (!calculatedProgress && validatedData.budgetProgressPercent) {
+                        calculatedProgress = validatedData.budgetProgressPercent;
+                    } else if (!calculatedProgress && validatedData.kpiAchievementPercent) {
+                        calculatedProgress = validatedData.kpiAchievementPercent;
+                    }
+
+                    let newStatus = "NOT_STARTED";
+                    if (calculatedProgress > 0 && calculatedProgress < 100) {
+                        newStatus = "IN_PROGRESS";
+                    } else if (calculatedProgress >= 100) {
+                        newStatus = "COMPLETED";
+                    }
+
+                    await tx.project.update({
+                        where: { id: Number(validatedData.projectId) },
+                        data: {
+                            budgetSpent: validatedData.budgetSpentCumulative || 0,
+                            progressPercent: Math.round(calculatedProgress),
+                            status: newStatus,
+                            lastReportedAt: new Date(), // Update this to match report edit time or keep original? Usually update to now is fine or use report's date.
+                            // Let's use current time as "Last Reported" event happened just now.
+                        },
+                    });
+                }
             }
         });
 
