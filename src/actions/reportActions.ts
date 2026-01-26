@@ -13,17 +13,17 @@ const ReportSchema = z.object({
     summary: z.string().optional(),
     issues: z.string().optional(),
     resolutionPlan: z.string().optional(),
-    overallProgressPercent: z.coerce.number().min(0).max(100).optional(),
+    overallProgressPercent: z.coerce.number().min(0).optional(),
 
     // Budget tracking fields
     budgetSpentInPeriod: z.coerce.number().optional(),
     budgetSpentCumulative: z.coerce.number().optional(),
-    budgetProgressPercent: z.coerce.number().min(0).max(100).optional(),
+    budgetProgressPercent: z.coerce.number().min(0).optional(),
 
     // KPI tracking fields
     kpiAchievedCount: z.coerce.number().min(0).optional(),
     kpiTotalCount: z.coerce.number().min(0).optional(),
-    kpiAchievementPercent: z.coerce.number().min(0).max(100).optional(),
+    kpiAchievementPercent: z.coerce.number().min(0).optional(),
 });
 
 export async function createReportAction(prevState: any, formData: FormData) {

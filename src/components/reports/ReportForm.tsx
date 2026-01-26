@@ -114,7 +114,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
 
             // Auto-calculate budget progress percent
             if (project.budgetTotal && project.budgetSpent !== null && project.budgetSpent !== undefined) {
-                const percent = Math.min(Math.round((project.budgetSpent / project.budgetTotal) * 100), 100);
+                const percent = Math.round((project.budgetSpent / project.budgetTotal) * 100);
                 setBudgetProgressPercent(percent);
             } else {
                 setBudgetProgressPercent(0);
@@ -137,7 +137,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
         let achievement = 0;
 
         if (actual !== "" && targetValue && targetValue > 0) {
-            achievement = Math.min(Math.round((actual / targetValue) * 100), 100);
+            achievement = Math.round((actual / targetValue) * 100);
         }
 
         setIndicatorValues(prev => ({
@@ -159,10 +159,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
 
         // Calculate progress percentage
         if (selectedProject?.budgetTotal && selectedProject.budgetTotal > 0) {
-            const percent = Math.min(
-                Math.round((newCumulative / selectedProject.budgetTotal) * 100),
-                100
-            );
+            const percent = Math.round((newCumulative / selectedProject.budgetTotal) * 100);
             setBudgetProgressPercent(percent);
         } else {
             setBudgetProgressPercent(0);
