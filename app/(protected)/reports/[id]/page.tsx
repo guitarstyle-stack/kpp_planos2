@@ -153,11 +153,11 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                             </td>
                                             <td className="text-center">
                                                 <div className="flex flex-col items-center gap-1">
-                                                    <span className={`font-bold ${res.achievementPercent >= 80 ? 'text-success' : 'text-warning'}`}>
+                                                    <span className={`font-bold ${res.achievementPercent >= 100 ? 'text-success' : 'text-warning'}`}>
                                                         {res.achievementPercent}%
                                                     </span>
                                                     <progress
-                                                        className={`progress w-16 ${res.achievementPercent >= 80 ? 'progress-success' : 'progress-warning'}`}
+                                                        className={`progress w-16 ${res.achievementPercent >= 100 ? 'progress-success' : 'progress-warning'}`}
                                                         value={res.achievementPercent}
                                                         max="100"
                                                     />

@@ -168,7 +168,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
 
     // Auto-calculate summary KPI counts
     const kpiTotal = selectedProject?.indicators?.length || 0;
-    const kpiAchieved = Object.values(indicatorValues).filter(v => v.achievementPercent >= 80).length;
+    const kpiAchieved = Object.values(indicatorValues).filter(v => v.achievementPercent >= 100).length;
     const kpiPercent = kpiTotal > 0 ? Math.round((kpiAchieved / kpiTotal) * 100) : 0;
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -415,8 +415,8 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                                                     value={indicatorValues[indicator.id]?.achievementPercent ?? 0}
                                                     className="input input-sm input-bordered w-full bg-base-200"
                                                 />
-                                                <div className={`badge ${indicatorValues[indicator.id]?.achievementPercent >= 80 ? 'badge-success' : 'badge-warning'} badge-sm whitespace-nowrap`}>
-                                                    {indicatorValues[indicator.id]?.achievementPercent >= 80 ? 'บรรลุเเป้า' : 'ยังไม่บรรลุ'}
+                                                <div className={`badge ${indicatorValues[indicator.id]?.achievementPercent >= 100 ? 'badge-success' : 'badge-warning'} badge-sm whitespace-nowrap`}>
+                                                    {indicatorValues[indicator.id]?.achievementPercent >= 100 ? 'บรรลุเป้า' : 'ยังไม่บรรลุ'}
                                                 </div>
                                             </div>
                                         </div>
@@ -431,7 +431,7 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                                     <div className="stat-value text-lg">{kpiTotal}</div>
                                 </div>
                                 <div className="stat py-2 border-l border-base-300">
-                                    <div className="stat-title text-xs">KPI ที่บรรลุ (80%+)</div>
+                                    <div className="stat-title text-xs">KPI ที่บรรลุ (100%+)</div>
                                     <div className="stat-value text-lg text-success">{kpiAchieved}</div>
                                 </div>
                                 <div className="stat py-2 border-l border-base-300">
