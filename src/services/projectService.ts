@@ -117,7 +117,7 @@ export async function getProjectById(id: number) {
                                 createdAt: "desc"
                             }
                         },
-                        take: 1,
+                        // Removed take: 1 to allow summation of all results
                         include: {
                             report: true
                         }

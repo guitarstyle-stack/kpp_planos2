@@ -219,7 +219,12 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                                         </thead>
                                         <tbody>
                                             {project.indicators.map((ind: any) => {
-                                                const latestResult = ind.reportResults?.[0];
+                                                const reportResults = ind.reportResults || [];
+                                                const totalActual = reportResults.reduce((sum: number, res: any) => sum + (res.actualValue || 0), 0);
+                                                const latestReport = reportResults[0];
+                                                const target = ind.targetValue || 0;
+                                                const percent = target > 0 ? (totalActual / target) * 100 : 0;
+
                                                 return (
                                                     <tr key={ind.id}>
                                                         <td className="font-medium">
@@ -229,15 +234,20 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                                                         <td className="text-center">{ind.targetValue || "-"}</td>
                                                         <td className="text-center badge-ghost opacity-70">{ind.unit}</td>
                                                         <td className="text-center">
-                                                            {latestResult ? (
+                                                            {reportResults.length > 0 ? (
                                                                 <div className="flex flex-col items-center">
-                                                                    <span className={`font-bold ${(latestResult.achievementPercent || 0) >= 100 ? 'text-success' :
-                                                                            (latestResult.achievementPercent || 0) >= 80 ? 'text-warning' : 'text-error'
-                                                                        }`}>
-                                                                        {latestResult.actualValue ?? "-"}
-                                                                    </span>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className={`font-bold ${percent >= 100 ? 'text-success' :
+                                                                                percent >= 80 ? 'text-warning' : 'text-error'
+                                                                            }`}>
+                                                                            {totalActual.toLocaleString()}
+                                                                        </span>
+                                                                        <span className="text-xs opacity-50">
+                                                                            ({percent.toFixed(1)}%)
+                                                                        </span>
+                                                                    </div>
                                                                     <span className="text-[10px] opacity-60">
-                                                                        ({new Date(latestResult.report?.createdAt).toLocaleDateString('th-TH')})
+                                                                        ล่าสุด: {new Date(latestReport.report?.createdAt).toLocaleDateString('th-TH')}
                                                                     </span>
                                                                 </div>
                                                             ) : (
