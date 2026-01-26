@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { z } from "zod";
 
 const IndicatorSchema = z.object({
+    id: z.coerce.number().optional(),
     name: z.string().min(1, "กรุณาระบุชื่อตัวชี้วัด"),
     unit: z.string().min(1, "กรุณาระบุหน่วยนับ"),
     baselineValue: z.coerce.number().optional(),
