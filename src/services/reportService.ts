@@ -33,7 +33,7 @@ export async function getReportById(id: number) {
         where: { id },
         include: {
             project: {
-                select: { id: true, name: true, code: true, department: true },
+                select: { id: true, name: true, code: true, departmentId: true, ownerUserId: true },
             },
             createdBy: {
                 select: { id: true, name: true },
