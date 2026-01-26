@@ -1,26 +1,11 @@
 'use client';
 
 import { LoginCard } from "@/components/auth/LoginCard";
-import { getBaseUrl } from "@/lib/env";
-import crypto from 'crypto';
+
 
 export default function Home() {
-  // Generate random state for security
-  const state = crypto.randomBytes(32).toString('hex');
-
-  // Construct LINE Login URL
-  const channelId = process.env.LINE_CHANNEL_ID;
-  const redirectUri = `${getBaseUrl()}/api/auth/line`;
-
-  const params = new URLSearchParams({
-    response_type: 'code',
-    client_id: channelId || '',
-    redirect_uri: redirectUri,
-    state: state,
-    scope: 'profile openid',
-  });
-
-  const loginUrl = `https://access.line.me/oauth2/v2.1/authorize?${params.toString()}`;
+  // Use the server-side API route to handle the redirect securely
+  const loginUrl = '/api/auth/login';
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
