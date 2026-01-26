@@ -20,3 +20,15 @@ h6,
 .btn {
   font-family: var(--font-kanit);
 }
+
+/* Eye-friendly Theme Overrides
+   Softens the harsh white backgrounds and pure black text */
+:root {
+  /* Softer Backgrounds (Cool Off-White) */
+  --color-base-100: oklch(98.5% 0.002 240); 
+  --color-base-200: oklch(96% 0.005 240);
+  --color-base-300: oklch(92% 0.008 240);
+  
+  /* Softer Text (Deep Charcoal Blue) */
+  --color-base-content: oklch(30% 0.02 250);
+}
