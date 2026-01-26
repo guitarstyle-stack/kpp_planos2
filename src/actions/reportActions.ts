@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
+import { hasRole } from "@/services/userRoleService";
 
 const ReportSchema = z.object({
     projectId: z.coerce.number(),
@@ -30,6 +31,27 @@ export async function createReportAction(prevState: any, formData: FormData) {
         const user = await getCurrentUser();
         if (!user) {
             return { message: "กรุณาเข้าสู่ระบบ" };
+        }
+
+        const projectId = Number(formData.get("projectId"));
+
+        // Permission Check
+        const isAdmin = await hasRole(user.id, "ADMIN");
+        if (!isAdmin) {
+            const project = await db.project.findUnique({
+                where: { id: projectId },
+                select: { departmentId: true, ownerUserId: true }
+            });
+
+            if (!project) return { message: "Project not found" };
+
+            // Allow if user owns project OR matches department
+            const matchesDepartment = user.departmentId === project.departmentId;
+            const isOwner = user.id === project.ownerUserId;
+
+            if (!matchesDepartment && !isOwner) {
+                return { message: "ไม่มีสิทธิ์สร้างรายงานสำหรับโครงการต่างหน่วยงาน" };
+            }
         }
 
         const rawData = {
@@ -125,6 +147,29 @@ export async function createReportAction(prevState: any, formData: FormData) {
 
 export async function updateReportAction(id: number, formData: FormData) {
     try {
+        const user = await getCurrentUser();
+        if (!user) {
+            return { message: "กรุณาเข้าสู่ระบบ" };
+        }
+
+        // Permission Check
+        const isAdmin = await hasRole(user.id, "ADMIN");
+        if (!isAdmin) {
+            const report = await db.report.findUnique({
+                where: { id },
+                include: { project: { select: { departmentId: true, ownerUserId: true } } }
+            });
+
+            if (!report) return { message: "Report not found" };
+
+            const matchesDepartment = user.departmentId === report.project.departmentId;
+            const isOwner = user.id === report.project.ownerUserId;
+
+            if (!matchesDepartment && !isOwner) {
+                return { message: "ไม่มีสิทธิ์แก้ไขรายงานนี้" };
+            }
+        }
+
         const rawData = {
             projectId: formData.get("projectId"),
             fiscalYear: formData.get("fiscalYear"),
@@ -184,6 +229,29 @@ export async function updateReportAction(id: number, formData: FormData) {
 
 export async function deleteReportAction(id: number) {
     try {
+        const user = await getCurrentUser();
+        if (!user) {
+            return { message: "กรุณาเข้าสู่ระบบ" };
+        }
+
+        // Permission Check
+        const isAdmin = await hasRole(user.id, "ADMIN");
+        if (!isAdmin) {
+            const report = await db.report.findUnique({
+                where: { id },
+                include: { project: { select: { departmentId: true, ownerUserId: true } } }
+            });
+
+            if (!report) return { message: "Report not found" };
+
+            const matchesDepartment = user.departmentId === report.project.departmentId;
+            const isOwner = user.id === report.project.ownerUserId;
+
+            if (!matchesDepartment && !isOwner) {
+                return { message: "ไม่มีสิทธิ์ลบรายงานนี้" };
+            }
+        }
+
         await db.report.delete({
             where: { id },
         });

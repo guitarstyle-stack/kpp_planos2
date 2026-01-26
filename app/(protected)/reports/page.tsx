@@ -9,8 +9,17 @@ const periodLabels: Record<string, string> = {
     FULL_12M: "รอบ 12 เดือน",
 };
 
+import { getCurrentUser } from "@/lib/auth";
+import { hasRole } from "@/services/userRoleService";
+
 export default async function ReportsPage() {
-    const reports = await getReports() as ReportWithDetails[];
+    const user = await getCurrentUser();
+    const isAdmin = user ? await hasRole(user.id, "ADMIN") : false;
+
+    // If not admin, filter by user's department
+    const departmentId = !isAdmin && user?.departmentId ? user.departmentId : undefined;
+
+    const reports = await getReports(departmentId) as ReportWithDetails[];
 
     return (
         <div className="space-y-6">

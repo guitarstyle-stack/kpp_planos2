@@ -9,8 +9,13 @@ export type ReportWithDetails = Prisma.ReportGetPayload<{
     };
 }>;
 
-export async function getReports() {
+export async function getReports(departmentId?: number) {
     return await db.report.findMany({
+        where: departmentId ? {
+            project: {
+                departmentId: departmentId
+            }
+        } : undefined,
         include: {
             project: {
                 select: { id: true, name: true, code: true },
