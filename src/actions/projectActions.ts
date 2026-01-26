@@ -186,13 +186,61 @@ export async function updateProjectAction(id: number, formData: FormData) {
 
         const validatedData = ProjectSchema.parse(rawData);
 
-        // Separate indicators (handling updates is complex, skipping for now or implementing basic "ignore" to fix type error)
-        // TODO: Implement indicator updates (add new, update existing, delete removed)
-        const { indicators: _indicators, ...projectData } = validatedData;
+        // Separate indicators
+        const { indicators: indicatorsData, ...projectData } = validatedData;
 
-        await db.project.update({
-            where: { id },
-            data: projectData,
+        await db.$transaction(async (tx) => {
+            // Update project fields
+            await tx.project.update({
+                where: { id },
+                data: projectData,
+            });
+
+            // Handle indicators if provided
+            if (indicatorsData) {
+                // Get existing indicators
+                const existingIndicators = await tx.indicator.findMany({
+                    where: { projectId: id }
+                });
+
+                // Identify IDs in the new data
+                const incomingIds = indicatorsData
+                    .map((ind: any) => ind.id)
+                    .filter((id: any) => id !== undefined && id !== null);
+
+                // Determine indicators to delete
+                const toDelete = existingIndicators.filter(ind => !incomingIds.includes(ind.id));
+                for (const ind of toDelete) {
+                    await tx.indicator.delete({ where: { id: ind.id } });
+                }
+
+                // Create or Update
+                for (const ind of indicatorsData as any[]) {
+                    if (ind.id) {
+                        // Update
+                        await tx.indicator.update({
+                            where: { id: ind.id },
+                            data: {
+                                name: ind.name,
+                                unit: ind.unit,
+                                targetValue: ind.targetValue,
+                                baselineValue: ind.baselineValue
+                            }
+                        });
+                    } else {
+                        // Create
+                        await tx.indicator.create({
+                            data: {
+                                projectId: id,
+                                name: ind.name,
+                                unit: ind.unit,
+                                targetValue: ind.targetValue,
+                                baselineValue: ind.baselineValue
+                            }
+                        });
+                    }
+                }
+            }
         });
 
         revalidatePath("/projects");

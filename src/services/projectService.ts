@@ -109,7 +109,21 @@ export async function getProjectById(id: number) {
                     name: true,
                 },
             },
-            indicators: true,
+            indicators: {
+                include: {
+                    reportResults: {
+                        orderBy: {
+                            report: {
+                                createdAt: "desc"
+                            }
+                        },
+                        take: 1,
+                        include: {
+                            report: true
+                        }
+                    }
+                }
+            },
         },
     });
 }

@@ -214,17 +214,39 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                                                 <th>ชื่อตัวชี้วัด</th>
                                                 <th className="text-center">ค่าเป้าหมาย</th>
                                                 <th className="text-center">หน่วยนับ</th>
-                                                {/* Future: Actual Value / Status */}
+                                                <th className="text-center">ผลลัพธ์ล่าสุด</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {project.indicators.map((ind: any) => (
-                                                <tr key={ind.id}>
-                                                    <td className="font-medium">{ind.name}</td>
-                                                    <td className="text-center">{ind.targetValue || "-"}</td>
-                                                    <td className="text-center badge-ghost opacity-70">{ind.unit}</td>
-                                                </tr>
-                                            ))}
+                                            {project.indicators.map((ind: any) => {
+                                                const latestResult = ind.reportResults?.[0];
+                                                return (
+                                                    <tr key={ind.id}>
+                                                        <td className="font-medium">
+                                                            <div>{ind.name}</div>
+                                                            {ind.description && <div className="text-xs opacity-60">{ind.description}</div>}
+                                                        </td>
+                                                        <td className="text-center">{ind.targetValue || "-"}</td>
+                                                        <td className="text-center badge-ghost opacity-70">{ind.unit}</td>
+                                                        <td className="text-center">
+                                                            {latestResult ? (
+                                                                <div className="flex flex-col items-center">
+                                                                    <span className={`font-bold ${(latestResult.achievementPercent || 0) >= 100 ? 'text-success' :
+                                                                            (latestResult.achievementPercent || 0) >= 80 ? 'text-warning' : 'text-error'
+                                                                        }`}>
+                                                                        {latestResult.actualValue ?? "-"}
+                                                                    </span>
+                                                                    <span className="text-[10px] opacity-60">
+                                                                        ({new Date(latestResult.report?.createdAt).toLocaleDateString('th-TH')})
+                                                                    </span>
+                                                                </div>
+                                                            ) : (
+                                                                <span className="text-xs opacity-40">-</span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
