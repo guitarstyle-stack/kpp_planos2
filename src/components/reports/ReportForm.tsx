@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faTimes } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 
 interface Project {
@@ -498,27 +498,56 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end gap-3">
-                <button
-                    type="button"
-                    onClick={() => router.back()}
-                    className="btn btn-ghost"
-                >
-                    <FontAwesomeIcon icon={faTimes} className="mr-2" />
-                    ยกเลิก
-                </button>
-                <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="btn btn-primary"
-                >
-                    {isLoading ? (
-                        <span className="loading loading-spinner loading-sm"></span>
-                    ) : (
-                        <FontAwesomeIcon icon={faSave} className="mr-2" />
-                    )}
-                    บันทึกรายงาน
-                </button>
+            <div className="flex justify-between w-full">
+                {isEdit && initialData?.id && (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบรายงานนี้? การกระทำนี้ไม่สามารถย้อนกลับได้")) {
+                                setIsLoading(true);
+                                try {
+                                    const { deleteReportAction } = await import("@/actions/reportActions");
+                                    await deleteReportAction(initialData.id!);
+                                    toast.success("ลบรายงานสำเร็จ");
+                                    router.push("/reports");
+                                    router.refresh();
+                                } catch (error) {
+                                    toast.error("เกิดข้อผิดพลาดในการลบรายงาน");
+                                    setIsLoading(false);
+                                }
+                            }
+                        }}
+                        className="btn btn-error btn-outline"
+                        disabled={isLoading}
+                    >
+                        <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                        ลบรายงาน
+                    </button>
+                )}
+
+                <div className="flex gap-3 ml-auto">
+                    <button
+                        type="button"
+                        onClick={() => router.back()}
+                        className="btn btn-ghost"
+                        disabled={isLoading}
+                    >
+                        <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                        ยกเลิก
+                    </button>
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="btn btn-primary"
+                    >
+                        {isLoading ? (
+                            <span className="loading loading-spinner loading-sm"></span>
+                        ) : (
+                            <FontAwesomeIcon icon={faSave} className="mr-2" />
+                        )}
+                        บันทึกรายงาน
+                    </button>
+                </div>
             </div>
         </form>
     );

@@ -4,7 +4,7 @@ import { getReportById } from "@/services/reportService";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faEdit, faCalendar, faUser, faBuilding } from "@fortawesome/free-solid-svg-icons";
+import { faArrowLeft, faEdit, faCalendar, faUser, faBuilding, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 const periodLabels: Record<string, string> = {
     MID_6M: "รอบ 6 เดือน",
@@ -60,10 +60,24 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                     </div>
                 </div>
                 {canEdit && (
-                    <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
-                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                        แก้ไข
-                    </Link>
+                    <div className="flex gap-2">
+                        <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
+                            <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                            แก้ไข
+                        </Link>
+                        <form action={async () => {
+                            "use server";
+                            const { deleteReportAction } = await import("@/actions/reportActions");
+                            await deleteReportAction(Number(id));
+                            const { redirect } = await import("next/navigation");
+                            redirect("/reports");
+                        }}>
+                            <button className="btn btn-error btn-outline btn-sm gap-2" type="submit">
+                                <FontAwesomeIcon icon={faTrash} className="h-4 w-4" />
+                                ลบ
+                            </button>
+                        </form>
+                    </div>
                 )}
             </div>
 

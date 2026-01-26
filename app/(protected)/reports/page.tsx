@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { getReports, ReportWithDetails } from "@/services/reportService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEye, faFileAlt } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faEye, faFileAlt, faEdit } from "@fortawesome/free-solid-svg-icons";
 
 const periodLabels: Record<string, string> = {
     MID_6M: "รอบ 6 เดือน",
@@ -95,13 +95,24 @@ export default async function ReportsPage() {
                                         {new Date(report.createdAt).toLocaleDateString("th-TH")}
                                     </td>
                                     <td>
-                                        <Link
-                                            href={`/reports/${report.id}`}
-                                            className="btn btn-ghost btn-sm gap-1"
-                                        >
-                                            <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
-                                            ดู
-                                        </Link>
+                                        <div className="flex gap-2">
+                                            <Link
+                                                href={`/reports/${report.id}`}
+                                                className="btn btn-ghost btn-sm gap-1"
+                                            >
+                                                <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
+                                                ดู
+                                            </Link>
+                                            {(isAdmin || (user && (user.id === report.project.ownerUserId || user.departmentId === report.project.departmentId))) && (
+                                                <Link
+                                                    href={`/reports/${report.id}/edit`}
+                                                    className="btn btn-ghost btn-sm gap-1 text-primary"
+                                                >
+                                                    <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                                    แก้ไข
+                                                </Link>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
