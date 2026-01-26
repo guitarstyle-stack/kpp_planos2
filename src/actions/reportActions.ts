@@ -295,11 +295,11 @@ export async function deleteReportAction(id: number) {
 
             if (!report) return { message: "Report not found" };
 
-            const matchesDepartment = user.departmentId === report.project.departmentId;
-            const isOwner = user.id === report.project.ownerUserId;
+            const isProjectOwner = user.id === report.project.ownerUserId;
+            const isReportCreator = user.id === report.createdById;
 
-            if (!matchesDepartment && !isOwner) {
-                return { message: "ไม่มีสิทธิ์ลบรายงานนี้" };
+            if (!isProjectOwner && !isReportCreator) {
+                return { message: "ไม่มีสิทธิ์ลบรายงานนี้ (ต้องเป็นเจ้าของโครงการ, ผู้สร้างรายงาน หรือ Admin)" };
             }
         }
 

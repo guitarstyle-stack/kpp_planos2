@@ -28,16 +28,27 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
     const currentUser = await getCurrentUser();
 
     // Check Permissions for Edit Button
+    // Check Permissions
     let canEdit = false;
+    let canDelete = false;
+
     if (currentUser) {
         const isAdmin = await hasRole(currentUser.id, "ADMIN");
         if (isAdmin) {
             canEdit = true;
+            canDelete = true;
         } else {
+            // Edit: Allow Department members or Project Owner
             const matchesDepartment = currentUser.departmentId === r.project?.departmentId;
-            const isOwner = currentUser.id === r.project?.ownerUserId;
-            if (matchesDepartment || isOwner) {
+            const isProjectOwner = currentUser.id === r.project?.ownerUserId;
+            if (matchesDepartment || isProjectOwner) {
                 canEdit = true;
+            }
+
+            // Delete: Strict (Project Owner OR Report Creator)
+            const isReportCreator = currentUser.id === r.createdById;
+            if (isProjectOwner || isReportCreator) {
+                canDelete = true;
             }
         }
     }
@@ -59,12 +70,14 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         </p>
                     </div>
                 </div>
-                {canEdit && (
+                {canDelete && (
                     <div className="flex gap-2">
-                        <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
-                            <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                            แก้ไข
-                        </Link>
+                        {canEdit && (
+                            <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
+                                <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                                แก้ไข
+                            </Link>
+                        )}
                         <form action={async () => {
                             "use server";
                             const { deleteReportAction } = await import("@/actions/reportActions");
