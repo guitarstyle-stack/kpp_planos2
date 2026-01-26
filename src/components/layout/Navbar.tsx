@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBars, faSearch, faBell, faChevronDown, faUserCircle } from "@fortawesome/free-solid-svg-icons";
+import { faBars, faSearch, faBell, faChevronDown, faUserCircle, faSignOutAlt, faUser } from "@fortawesome/free-solid-svg-icons";
 import { NotificationBell } from "./NotificationBell";
+import { logoutAction } from "@/actions/authActions";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -79,28 +80,48 @@ export function Navbar({ userId, userName, userImage }: NavbarProps) {
 
                 <div className="h-8 w-[1px] bg-base-300 mx-1 hidden md:block"></div>
 
-                <Link href="/settings/profile" className="btn btn-ghost btn-md gap-3 px-2 md:px-4 rounded-full hover:bg-base-200/50 group transition-all">
-                    <div className="text-right hidden md:block">
-                        <div className="text-sm font-semibold group-hover:text-primary transition-colors">
-                            {userName || "ผู้ใช้งาน"}
+                <div className="dropdown dropdown-end">
+                    <div tabIndex={0} role="button" className="btn btn-ghost btn-md gap-3 px-2 md:px-4 rounded-full hover:bg-base-200/50 group transition-all">
+                        <div className="text-right hidden md:block">
+                            <div className="text-sm font-semibold group-hover:text-primary transition-colors">
+                                {userName || "ผู้ใช้งาน"}
+                            </div>
+                            <div className="text-[10px] text-base-content/50 uppercase tracking-wider font-bold">
+                                {getGreeting()}
+                            </div>
                         </div>
-                        <div className="text-[10px] text-base-content/50 uppercase tracking-wider font-bold">
-                            {getGreeting()}
+                        <div className="avatar ring-2 ring-base-200 ring-offset-2 ring-offset-base-100 rounded-full transition-all group-hover:ring-primary/30">
+                            <div className="w-9 h-9 mask mask-circle">
+                                {userImage ? (
+                                    <Image src={userImage} alt="Profile" width={36} height={36} unoptimized />
+                                ) : (
+                                    <div className="bg-primary/10 text-primary w-full h-full flex items-center justify-center font-bold text-sm">
+                                        {(userName?.[0] || "U").toUpperCase()}
+                                    </div>
+                                )}
+                            </div>
                         </div>
+                        <FontAwesomeIcon icon={faChevronDown} className="h-3 w-3 opacity-30 group-hover:opacity-100 transition-all hidden md:block" />
                     </div>
-                    <div className="avatar ring-2 ring-base-200 ring-offset-2 ring-offset-base-100 rounded-full transition-all group-hover:ring-primary/30">
-                        <div className="w-9 h-9 mask mask-circle">
-                            {userImage ? (
-                                <Image src={userImage} alt="Profile" width={36} height={36} unoptimized />
-                            ) : (
-                                <div className="bg-primary/10 text-primary w-full h-full flex items-center justify-center font-bold text-sm">
-                                    {(userName?.[0] || "U").toUpperCase()}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <FontAwesomeIcon icon={faChevronDown} className="h-3 w-3 opacity-30 group-hover:opacity-100 transition-all hidden md:block" />
-                </Link>
+                    <ul tabIndex={0} className="dropdown-content menu bg-base-100 rounded-box z-[100] w-56 p-2 shadow-xl border border-base-200 mt-2">
+                        <li className="menu-title px-4 py-2">
+                            <span className="text-xs font-bold opacity-50 uppercase tracking-wider">บัญชีของฉัน</span>
+                        </li>
+                        <li>
+                            <Link href="/settings/profile" className="font-medium">
+                                <FontAwesomeIcon icon={faUser} className="w-4 h-4 mr-2 opacity-70" />
+                                โปรไฟล์ส่วนตัว
+                            </Link>
+                        </li>
+                        <div className="divider my-1 opacity-50"></div>
+                        <li>
+                            <button onClick={() => logoutAction()} className="text-error font-medium hover:bg-error/10">
+                                <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4 mr-2" />
+                                ออกจากระบบ
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     );

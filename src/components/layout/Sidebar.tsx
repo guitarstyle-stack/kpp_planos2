@@ -35,11 +35,7 @@ async function getMenuItems() {
                     href: "/reports",
                     icon: faFileAlt,
                 },
-                {
-                    title: "โปรไฟล์",
-                    href: "/settings/profile",
-                    icon: faUser,
-                },
+
             ]
         }
     ];

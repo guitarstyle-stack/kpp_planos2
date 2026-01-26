@@ -76,17 +76,7 @@ export function SidebarClient({ menuGroups }: SidebarClientProps) {
                 ))}
             </div>
 
-            <div className="divider opacity-50 my-6"></div>
 
-            <button
-                onClick={() => logoutAction()}
-                className="group flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-300 font-bold text-error hover:bg-error/10 w-full"
-            >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-error/10 text-error">
-                    <FontAwesomeIcon icon={faSignOutAlt} className="w-4 h-4" />
-                </div>
-                <span className="text-[15px] tracking-wide">ออกจากระบบ</span>
-            </button>
         </aside>
     );
 }
