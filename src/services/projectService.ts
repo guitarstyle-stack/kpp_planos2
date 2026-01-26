@@ -242,3 +242,39 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         pendingReports: statusCounts.IN_PROGRESS, // Projects in progress need updates
     };
 }
+
+// Get projects for report creation/editing (includes indicators)
+export async function getProjectsForReport(userId?: number) {
+    const where: Prisma.ProjectWhereInput = {
+        isActive: true,
+    };
+
+    if (userId) {
+        where.ownerUserId = userId;
+    }
+
+    return await db.project.findMany({
+        where,
+        include: {
+            department: true,
+            ownerUser: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            indicators: {
+                select: {
+                    id: true,
+                    name: true,
+                    unit: true,
+                    targetValue: true,
+                    baselineValue: true,
+                },
+            },
+        },
+        orderBy: {
+            code: "asc",
+        },
+    });
+}
