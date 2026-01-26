@@ -34,8 +34,8 @@ DATABASE_URL=your-postgres-prisma-url
 DIRECT_URL=your-postgres-url-non-pooling
 
 # LINE Login
-LINE_CHANNEL_ID=1656002115
-LINE_CHANNEL_SECRET=6034068c307ec579efbb2302d258a5b6
+LINE_CHANNEL_ID=your-line-channel-id
+LINE_CHANNEL_SECRET=your-line-channel-secret
 LINE_CALLBACK_URL=https://your-app.vercel.app/api/auth/line
 
 # NextAuth
