@@ -10,6 +10,7 @@ export type ProjectWithDetails = Project & {
 
 export interface ProjectFilters {
     departmentId?: number;
+    fiscalYear?: number;
 }
 
 export async function getProjects(filters: ProjectFilters = {}) {
@@ -19,6 +20,10 @@ export async function getProjects(filters: ProjectFilters = {}) {
 
     if (filters.departmentId) {
         where.departmentId = filters.departmentId;
+    }
+
+    if (filters.fiscalYear) {
+        where.fiscalYear = filters.fiscalYear;
     }
 
     return await db.project.findMany({
