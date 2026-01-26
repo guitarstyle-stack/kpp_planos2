@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getReportById } from "@/services/reportService";
+import { getCurrentUser } from "@/lib/auth";
+import { hasRole } from "@/services/userRoleService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faEdit, faCalendar, faUser, faBuilding } from "@fortawesome/free-solid-svg-icons";
 
@@ -23,6 +25,22 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
     }
 
     const r = report as any;
+    const currentUser = await getCurrentUser();
+
+    // Check Permissions for Edit Button
+    let canEdit = false;
+    if (currentUser) {
+        const isAdmin = await hasRole(currentUser.id, "ADMIN");
+        if (isAdmin) {
+            canEdit = true;
+        } else {
+            const matchesDepartment = currentUser.departmentId === r.project?.departmentId;
+            const isOwner = currentUser.id === r.project?.ownerUserId;
+            if (matchesDepartment || isOwner) {
+                canEdit = true;
+            }
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -41,10 +59,12 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         </p>
                     </div>
                 </div>
-                <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
-                    <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                    แก้ไข
-                </Link>
+                {canEdit && (
+                    <Link href={`/reports/${id}/edit`} className="btn btn-primary btn-sm gap-2">
+                        <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
+                        แก้ไข
+                    </Link>
+                )}
             </div>
 
             {/* Report Details */}
