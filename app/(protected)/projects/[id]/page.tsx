@@ -119,7 +119,7 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
 
                 <div className="stat">
                     <div className="stat-figure text-accent">
-                        <div className="radial-progress bg-primary text-primary-content border-4 border-primary" style={{ "--value": project.progressPercent || 0 } as any} role="progressbar">
+                        <div className="radial-progress bg-primary text-primary-content border-4 border-primary" style={{ "--value": Math.min(project.progressPercent || 0, 100) } as any} role="progressbar">
                             {project.progressPercent}%
                         </div>
                     </div>
@@ -238,7 +238,7 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                                                                 <div className="flex flex-col items-center">
                                                                     <div className="flex items-center gap-2">
                                                                         <span className={`font-bold ${percent >= 100 ? 'text-success' :
-                                                                                percent >= 80 ? 'text-warning' : 'text-error'
+                                                                            percent >= 80 ? 'text-warning' : 'text-error'
                                                                             }`}>
                                                                             {totalActual.toLocaleString()}
                                                                         </span>
