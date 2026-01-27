@@ -1,10 +1,11 @@
+import { NextRequest } from 'next/server'
 import { redirect } from 'next/navigation'
 import { getBaseUrl } from '@/lib/env'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
     const LINE_AUTH_URL = 'https://access.line.me/oauth2/v2.1/authorize'
     const CHANNEL_ID = process.env.LINE_CHANNEL_ID
-    const REDIRECT_URI = `${getBaseUrl()}/api/auth/line`
+    const REDIRECT_URI = `${req.nextUrl.origin}/api/auth/line`
     const STATE = crypto.randomUUID() // Should ideally be stored and verified
     const SCOPE = 'profile openid email'
 

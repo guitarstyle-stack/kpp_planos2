@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     try {
         const CHANNEL_ID = process.env.LINE_CHANNEL_ID!
         const CHANNEL_SECRET = process.env.LINE_CHANNEL_SECRET!
-        const REDIRECT_URI = `${getBaseUrl()}/api/auth/line`
+        const REDIRECT_URI = `${req.nextUrl.origin}/api/auth/line`
 
         // 1. Exchange code for access token
         const tokenResponse = await fetch('https://api.line.me/oauth2/v2.1/token', {
