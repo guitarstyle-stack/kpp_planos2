@@ -5,8 +5,14 @@ import { getSession } from "@/lib/auth";
 
 export default async function NewProjectPage() {
     const session = await getSession();
-    const departments = await getDepartments();
+    const allDepartments = await getDepartments();
     const annualPlans = await getAnnualPlans();
+
+    // Filter departments to show only user's department
+    const userDepartmentId = session?.user?.departmentId;
+    const departments = userDepartmentId
+        ? allDepartments.filter(dept => dept.id === userDepartmentId)
+        : allDepartments;
 
     const masterData = {
         departments,

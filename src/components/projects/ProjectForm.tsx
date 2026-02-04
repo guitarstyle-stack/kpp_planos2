@@ -210,7 +210,7 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             id="description"
                             defaultValue={initialData?.description}
                             className="textarea textarea-bordered w-full h-24"
-                            placeholder="ระบุรายละเอียดเพิ่มเติม..."
+                            placeholder="กรุณาระบุรายละเอียด เช่น หลักการและเหตุผล วัตถุประสงค์โครงการ รายละเอียดสำคัญอื่นๆ"
                         ></textarea>
                     </div>
 
@@ -324,30 +324,17 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                     {/* Budget */}
                     <div className="form-control col-span-1">
                         <label htmlFor="budgetTotal" className="label">
-                            <span className="label-text">งบประมาณ (บาท)</span>
+                            <span className="label-text">
+                                งบประมาณ (บาท) <span className="text-error">*</span>
+                            </span>
                         </label>
                         <input
                             type="number"
                             name="budgetTotal"
                             id="budgetTotal"
                             step="0.01"
+                            required
                             defaultValue={initialData?.budgetTotal}
-                            placeholder="0.00"
-                            className="input input-bordered w-full"
-                        />
-                    </div>
-
-                    {/* Budget Spent */}
-                    <div className="form-control col-span-1">
-                        <label htmlFor="budgetSpent" className="label">
-                            <span className="label-text">ใช้จ่ายแล้ว (บาท)</span>
-                        </label>
-                        <input
-                            type="number"
-                            name="budgetSpent"
-                            id="budgetSpent"
-                            step="0.01"
-                            defaultValue={initialData?.budgetSpent}
                             placeholder="0.00"
                             className="input input-bordered w-full"
                         />
@@ -363,7 +350,7 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             name="targetGroup"
                             id="targetGroup"
                             defaultValue={initialData?.targetGroup}
-                            placeholder="ระบุกลุ่มเป้าหมาย"
+                            placeholder="กลุ่มเป้าหมาย เช่น เด็ก, คนพิการ, ผู้สูงอายุ, สตรี เป็นต้น"
                             className="input input-bordered w-full"
                         />
                     </div>
