@@ -37,7 +37,8 @@ export async function updateUserAction(id: number, formData: FormData) {
 
         revalidatePath("/users");
         revalidatePath(`/users/${id}/edit`);
-        redirect("/users");
+
+        return { success: true };
     } catch (error) {
         console.error(error);
         return { message: "Failed to update user" };

@@ -28,8 +28,9 @@ export function UserEditForm({ user, departments }: UserEditFormProps) {
 
             if (result?.message) {
                 toast.error(result.message);
-            } else {
+            } else if (result?.success) {
                 toast.success("อัปเดตข้อมูลผู้ใช้สำเร็จ");
+                router.push("/users");
             }
         } catch (error) {
             toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
