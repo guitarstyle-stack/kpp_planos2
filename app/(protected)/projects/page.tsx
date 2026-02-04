@@ -1,18 +1,20 @@
 import Link from "next/link";
-import { getProjects, getProjectStats } from "@/services/projectService";
+import { searchProjects, getProjectStats } from "@/services/projectService";
+import { getDepartments } from "@/services/departmentService";
+import { getDevelopmentGoals } from "@/services/developmentPlanService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faSearch, faFolder, faChartLine, faFolderOpen, faMoneyBillTrendUp, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faFolder, faChartLine, faFolderOpen, faMoneyBillTrendUp, faClock } from "@fortawesome/free-solid-svg-icons";
 import { StatusChart, DepartmentChart } from "@/components/dashboard/Charts";
 import { getSession } from "@/lib/auth";
 import { getUserById } from "@/services/userService";
+import { ProjectSearch } from "@/components/projects/ProjectSearch";
+
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
     "NOT_STARTED": { label: "ยังไม่เริ่ม", color: "badge-ghost" },
     "IN_PROGRESS": { label: "กำลังดำเนินการ", color: "badge-info" },
     "COMPLETED": { label: "เสร็จสิ้น", color: "badge-success" },
     "CANCELLED": { label: "ยกเลิก", color: "badge-error" },
 };
-
-import { ProjectFilter } from "@/components/projects/ProjectFilter";
 
 interface ProjectsPageProps {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -24,23 +26,42 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
         return <div>Access Denied</div>;
     }
 
-    const { fiscalYear } = await searchParams;
-    const selectedYear = fiscalYear ? Number(fiscalYear) : undefined;
+    const params = await searchParams;
+    const query = params.q as string || "";
+    const status = params.status as string || undefined;
+    const departmentIdParam = params.departmentId as string || undefined;
+    const fiscalYearParam = params.fiscalYear as string || undefined;
+    const goalIdParam = params.goalId as string || undefined;
 
     const user = await getUserById(Number(session.user.id));
     const userDepartmentId = user?.departmentId;
     const userDepartmentName = user?.department?.name;
 
-    const [projects, stats] = await Promise.all([
-        getProjects({
-            departmentId: userDepartmentId,
-            fiscalYear: selectedYear
+    // Convert params to numbers
+    const searchDepartmentId = departmentIdParam ? Number(departmentIdParam) : undefined;
+    const searchFiscalYear = fiscalYearParam ? Number(fiscalYearParam) : undefined;
+    const searchGoalId = goalIdParam ? Number(goalIdParam) : undefined;
+
+    // Fetch data for filters
+    const [searchResult, stats, departments, goals] = await Promise.all([
+        searchProjects({
+            query,
+            status,
+            departmentId: searchDepartmentId || userDepartmentId,
+            fiscalYear: searchFiscalYear,
+            goalId: searchGoalId,
+            page: 1,
+            limit: 100, // Show more results
         }),
         getProjectStats({
-            departmentId: userDepartmentId,
-            fiscalYear: selectedYear
+            departmentId: searchDepartmentId || userDepartmentId,
+            fiscalYear: searchFiscalYear,
         }),
+        getDepartments(),
+        getDevelopmentGoals(),
     ]);
+
+    const projects = searchResult.projects;
 
     // Generate years for filter (current year +/- 2)
     const currentYear = new Date().getFullYear() + 543;
@@ -67,7 +88,6 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
                     </p>
                 </div>
                 <div className="flex gap-3">
-                    <ProjectFilter years={fiscalYears} />
                     <Link
                         href="/projects/new"
                         className="btn btn-primary gap-2 shadow-lg shadow-primary/20"
@@ -77,6 +97,13 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
                     </Link>
                 </div>
             </div>
+
+            {/* Project Search */}
+            <ProjectSearch
+                departments={departments}
+                years={fiscalYears}
+                developmentGoals={goals}
+            />
 
             {/* Stats Cards - Real Data */}
             <div className="stats shadow-sm border border-base-200 w-full bg-base-100 lg:stats-horizontal stats-vertical">
@@ -89,7 +116,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
                     <div className="stat-title opacity-70">โครงการทั้งหมด</div>
                     <div className="stat-value text-primary">{stats.totalProjects}</div>
                     <div className="stat-desc">
-                        {selectedYear ? `ปีงบประมาณ ${selectedYear}` : 'ทุกปีงบประมาณ'}
+                        {searchFiscalYear ? `ปีงบประมาณ ${searchFiscalYear}` : 'ทุกปีงบประมาณ'}
                     </div>
                 </div>
 
@@ -146,17 +173,11 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             {/* Projects Table */}
             <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="border-b border-base-200 bg-base-200/30 px-6 py-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <h3 className="font-bold text-lg">รายการโครงการ {selectedYear && <span className="text-primary text-base ml-2">(ปี {selectedYear})</span>}</h3>
-                    <div className="relative w-full sm:w-72">
-                        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <FontAwesomeIcon icon={faSearch} className="h-4 w-4 opacity-50" />
-                        </div>
-                        <input
-                            type="text"
-                            className="input input-bordered input-sm w-full pl-10"
-                            placeholder="ค้นหาโครงการ..."
-                        />
-                    </div>
+                    <h3 className="font-bold text-lg">
+                        รายการโครงการ
+                        {query && <span className="text-primary text-base ml-2">({searchResult.total} ผลลัพธ์)</span>}
+                        {searchFiscalYear && !query && <span className="text-primary text-base ml-2">(ปี {searchFiscalYear})</span>}
+                    </h3>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="table table-zebra w-full">

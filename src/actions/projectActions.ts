@@ -301,3 +301,42 @@ export async function deleteProjectAction(id: number) {
         return { message: "Failed to delete project" };
     }
 }
+
+// ============================================
+// Project Search Action
+// ============================================
+
+export async function searchProjectsAction(filters: {
+    query?: string;
+    status?: string;
+    departmentId?: number;
+    fiscalYear?: number;
+    goalId?: number;
+    page?: number;
+    limit?: number;
+}) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            return {
+                success: false,
+                error: "Unauthorized: Please login",
+            };
+        }
+
+        const { searchProjects } = await import("@/services/projectService");
+        const result = await searchProjects(filters);
+
+        return {
+            success: true,
+            data: result,
+        };
+    } catch (error) {
+        console.error("Search projects error:", error);
+        return {
+            success: false,
+            error: "Failed to search projects",
+        };
+    }
+}
+

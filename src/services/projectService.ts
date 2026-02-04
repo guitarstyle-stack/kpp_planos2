@@ -278,8 +278,125 @@ export async function getProjectsForReport(userId?: number) {
                 },
             },
         },
-        orderBy: {
-            code: "asc",
-        },
     });
 }
+
+// ============================================
+// Project Search
+// ============================================
+
+export interface SearchFilters {
+    query?: string;
+    status?: string;
+    departmentId?: number;
+    fiscalYear?: number;
+    goalId?: number;
+    page?: number;
+    limit?: number;
+}
+
+export async function searchProjects(filters: SearchFilters = {}) {
+    const {
+        query = "",
+        status,
+        departmentId,
+        fiscalYear,
+        goalId,
+        page = 1,
+        limit = 20,
+    } = filters;
+
+    const where: Prisma.ProjectWhereInput = {
+        isActive: true,
+    };
+
+    // Full-text search across name, code, and description
+    if (query && query.trim()) {
+        where.OR = [
+            {
+                name: {
+                    contains: query.trim(),
+                    mode: "insensitive",
+                },
+            },
+            {
+                code: {
+                    contains: query.trim(),
+                    mode: "insensitive",
+                },
+            },
+            {
+                description: {
+                    contains: query.trim(),
+                    mode: "insensitive",
+                },
+            },
+        ];
+    }
+
+    // Advanced filters
+    if (status) {
+        where.status = status;
+    }
+
+    if (departmentId) {
+        where.departmentId = departmentId;
+    }
+
+    if (fiscalYear) {
+        where.fiscalYear = fiscalYear;
+    }
+
+    if (goalId) {
+        where.developmentGoalId = goalId;
+    }
+
+    const skip = (page - 1) * limit;
+
+    const [projects, total] = await Promise.all([
+        db.project.findMany({
+            where,
+            skip,
+            take: limit,
+            include: {
+                department: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+                developmentGoal: {
+                    select: {
+                        id: true,
+                        name: true,
+                        issue: {
+                            select: {
+                                name: true,
+                            },
+                        },
+                    },
+                },
+                ownerUser: {
+                    select: {
+                        id: true,
+                        name: true,
+                    },
+                },
+            },
+            orderBy: [
+                { createdAt: "desc" },
+            ],
+        }),
+        db.project.count({ where }),
+    ]);
+
+    return {
+        projects,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        hasMore: page * limit < total,
+    };
+}
+
