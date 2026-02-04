@@ -164,8 +164,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                         </div>
                                     </td>
                                     <td>
-                                        <span className={`badge badge-sm ${project.status === "NOT_STARTED" ? "badge-ghost" : "badge-info"}`}>
-                                            {project.status === "NOT_STARTED" ? "ยังไม่เริ่ม" : project.status}
+                                        <span className={`badge badge-sm ${project.status === "NOT_STARTED" ? "badge-ghost" :
+                                                project.status === "IN_PROGRESS" ? "badge-info" :
+                                                    project.status === "COMPLETED" ? "badge-success" :
+                                                        project.status === "CANCELLED" ? "badge-error" :
+                                                            "badge-info"
+                                            }`}>
+                                            {project.status === "NOT_STARTED" ? "ยังไม่เริ่ม" :
+                                                project.status === "IN_PROGRESS" ? "กำลังดำเนินการ" :
+                                                    project.status === "COMPLETED" ? "เสร็จสิ้น" :
+                                                        project.status === "CANCELLED" ? "ยกเลิก" :
+                                                            project.status}
                                         </span>
                                     </td>
                                     <td className="text-xs">{project.department?.name || "-"}</td>

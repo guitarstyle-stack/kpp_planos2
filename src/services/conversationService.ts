@@ -473,7 +473,7 @@ export async function getConversationStats(userId?: number) {
         }
     } : {};
 
-    const [total, byStatus, byPriority] = await Promise.all([
+    const [total, byStatus, byPriority, unreadCount] = await Promise.all([
         db.conversation.count({ where }),
         db.conversation.groupBy({
             by: ['status'],
@@ -484,12 +484,31 @@ export async function getConversationStats(userId?: number) {
             by: ['priority'],
             where,
             _count: { priority: true }
-        })
+        }),
+        // Count conversations with unread messages for this user
+        userId ? db.conversation.count({
+            where: {
+                ...where,
+                messages: {
+                    some: {
+                        senderId: { not: userId },
+                        readBy: {
+                            none: { userId }
+                        }
+                    }
+                }
+            }
+        }) : 0
     ]);
+
+    const statusCounts = Object.fromEntries(byStatus.map(g => [g.status, g._count.status]));
+    const priorityCounts = Object.fromEntries(byPriority.map(g => [g.priority, g._count.priority]));
 
     return {
         total,
-        byStatus: Object.fromEntries(byStatus.map(g => [g.status, g._count.status])),
-        byPriority: Object.fromEntries(byPriority.map(g => [g.priority, g._count.priority]))
+        openConversations: (statusCounts['OPEN'] || 0) + (statusCounts['IN_PROGRESS'] || 0),
+        unreadCount,
+        byStatus: statusCounts,
+        byPriority: priorityCounts
     };
 }

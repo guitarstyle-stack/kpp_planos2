@@ -264,29 +264,6 @@ export async function addParticipantAction(
     }
 }
 
-// ============================================
-// Get Conversation Statistics (Admin Only)
-// ============================================
-
-export async function getConversationStatsAction(): Promise<ActionResponse> {
-    try {
-        const session = await getSession();
-        if (!session?.user) {
-            return { success: false, error: "กรุณาเข้าสู่ระบบ" };
-        }
-
-        const admin = await isAdmin();
-        if (!admin) {
-            return { success: false, error: "คุณไม่มีสิทธิ์ในการดูสถิติ" };
-        }
-
-        const stats = await getConversationStats();
-        return { success: true, data: stats };
-    } catch (error: any) {
-        console.error("Error fetching conversation stats:", error);
-        return { success: false, error: "เกิดข้อผิดพลาดในการโหลดสถิติ" };
-    }
-}
 
 // ============================================
 // Get All Conversations (Admin Only)
@@ -392,3 +369,22 @@ export async function updateConversationAction(
     }
 }
 
+// ============================================
+// Get Conversation Statistics
+// ============================================
+
+export async function getConversationStatsAction(): Promise<ActionResponse> {
+    try {
+        const session = await getSession();
+        if (!session?.user) {
+            return { success: false, error: "กรุณาเข้าสู่ระบบ" };
+        }
+
+        const stats = await getConversationStats(session.user.id);
+
+        return { success: true, data: stats };
+    } catch (error: any) {
+        console.error("Error getting conversation stats:", error);
+        return { success: false, error: "เกิดข้อผิดพลาดในการโหลดสถิติ" };
+    }
+}

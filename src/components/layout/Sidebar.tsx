@@ -12,7 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 import { isAdmin } from "@/lib/rbac";
-import { SidebarClient } from "./SidebarClient";
+import { SidebarWrapper } from "./SidebarWrapper";
 
 async function getMenuItems() {
     const admin = await isAdmin();
@@ -79,5 +79,5 @@ async function getMenuItems() {
 export async function Sidebar() {
     const menuGroups = await getMenuItems();
 
-    return <SidebarClient menuGroups={menuGroups} />;
+    return <SidebarWrapper menuGroups={menuGroups} />;
 }
