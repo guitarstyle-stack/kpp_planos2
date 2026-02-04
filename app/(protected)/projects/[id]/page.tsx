@@ -17,6 +17,7 @@ import {
 import { deleteProjectAction } from "@/actions/projectActions";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
+import { AttachmentManager } from "@/components/attachments/AttachmentManager";
 
 // Map status to Thai label and color
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -341,15 +342,17 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     </div>
 
 
-                    {/* Attachments Placeholder (If needed later) */}
-                    {/* 
+                    {/* File Attachments */}
                     <div className="card bg-base-100 shadow-sm border border-base-200">
                         <div className="card-body">
-                            <h3 className="card-title text-sm">ไฟล์แนบ</h3>
-                            <div className="text-center py-4 text-xs opacity-50">ไม่มีไฟล์แนบ</div>
+                            <h3 className="card-title text-base mb-4">ไฟล์แนบโครงการ</h3>
+                            <AttachmentManager
+                                projectId={project.id}
+                                canUpload={canDelete}
+                                canDelete={canDelete}
+                            />
                         </div>
-                    </div> 
-                    */}
+                    </div>
                 </div>
             </div>
         </div>
