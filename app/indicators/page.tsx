@@ -26,8 +26,10 @@ export default async function IndicatorsPage() {
         );
     }
 
-    const { indicators, total } = indicatorsResult.data;
-    const stats = statsResult.data;
+    const data = indicatorsResult.data;
+    const indicators = data?.indicators || [];
+    const total = data?.total || 0;
+    const stats = statsResult.data || { total: 0, achieved: 0, notAchieved: 0, noData: 0, achievementRate: 0 };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -135,12 +137,12 @@ export default async function IndicatorsPage() {
                                                 {actualValue && indicator.targetValue && (
                                                     <span
                                                         className={`badge badge-sm ${progress >= 100
-                                                                ? "badge-success"
-                                                                : progress >= 75
-                                                                    ? "badge-info"
-                                                                    : progress >= 50
-                                                                        ? "badge-warning"
-                                                                        : "badge-error"
+                                                            ? "badge-success"
+                                                            : progress >= 75
+                                                                ? "badge-info"
+                                                                : progress >= 50
+                                                                    ? "badge-warning"
+                                                                    : "badge-error"
                                                             }`}
                                                     >
                                                         {progress}%
