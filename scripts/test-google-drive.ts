@@ -252,7 +252,7 @@ async function testFileUpload() {
             }
         });
 
-        return file.id;
+        return file.id || null;
     } catch (error: any) {
         logTest({
             test: 'File Upload (Specified Folder)',
@@ -286,7 +286,7 @@ async function testFileUpload() {
                 message: 'Successfully uploaded to Service Account root',
                 details: response.data
             });
-            return response.data.id;
+            return response.data.id || null;
         } catch (rootError: any) {
             logTest({
                 test: 'File Upload (Root Folder)',
