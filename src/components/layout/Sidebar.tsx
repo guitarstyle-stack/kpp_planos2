@@ -8,6 +8,7 @@ import {
     faCog,
     faUser,
     faBullhorn,
+    faEnvelope,
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
 import { isAdmin } from "@/lib/rbac";
@@ -35,7 +36,11 @@ async function getMenuItems() {
                     href: "/reports",
                     icon: faFileAlt,
                 },
-
+                {
+                    title: "ข้อความ",
+                    href: "/conversations",
+                    icon: faEnvelope,
+                },
             ]
         }
     ];
@@ -58,6 +63,11 @@ async function getMenuItems() {
                     title: "จัดการแจ้งเตือน",
                     href: "/admin/notifications",
                     icon: faBullhorn,
+                },
+                {
+                    title: "จัดการข้อความ",
+                    href: "/admin/conversations",
+                    icon: faEnvelope,
                 },
             ]
         });
