@@ -167,34 +167,16 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                                 </div>
                             </div>
 
-                            <div className="divider my-2"></div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex items-center gap-3 p-3 bg-base-50 rounded-box">
-                                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                                        <FontAwesomeIcon icon={faCalendar} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-base-content/60">ระยะเวลาดำเนินการ</div>
-                                        <div className="font-medium text-sm">
-                                            {formatDate(project.startDate)} - {formatDate(project.endDate)}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3 p-3 bg-base-50 rounded-box">
-                                    <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
-                                        <FontAwesomeIcon icon={faUser} />
-                                    </div>
-                                    <div>
-                                        <div className="text-xs text-base-content/60">ผู้รับผิดชอบ</div>
-                                        <div className="font-medium text-sm">
-                                            {project.ownerUser?.name || "ไม่ระบุ"}
-                                        </div>
-                                        <div className="text-xs text-base-content/60">
-                                            {project.department?.name}
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className="mt-6">
+                                <h3 className="card-title text-lg mb-4 border-b pb-2">
+                                    <FontAwesomeIcon icon={faQuoteLeft} className="mr-2 opacity-50 text-base-content" />
+                                    ไฟล์แนบโครงการ
+                                </h3>
+                                <AttachmentManager
+                                    projectId={project.id}
+                                    canUpload={false}
+                                    canDelete={canDelete}
+                                />
                             </div>
                         </div>
                     </div>
@@ -275,7 +257,7 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     <div className="card bg-base-100 shadow-sm border border-base-200 h-fit">
                         <div className="card-body">
                             <h2 className="card-title text-base mb-6 text-base-content/70 uppercase tracking-widest border-b pb-2">
-                                <FontAwesomeIcon icon={faQuoteLeft} className="mr-2 opacity-50" />
+                                <FontAwesomeIcon icon={faBullseye} className="mr-2 opacity-50" />
                                 ความสอดคล้องเชิงยุทธศาสตร์
                             </h2>
 
@@ -342,15 +324,48 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     </div>
 
 
-                    {/* File Attachments */}
+                    {/* Project Details (Moved from Left) */}
                     <div className="card bg-base-100 shadow-sm border border-base-200">
                         <div className="card-body">
-                            <h3 className="card-title text-base mb-4">ไฟล์แนบโครงการ</h3>
-                            <AttachmentManager
-                                projectId={project.id}
-                                canUpload={false} // Upload only in Report page as requested
-                                canDelete={canDelete}
-                            />
+                            <h2 className="card-title text-base mb-4 text-base-content/70 uppercase tracking-widest border-b pb-2">
+                                <FontAwesomeIcon icon={faBuilding} className="mr-2 opacity-50" />
+                                ข้อมูลเพิ่มเติม
+                            </h2>
+
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                                        <FontAwesomeIcon icon={faCalendar} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-base-content/60 mb-0.5">ระยะเวลาดำเนินการ</div>
+                                        <div className="font-medium text-sm">
+                                            {formatDate(project.startDate)}
+                                        </div>
+                                        <div className="text-xs opacity-50 text-center my-0.5">ถึง</div>
+                                        <div className="font-medium text-sm">
+                                            {formatDate(project.endDate)}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="divider my-0"></div>
+
+                                <div className="flex items-start gap-3">
+                                    <div className="mt-1 w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center text-secondary flex-shrink-0">
+                                        <FontAwesomeIcon icon={faUser} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs text-base-content/60 mb-0.5">ผู้รับผิดชอบ</div>
+                                        <div className="font-medium text-sm">
+                                            {project.ownerUser?.name || "ไม่ระบุ"}
+                                        </div>
+                                        <div className="text-xs text-base-content/60 bg-base-200/50 px-2 py-0.5 rounded-full inline-block mt-1">
+                                            {project.department?.name}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
