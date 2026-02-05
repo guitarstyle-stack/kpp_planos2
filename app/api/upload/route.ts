@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { uploadFile, validateFile } from "@/services/supabaseStorageService";
 import { createAttachment } from "@/services/attachmentService";
+import db from "@/lib/db";
+import { hasRole } from "@/services/userRoleService";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,29 @@ export async function POST(req: NextRequest) {
             return NextResponse.json(
                 { success: false, error: "Project ID is required" },
                 { status: 400 }
+            );
+        }
+
+        // Security Check: Only Project Owner or Admin can upload
+        const project = await db.project.findUnique({
+            where: { id: projectId },
+            select: { ownerUserId: true }
+        });
+
+        if (!project) {
+            return NextResponse.json(
+                { success: false, error: "Project not found" },
+                { status: 404 }
+            );
+        }
+
+        const isAdmin = await hasRole(user.id, "ADMIN");
+        const isProjectOwner = project.ownerUserId === user.id;
+
+        if (!isAdmin && !isProjectOwner) {
+            return NextResponse.json(
+                { success: false, error: "Unauthorized: Only Project Owner or Admin can upload files" },
+                { status: 403 }
             );
         }
 

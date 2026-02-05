@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getAttachmentById, deleteAttachment } from "@/services/attachmentService";
 import { deleteFile as deleteDriveFile, getFile, getFileStream } from "@/services/supabaseStorageService";
 import { hasRole } from "@/services/userRoleService";
+import db from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -132,13 +133,37 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
             );
         }
 
-        // Check permission (owner or admin)
+        // Check permission (Project Owner or Admin)
         const isAdmin = await hasRole(user.id, "ADMIN");
-        const isOwner = attachment.uploadedById === user.id;
+        // We need to check if the user is the owner of the PROJECT, not just the file uploader
+        // The getAttachmentById already includes project: { id, code, ... } but we need ownerUserId
+        // So we might need to fetch project or update the service.
+        // Let's check what getAttachmentById returns.
+        // Looking at src/services/attachmentService.ts, getAttachmentById includes:
+        // project: { select: { id: true, name: true, code: true } } -> It does NOT select ownerUserId.
 
-        if (!isAdmin && !isOwner) {
+        // We either update the service to return ownerUserId or we fetch the project. 
+        // Updating the service is better for reuse. But for now, let's just fetch project entitlement.
+
+        // Wait, I can't modify the service easily in this replace block without context of the service file.
+        // I will use prisma directly here or use getProjectById? 
+        // Better: let's update this file to import db and check project ownership directly or use getProjectById.
+        // Actually, let's look at getAttachmentById in service again. 
+        // It's cleaner to update the service to include ownerUserId in the project include.
+
+        // FOR NOW: I will just fetch the project to check ownership.
+        const isAdminCheck = isAdmin;
+        // Re-fetching project to get owner
+        const project = await db.project.findUnique({
+            where: { id: attachment.projectId },
+            select: { ownerUserId: true }
+        });
+
+        const isProjectOwner = project?.ownerUserId === user.id;
+
+        if (!isAdminCheck && !isProjectOwner) {
             return NextResponse.json(
-                { success: false, error: "You don't have permission to delete this file" },
+                { success: false, error: "Unauthorized: Only Project Owner or Admin can delete attachments" },
                 { status: 403 }
             );
         }
