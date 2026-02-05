@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
+import { ErrorCodes, createErrorResponse, createSuccessResponse } from "@/lib/errorCodes";
 
 import { z } from "zod";
 
@@ -43,7 +44,7 @@ export async function createProjectAction(prevState: any, formData: FormData) {
     try {
         const user = await getCurrentUser();
         if (!user) {
-            return { message: "Unauthorized: Please login to create a project" };
+            return createErrorResponse("กรุณาเข้าสู่ระบบเพื่อสร้างโครงการ", ErrorCodes.AUTH_LOGIN_REQUIRED);
         }
 
         const indicatorsJson = formData.get("indicatorsJson") as string;
@@ -122,10 +123,10 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         });
 
         revalidatePath("/projects");
-        return { success: true };
+        return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
-        return { message: "Failed to create project" };
+        return createErrorResponse("ไม่สามารถสร้างโครงการได้", ErrorCodes.PROJECT_CREATE_FAILED, error);
     }
 }
 
@@ -139,7 +140,7 @@ export async function updateProjectAction(id: number, formData: FormData) {
     try {
         const user = await getCurrentUser();
         if (!user) {
-            return { message: "Unauthorized: Please login" };
+            return createErrorResponse("กรุณาเข้าสู่ระบบ", ErrorCodes.AUTH_LOGIN_REQUIRED);
         }
 
         const project = await db.project.findUnique({
@@ -148,12 +149,12 @@ export async function updateProjectAction(id: number, formData: FormData) {
         });
 
         if (!project) {
-            return { message: "Project not found" };
+            return createErrorResponse("ไม่พบโครงการ", ErrorCodes.PROJECT_NOT_FOUND);
         }
 
         const isAdmin = await hasRole(user.id, "ADMIN");
         if (project.ownerUserId !== user.id && !isAdmin) {
-            return { message: "Unauthorized: You can only edit projects you own" };
+            return createErrorResponse("คุณไม่มีสิทธิ์แก้ไขโครงการนี้", ErrorCodes.PROJECT_UNAUTHORIZED);
         }
 
         const indicatorsJson = formData.get("indicatorsJson") as string;
@@ -245,10 +246,10 @@ export async function updateProjectAction(id: number, formData: FormData) {
         });
 
         revalidatePath("/projects");
-        return { success: true };
+        return createSuccessResponse(null, "อัปเดตโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
-        return { message: "Failed to update project" };
+        return createErrorResponse("ไม่สามารถอัปเดตโครงการได้", ErrorCodes.PROJECT_UPDATE_FAILED, error);
     }
 }
 

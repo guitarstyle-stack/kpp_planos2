@@ -35,6 +35,7 @@ export async function createNotification(data: {
     message: string;
     type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
     link?: string;
+    imageUrl?: string;
 }) {
     const notification = await db.notification.create({
         data: {
@@ -54,7 +55,7 @@ export async function createNotification(data: {
         });
 
         if (user?.lineUserId) {
-            await pushFlexMessage(user.lineUserId, data.title, data.message, data.link, data.type);
+            await pushFlexMessage(user.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl);
         }
     } catch (error) {
         console.error("Background LINE notification failed:", error);
@@ -75,6 +76,7 @@ export async function broadcastNotification(data: {
     message: string;
     type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
     link?: string;
+    imageUrl?: string;
     createdById?: number;
 }) {
     // 1. Get all active users
@@ -100,7 +102,7 @@ export async function broadcastNotification(data: {
     const lineUsers = users.filter(u => u.lineUserId);
 
     // Use Flex Message
-    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type)))
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
         .then(() => console.log(`Broadcasted to ${lineUsers.length} LINE users`))
         .catch(err => console.error("Broadcast LINE failed", err));
 
@@ -112,6 +114,7 @@ export async function sendNotificationToDepartment(departmentId: number, data: {
     message: string;
     type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
     link?: string;
+    imageUrl?: string;
 }) {
     // 1. Get users in department
     const users = await db.user.findMany({
@@ -135,8 +138,117 @@ export async function sendNotificationToDepartment(departmentId: number, data: {
     // 3. Send LINE
     const lineUsers = users.filter(u => u.lineUserId);
 
-    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type)))
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
         .then(() => console.log(`Department broadcast to ${lineUsers.length} LINE users`));
+
+    return { count: users.length };
+}
+
+export async function sendNotificationToRoles(roleIds: number[], data: {
+    title: string;
+    message: string;
+    type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
+    link?: string;
+    imageUrl?: string;
+}) {
+    // 1. Get users with roles
+    const users = await db.user.findMany({
+        where: {
+            isActive: true,
+            roles: {
+                some: {
+                    roleId: { in: roleIds }
+                }
+            }
+        },
+        select: { id: true, lineUserId: true },
+    });
+
+    if (users.length === 0) return { count: 0 };
+
+    // 2. Create notifications (deduplication handled by createMany if IDs unique, but here users are unique)
+    await db.notification.createMany({
+        data: users.map(user => ({
+            userId: user.id,
+            title: data.title,
+            message: data.message,
+            type: data.type || "INFO",
+            link: data.link,
+        })),
+    });
+
+    // 3. Send LINE
+    const lineUsers = users.filter(u => u.lineUserId);
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
+        .then(() => console.log(`Role broadcast to ${lineUsers.length} LINE users`));
+
+    return { count: users.length };
+}
+
+export async function sendNotificationToMultipleUsers(userIds: number[], data: {
+    title: string;
+    message: string;
+    type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
+    link?: string;
+    imageUrl?: string;
+}) {
+    const users = await db.user.findMany({
+        where: {
+            id: { in: userIds },
+            isActive: true
+        },
+        select: { id: true, lineUserId: true },
+    });
+
+    if (users.length === 0) return { count: 0 };
+
+    await db.notification.createMany({
+        data: users.map(user => ({
+            userId: user.id,
+            title: data.title,
+            message: data.message,
+            type: data.type || "INFO",
+            link: data.link,
+        })),
+    });
+
+    const lineUsers = users.filter(u => u.lineUserId);
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
+        .then(() => console.log(`Multi-user broadcast to ${lineUsers.length} LINE users`));
+
+    return { count: users.length };
+}
+
+export async function sendNotificationToMultipleDepartments(departmentIds: number[], data: {
+    title: string;
+    message: string;
+    type?: "INFO" | "WARNING" | "SUCCESS" | "ERROR";
+    link?: string;
+    imageUrl?: string;
+}) {
+    const users = await db.user.findMany({
+        where: {
+            departmentId: { in: departmentIds },
+            isActive: true
+        },
+        select: { id: true, lineUserId: true },
+    });
+
+    if (users.length === 0) return { count: 0 };
+
+    await db.notification.createMany({
+        data: users.map(user => ({
+            userId: user.id,
+            title: data.title,
+            message: data.message,
+            type: data.type || "INFO",
+            link: data.link,
+        })),
+    });
+
+    const lineUsers = users.filter(u => u.lineUserId);
+    Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
+        .then(() => console.log(`Multi-department broadcast to ${lineUsers.length} LINE users`));
 
     return { count: users.length };
 }
@@ -205,9 +317,11 @@ export async function createSchedule(data: {
     title: string;
     message: string;
     link?: string;
+    imageUrl?: string;
     type?: string;
     targetType: string;
     targetId?: number;
+    targetIds?: number[];
     scheduledFor: Date;
 }) {
     return await db.notificationSchedule.create({
@@ -215,6 +329,7 @@ export async function createSchedule(data: {
             ...data,
             type: data.type || "INFO",
             status: "PENDING",
+            targetIds: data.targetIds || [],
         }
     });
 }
@@ -242,7 +357,8 @@ export async function processDueSchedules() {
                 title: schedule.title,
                 message: schedule.message,
                 link: schedule.link || "",
-                type: schedule.type as any
+                type: schedule.type as any,
+                imageUrl: schedule.imageUrl || undefined
             };
 
             if (schedule.targetType === "BROADCAST") {
@@ -251,6 +367,12 @@ export async function processDueSchedules() {
                 await sendNotificationToDepartment(schedule.targetId, payload);
             } else if (schedule.targetType === "USER" && schedule.targetId) {
                 await createNotification({ userId: schedule.targetId, ...payload });
+            } else if (schedule.targetType === "ROLES" && schedule.targetIds.length > 0) {
+                await sendNotificationToRoles(schedule.targetIds, payload);
+            } else if (schedule.targetType === "MULTI_USERS" && schedule.targetIds.length > 0) {
+                await sendNotificationToMultipleUsers(schedule.targetIds, payload);
+            } else if (schedule.targetType === "MULTI_DEPARTMENTS" && schedule.targetIds.length > 0) {
+                await sendNotificationToMultipleDepartments(schedule.targetIds, payload);
             }
 
             await db.notificationSchedule.update({
@@ -266,4 +388,10 @@ export async function processDueSchedules() {
             });
         }
     }
+}
+
+export async function getRoles() {
+    return await db.role.findMany({
+        orderBy: { name: "asc" },
+    });
 }

@@ -4,6 +4,7 @@ import db from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { ErrorCodes, createErrorResponse, createSuccessResponse } from "@/lib/errorCodes";
 import { assignRole, removeRole } from "@/services/userRoleService";
 import { createDepartment } from "@/services/departmentService";
 import { updateUser, updateUserStatus, updateUserDepartment, getUsers } from "@/services/userService";
@@ -38,10 +39,10 @@ export async function updateUserAction(id: number, formData: FormData) {
         revalidatePath("/users");
         revalidatePath(`/users/${id}/edit`);
 
-        return { success: true };
+        return createSuccessResponse(null, "อัปเดตข้อมูลผู้ใช้สำเร็จ");
     } catch (error) {
         console.error(error);
-        return { message: "Failed to update user" };
+        return createErrorResponse("ไม่สามารถอัปเดตข้อมูลผู้ใช้ได้", ErrorCodes.USER_UPDATE_FAILED, error);
     }
 }
 
@@ -76,10 +77,10 @@ export async function updateProfileAction(id: number, formData: FormData) {
 
         revalidatePath("/settings/profile");
         revalidatePath("/", "layout");
-        return { success: true };
+        return createSuccessResponse(null, "อัปเดตโปรไฟล์สำเร็จ");
     } catch (error) {
         console.error("Profile Update Error:", error);
-        return { message: "Failed to update profile", error };
+        return createErrorResponse("ไม่สามารถอัปเดตโปรไฟล์ได้", ErrorCodes.USER_UPDATE_FAILED, error);
     }
 }
 

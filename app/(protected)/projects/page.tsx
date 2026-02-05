@@ -3,11 +3,12 @@ import { searchProjects, getProjectStats } from "@/services/projectService";
 import { getDepartments } from "@/services/departmentService";
 import { getDevelopmentGoals } from "@/services/developmentPlanService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faFolder, faChartLine, faFolderOpen, faMoneyBillTrendUp, faClock } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faFolder, faChartLine, faMoneyBillTrendUp, faClock } from "@fortawesome/free-solid-svg-icons";
 import { StatusChart, DepartmentChart } from "@/components/dashboard/Charts";
 import { getSession } from "@/lib/auth";
 import { getUserById } from "@/services/userService";
 import { ProjectSearch } from "@/components/projects/ProjectSearch";
+import { ResponsiveProjectsList } from "@/components/projects/ResponsiveProjectsList";
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
     "NOT_STARTED": { label: "ยังไม่เริ่ม", color: "badge-ghost" },
@@ -172,89 +173,17 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
 
             {/* Projects Table */}
             <div className="card bg-base-100 shadow-sm border border-base-200">
-                <div className="border-b border-base-200 bg-base-200/30 px-6 py-4 flex flex-col sm:flex-row gap-4 justify-between items-center">
-                    <h3 className="font-bold text-lg">
+                <div className="border-b border-base-200 bg-base-200/30 px-4 md:px-6 py-4 flex flex-col sm:flex-row gap-2 md:gap-4 justify-between items-start sm:items-center">
+                    <h3 className="font-bold text-base md:text-lg">
                         รายการโครงการ
-                        {query && <span className="text-primary text-base ml-2">({searchResult.total} ผลลัพธ์)</span>}
-                        {searchFiscalYear && !query && <span className="text-primary text-base ml-2">(ปี {searchFiscalYear})</span>}
+                        {query && <span className="text-primary text-sm md:text-base ml-2">({searchResult.total} ผลลัพธ์)</span>}
+                        {searchFiscalYear && !query && <span className="text-primary text-sm md:text-base ml-2">(ปี {searchFiscalYear})</span>}
                     </h3>
                 </div>
-                <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
-                        <thead>
-                            <tr className="bg-base-200/50">
-                                <th>รหัสโครงการ</th>
-                                <th>ชื่อโครงการ</th>
-                                <th className="text-center">สถานะ</th>
-                                <th className="text-center">ความคืบหน้า</th>
-                                <th>เป้าประสงค์</th>
-                                <th>หน่วยงาน</th>
-                                <th>งบประมาณ</th>
-                                <th className="text-right">ดำเนินการ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {projects.map((project: any) => (
-                                <tr key={project.id} className="hover">
-                                    <td className="font-mono text-xs opacity-70">
-                                        {project.code}
-                                    </td>
-                                    <td>
-                                        <div className="font-bold text-sm line-clamp-2 max-w-sm" title={project.name}>
-                                            {project.name}
-                                        </div>
-                                    </td>
-                                    <td className="text-center whitespace-nowrap">
-                                        <span className={`badge ${STATUS_MAP[project.status]?.color || 'badge-ghost'} badge-sm`}>
-                                            {STATUS_MAP[project.status]?.label || project.status}
-                                        </span>
-                                    </td>
-                                    <td className="text-center">
-                                        <div className="flex items-center gap-2 justify-center">
-                                            <progress
-                                                className="progress progress-primary w-20"
-                                                value={project.progressPercent || 0}
-                                                max="100"
-                                            />
-                                            <span className="text-xs font-medium">{project.progressPercent || 0}%</span>
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap max-w-[200px]">
-                                        <div className="truncate text-xs opacity-70" title={project.developmentGoal?.name || ""}>
-                                            {project.developmentGoal?.name || "-"}
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap text-sm">
-                                        {project.department?.name || "-"}
-                                    </td>
-                                    <td className="whitespace-nowrap text-xs font-mono">
-                                        {project.budgetTotal ? formatMoney(project.budgetTotal) : "-"}
-                                    </td>
-                                    <td className="text-right">
-                                        <Link
-                                            href={`/projects/${project.id}`}
-                                            className="btn btn-ghost btn-xs text-primary"
-                                        >
-                                            ดูรายละเอียด
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                            {projects.length === 0 && (
-                                <tr>
-                                    <td colSpan={8} className="text-center py-24">
-                                        <div className="flex flex-col items-center justify-center opacity-50">
-                                            <FontAwesomeIcon icon={faFolderOpen} className="h-12 w-12 mb-4" />
-                                            <p className="text-lg font-medium">ยังไม่มีโครงการ</p>
-                                            <p className="text-sm">เริ่มต้นด้วยการสร้างโครงการใหม่</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="p-0 md:p-4">
+                    <ResponsiveProjectsList projects={projects} />
                 </div>
-            </div >
-        </div >
+            </div>
+        </div>
     );
 }

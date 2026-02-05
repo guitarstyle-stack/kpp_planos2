@@ -3,8 +3,13 @@ import db from '@/lib/db'
 import crypto from 'crypto'
 import { SignJWT, jwtVerify } from 'jose'
 
-const SESSION_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-at-least-32-chars-long'
-const encodedSecret = new TextEncoder().encode(SESSION_SECRET)
+const SESSION_SECRET = process.env.NEXTAUTH_SECRET;
+
+if (!SESSION_SECRET) {
+    throw new Error('NEXTAUTH_SECRET environment variable must be defined for security');
+}
+
+const encodedSecret = new TextEncoder().encode(SESSION_SECRET);
 
 // 1. Create a session for a user
 export async function createSession(userId: number) {

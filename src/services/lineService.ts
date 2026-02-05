@@ -35,7 +35,14 @@ export async function pushMessage(lineUserId: string, message: string) {
     }
 }
 
-export async function pushFlexMessage(userId: string, title: string, message: string, link: string | undefined | null, type: string | undefined | null = "INFO") {
+export async function pushFlexMessage(
+    userId: string,
+    title: string,
+    message: string,
+    link: string | undefined | null,
+    type: string | undefined | null = "INFO",
+    imageUrl?: string | null
+) {
     if (!LINE_CHANNEL_ACCESS_TOKEN) {
         console.error("LINE_CHANNEL_ACCESS_TOKEN is missing");
         return;
@@ -56,65 +63,82 @@ export async function pushFlexMessage(userId: string, title: string, message: st
     const safeTitle = title.substring(0, 100);
     const safeMessage = message.substring(0, 200); // Truncate content for list view legibility
 
+    const bubbleContents: any = {
+        type: "bubble",
+        header: {
+            type: "box",
+            layout: "vertical",
+            contents: [{
+                type: "text",
+                text: type || "INFO",
+                color: "#ffffff",
+                weight: "bold",
+                size: "xs",
+                align: "center"
+            }],
+            backgroundColor: headerColor,
+            paddingAll: "4px"
+        },
+        body: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+                {
+                    type: "text",
+                    text: safeTitle,
+                    weight: "bold",
+                    size: "sm",
+                    wrap: true,
+                    margin: "none"
+                },
+                {
+                    type: "text",
+                    text: safeMessage,
+                    size: "xs",
+                    color: "#666666",
+                    wrap: true,
+                    margin: "md"
+                }
+            ]
+        },
+        footer: link ? {
+            type: "box",
+            layout: "vertical",
+            contents: [{
+                type: "button",
+                style: "primary",
+                height: "sm",
+                action: {
+                    type: "uri",
+                    label: "ดูรายละเอียด",
+                    uri: `${process.env.NEXT_PUBLIC_APP_URL || ""}${link}`
+                },
+                color: headerColor
+            }]
+        } : undefined
+    };
+
+    // Add Hero Image if provided
+    if (imageUrl) {
+        bubbleContents.hero = {
+            type: "image",
+            url: imageUrl,
+            size: "full",
+            aspectRatio: "20:13",
+            aspectMode: "cover",
+            action: link ? {
+                type: "uri",
+                uri: `${process.env.NEXT_PUBLIC_APP_URL || ""}${link}`
+            } : undefined
+        };
+    }
+
     const payload = {
         to: userId,
         messages: [{
             type: "flex",
             altText: `${safeTitle}: ${safeMessage}`,
-            contents: {
-                type: "bubble",
-                header: {
-                    type: "box",
-                    layout: "vertical",
-                    contents: [{
-                        type: "text",
-                        text: type || "INFO",
-                        color: "#ffffff",
-                        weight: "bold",
-                        size: "xs",
-                        align: "center"
-                    }],
-                    backgroundColor: headerColor,
-                    paddingAll: "4px"
-                },
-                body: {
-                    type: "box",
-                    layout: "vertical",
-                    contents: [
-                        {
-                            type: "text",
-                            text: safeTitle,
-                            weight: "bold",
-                            size: "sm",
-                            wrap: true,
-                            margin: "none"
-                        },
-                        {
-                            type: "text",
-                            text: safeMessage,
-                            size: "xs",
-                            color: "#666666",
-                            wrap: true,
-                            margin: "md"
-                        }
-                    ]
-                },
-                footer: link ? {
-                    type: "box",
-                    layout: "vertical",
-                    contents: [{
-                        type: "button",
-                        style: "primary",
-                        height: "sm",
-                        action: {
-                            type: "uri",
-                            label: "ดูรายละเอียด",
-                            uri: `${process.env.NEXT_PUBLIC_APP_URL || ""}${link}`
-                        },
-                        color: headerColor
-                    }]
-                } : undefined
-            }
+            contents: bubbleContents
         }]
     };
 

@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { getSession } from "@/lib/auth";
 
 export default async function ProtectedLayout({
@@ -24,13 +25,16 @@ export default async function ProtectedLayout({
                 />
 
                 {/* Main Content */}
-                <main className="flex-1 p-6 md:p-10 bg-base-200/50">
-                    <div className="mx-auto max-w-7xl space-y-8">
+                <main className="flex-1 p-4 md:p-6 lg:p-10 bg-base-200/50 pb-20 lg:pb-6">
+                    <div className="mx-auto max-w-7xl space-y-6 md:space-y-8">
                         {children}
                     </div>
                 </main>
 
                 <Footer />
+
+                {/* Bottom Navigation - Mobile Only */}
+                <BottomNav />
             </div>
 
             {/* Drawer Side */}
