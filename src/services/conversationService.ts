@@ -87,12 +87,12 @@ export async function createConversation(params: CreateConversationParams) {
     });
 
     // Notify participants (except initiator)
-    const recipientIds = participantIds.filter(id => id !== initiatorId);
-    await notifyParticipants(recipientIds, {
-        title: `การสนทนาใหม่: ${title}`,
-        message: content.substring(0, 100),
-        conversationId: conversation.id
-    });
+    // const recipientIds = participantIds.filter(id => id !== initiatorId);
+    // await notifyParticipants(recipientIds, {
+    //     title: `การสนทนาใหม่: ${title}`,
+    //     message: content.substring(0, 100),
+    //     conversationId: conversation.id
+    // });
 
     return conversation;
 }
@@ -281,16 +281,16 @@ export async function sendMessage(params: SendMessageParams) {
     });
 
     // Notify participants
-    const conversation = await db.conversation.findUnique({
-        where: { id: conversationId },
-        select: { title: true }
-    });
+    // const conversation = await db.conversation.findUnique({
+    //     where: { id: conversationId },
+    //     select: { title: true }
+    // });
 
-    await notifyParticipants(participants.map(p => p.userId), {
-        title: `ข้อความใหม่: ${conversation?.title}`,
-        message: content.substring(0, 100),
-        conversationId
-    });
+    // await notifyParticipants(participants.map(p => p.userId), {
+    //     title: `ข้อความใหม่: ${conversation?.title}`,
+    //     message: content.substring(0, 100),
+    //     conversationId
+    // });
 
     return message;
 }
@@ -382,11 +382,11 @@ export async function updateConversationStatus(
     });
 
     // Notify participants
-    await notifyParticipants(conversation.participants.map(p => p.userId), {
-        title: `สถานะการสนทนาเปลี่ยนแปลง`,
-        message: `สถานะเปลี่ยนเป็น: ${status}`,
-        conversationId
-    });
+    // await notifyParticipants(conversation.participants.map(p => p.userId), {
+    //     title: `สถานะการสนทนาเปลี่ยนแปลง`,
+    //     message: `สถานะเปลี่ยนเป็น: ${status}`,
+    //     conversationId
+    // });
 
     return conversation;
 }
@@ -425,18 +425,18 @@ export async function addParticipant(conversationId: number, userIdToAdd: number
     });
 
     // Notify the new participant
-    const conversation = await db.conversation.findUnique({
-        where: { id: conversationId },
-        select: { title: true }
-    });
+    // const conversation = await db.conversation.findUnique({
+    //     where: { id: conversationId },
+    //     select: { title: true }
+    // });
 
-    await createNotification({
-        userId: userIdToAdd,
-        title: "เพิ่มคุณเข้าสู่การสนทนา",
-        message: `คุณได้ถูกเพิ่มเข้าสู่การสนทนา: ${conversation?.title}`,
-        type: "INFO",
-        link: `/conversations/${conversationId}`
-    });
+    // await createNotification({
+    //     userId: userIdToAdd,
+    //     title: "เพิ่มคุณเข้าสู่การสนทนา",
+    //     message: `คุณได้ถูกเพิ่มเข้าสู่การสนทนา: ${conversation?.title}`,
+    //     type: "INFO",
+    //     link: `/conversations/${conversationId}`
+    // });
 
     return participant;
 }
