@@ -100,21 +100,60 @@ export async function deleteAttachmentAction(id: number) {
             };
         }
 
-        // Deletion logic is handled in the API route
-        // This action triggers revalidation after deletion
-        const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ""}/api/attachments/${id}`, {
-            method: "DELETE",
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-            // Revalidate relevant paths
-            revalidatePath("/projects");
-            revalidatePath("/reports");
+        const attachment = await getAttachmentById(id);
+        if (!attachment) {
+            return {
+                success: false,
+                error: "Attachment not found",
+            };
         }
 
-        return result;
+        // Permission Check: Project Owner or Admin
+        const { hasRole } = await import("@/services/userRoleService");
+        const isAdmin = await hasRole(user.id, "ADMIN");
+
+        // Fetch project to check ownership (need db import)
+        const { default: db } = await import("@/lib/db");
+        // We can trust getAttachmentById to return projectId correctly? Yes.
+        // It returns attachment with project relation, but let's just query project owner manually to be safe/consistent
+        // actually attachment.project is included in getAttachmentById but only id/name/code.
+        // So we verify ownership again.
+
+        const project = await db.project.findUnique({
+            where: { id: attachment.projectId },
+            select: { ownerUserId: true }
+        });
+
+        const isProjectOwner = project?.ownerUserId === user.id;
+
+        if (!isAdmin && !isProjectOwner) {
+            return {
+                success: false,
+                error: "Unauthorized: Only Project Owner or Admin can delete attachments",
+            };
+        }
+
+        // Delete from Storage
+        const { deleteFile } = await import("@/services/supabaseStorageService");
+        try {
+            await deleteFile(attachment.fileUrl);
+        } catch (storageError) {
+            console.error("Failed to delete from storage:", storageError);
+            // Proceed to delete DB record anyway? standard practice is often "yes" to avoid orphans
+        }
+
+        // Delete from Database
+        await import("@/services/attachmentService").then(m => m.deleteAttachment(id));
+
+        // Revalidate
+        revalidatePath("/projects");
+        revalidatePath("/reports");
+
+        return {
+            success: true,
+            message: "File deleted successfully",
+        };
+
     } catch (error) {
         console.error("Delete attachment error:", error);
         return {
