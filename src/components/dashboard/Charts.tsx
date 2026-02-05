@@ -242,3 +242,126 @@ export function KPIChart({ stats }: KPIChartProps) {
         </div>
     );
 }
+
+// ----------------------------------------------------------------------
+// New PMO Dashboard Components
+// ----------------------------------------------------------------------
+
+export interface StrategicChartProps {
+    strategicCounts: Record<string, number>;
+}
+
+export function StrategicChart({ strategicCounts }: StrategicChartProps) {
+    const entries = Object.entries(strategicCounts).sort((a, b) => b[1] - a[1]);
+    const total = entries.reduce((sum, [, count]) => sum + count, 0);
+
+    if (total === 0) return <div className="text-center text-base-content/50 py-8">ไม่มีข้อมูลความสอดคล้องเชิงยุทธศาสตร์</div>;
+
+    return (
+        <div className="space-y-4">
+            {entries.map(([issue, count]) => {
+                const percentage = Math.round((count / total) * 100);
+                return (
+                    <div key={issue} className="space-y-1">
+                        <div className="flex justify-between text-sm items-end">
+                            <span className="font-medium truncate max-w-[70%] pr-2" title={issue}>{issue}</span>
+                            <span className="text-xs opacity-70 whitespace-nowrap">{count} โครงการ ({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-base-200 rounded-full h-3 relative overflow-hidden group">
+                            <div
+                                className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full transition-all duration-700 ease-out group-hover:brightness-110"
+                                style={{ width: `${percentage}%` }}
+                            />
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+}
+
+export interface DepartmentProgressChartProps {
+    avgProgressByDepartment: Record<string, number>;
+}
+
+export function DepartmentProgressChart({ avgProgressByDepartment }: DepartmentProgressChartProps) {
+    const entries = Object.entries(avgProgressByDepartment).sort((a, b) => b[1] - a[1]);
+
+    if (entries.length === 0) return <div className="text-center text-base-content/50 py-8">ไม่มีข้อมูลความก้าวหน้าหน่วยงาน</div>;
+
+    return (
+        <div className="space-y-3">
+            {entries.slice(0, 8).map(([dept, progress]) => {
+                // Determine color based on progress (Performance Health)
+                let colorClass = "bg-info";
+                if (progress < 25) colorClass = "bg-error";
+                else if (progress < 50) colorClass = "bg-warning";
+                else if (progress >= 80) colorClass = "bg-success";
+
+                return (
+                    <div key={dept} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                            <span className="truncate max-w-[200px]" title={dept}>{dept}</span>
+                            <span className="font-bold">{progress}%</span>
+                        </div>
+                        <div className="w-full bg-base-200 rounded-full h-2">
+                            <div
+                                className={`${colorClass} h-2 rounded-full transition-all duration-500`}
+                                style={{ width: `${progress}%` }}
+                            />
+                        </div>
+                    </div>
+                );
+            })}
+            {entries.length > 8 && (
+                <div className="text-xs text-base-content/40 text-center pt-2">
+                    และอีก {entries.length - 8} หน่วยงาน...
+                </div>
+            )}
+        </div>
+    );
+}
+
+export interface RiskSummaryCardProps {
+    projectsWithIssuesCount: number;
+    totalProjects: number;
+}
+
+export function RiskSummaryCard({ projectsWithIssuesCount, totalProjects }: RiskSummaryCardProps) {
+    const riskPercent = totalProjects > 0 ? Math.round((projectsWithIssuesCount / totalProjects) * 100) : 0;
+
+    // Status Logic
+    let statusText = "ปกติ";
+    let statusColor = "text-success";
+    let alertClass = "alert-success";
+
+    if (riskPercent > 20) {
+        statusText = "วิกฤต";
+        statusColor = "text-error";
+        alertClass = "alert-error";
+    } else if (riskPercent > 5) {
+        statusText = "เฝ้าระวัง";
+        statusColor = "text-warning";
+        alertClass = "alert-warning";
+    }
+
+    return (
+        <div className="text-center space-y-4">
+            <div className="radial-progress text-error bg-base-200/50 border-4 border-base-100 shadow-inner" style={{ "--value": riskPercent, "--size": "8rem", "--thickness": "0.8rem" } as any}>
+                <div className="flex flex-col items-center">
+                    <span className="text-3xl font-extrabold">{projectsWithIssuesCount}</span>
+                    <span className="text-xs opacity-70">โครงการ</span>
+                </div>
+            </div>
+            <div>
+                <p className="text-sm font-medium opacity-70">พบปัญหา/อุปสรรค</p>
+                <div className={`mt-2 badge ${alertClass} badge-lg font-bold shadow-sm`}>
+                    สถานะ: {statusText}
+                </div>
+            </div>
+            <p className="text-xs opacity-50 px-4">
+                คิดเป็น {riskPercent}% จากโครงการทั้งหมดในพอร์ตโฟลิโอ
+            </p>
+        </div>
+    );
+}

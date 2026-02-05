@@ -5,7 +5,7 @@ import { getDevelopmentIssues } from "@/services/developmentPlanService";
 import db from "@/lib/db";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolder, faChartLine, faMoneyBillTrendUp, faClock, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart, KPIChart } from "@/components/dashboard/Charts";
+import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart, KPIChart, StrategicChart, RiskSummaryCard, DepartmentProgressChart } from "@/components/dashboard/Charts";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -99,45 +99,91 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 </div>
             </div>
 
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body">
-                        <h3 className="card-title text-base mb-4">สถานะโครงการ</h3>
-                        <StatusChart statusCounts={stats.statusCounts} />
+
+            {/* Charts Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+                {/* Column 1: Strategy & Alignment (PMO Focus) */}
+                <div className="space-y-6 xl:col-span-1">
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4 flex justify-between items-center">
+                                <span>ความสอดคล้องเชิงยุทธศาสตร์</span>
+                                <span className="badge badge-primary badge-outline text-xs">Strategy</span>
+                            </h3>
+                            <StrategicChart strategicCounts={stats.strategicCounts} />
+                        </div>
                     </div>
-                </div>
-                <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body">
-                        <h3 className="card-title text-base mb-4">โครงการตามปีงบประมาณ</h3>
-                        <FiscalYearChart yearlyCounts={stats.yearlyCounts} />
-                    </div>
-                </div>
-                {/* Advanced Charts: Budget & Progress */}
-                <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body">
-                        <h3 className="card-title text-base mb-4">การเบิกจ่ายงบประมาณ (Top 6 หน่วยงาน)</h3>
-                        <BudgetChart budgetByDepartment={stats.budgetByDepartment} />
-                    </div>
-                </div>
-                <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body">
-                        <h3 className="card-title text-base mb-4">การกระจายตัวความก้าวหน้า</h3>
-                        <ProgressDistributionChart distribution={stats.progressDistribution} />
+
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4">โครงการตามปีงบประมาณ</h3>
+                            <FiscalYearChart yearlyCounts={stats.yearlyCounts} />
+                        </div>
                     </div>
                 </div>
 
-                {/* KPI Chart */}
-                <div className="card bg-base-100 shadow-sm border border-base-300">
-                    <div className="card-body">
-                        <h3 className="card-title text-base mb-4">ผลการดำเนินงานตัวชี้วัด (KPI)</h3>
-                        <KPIChart stats={stats.kpiStats} />
+                {/* Column 2: Health & Risk (PMO Focus) */}
+                <div className="space-y-6 xl:col-span-1">
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4 flex justify-between items-center">
+                                <span>สุขภาพพอร์ตโฟลิโอ (Portfolio Health)</span>
+                                <span className="badge badge-error badge-outline text-xs">Risk</span>
+                            </h3>
+                            <div className="grid grid-cols-1 gap-6">
+                                <RiskSummaryCard
+                                    projectsWithIssuesCount={stats.projectsWithIssuesCount}
+                                    totalProjects={stats.totalProjects}
+                                />
+                                <div className="divider my-0"></div>
+                                <div>
+                                    <h4 className="text-sm font-semibold mb-3 opacity-80">สถานะโครงการ</h4>
+                                    <StatusChart statusCounts={stats.statusCounts} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4">การกระจายตัวความก้าวหน้า</h3>
+                            <ProgressDistributionChart distribution={stats.progressDistribution} />
+                        </div>
                     </div>
                 </div>
 
-                <div className="card bg-base-100 shadow-sm border border-base-300 lg:col-span-2">
+                {/* Column 3: Performance & Finance */}
+                <div className="space-y-6 xl:col-span-1">
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4">ผลการดำเนินงานตัวชี้วัด (KPI)</h3>
+                            <KPIChart stats={stats.kpiStats} />
+                        </div>
+                    </div>
+
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4">การเบิกจ่ายงบประมาณ (Top Depts)</h3>
+                            <BudgetChart budgetByDepartment={stats.budgetByDepartment} />
+                        </div>
+                    </div>
+
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <h3 className="card-title text-base mb-4 flex justify-between items-center">
+                                <span>ประสิทธิภาพรายหน่วยงาน</span>
+                                <span className="badge badge-info badge-outline text-xs">Avg Progress</span>
+                            </h3>
+                            <DepartmentProgressChart avgProgressByDepartment={stats.avgProgressByDepartment} />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Full Width: Department Overview */}
+                <div className="card bg-base-100 shadow-sm border border-base-300 xl:col-span-3">
                     <div className="card-body">
-                        <h3 className="card-title text-base mb-4">โครงการแยกตามหน่วยงาน</h3>
+                        <h3 className="card-title text-base mb-4">จำนวนโครงการแยกตามหน่วยงาน</h3>
                         <DepartmentChart departmentCounts={stats.departmentCounts} />
                     </div>
                 </div>

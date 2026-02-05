@@ -172,6 +172,20 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
             departmentId: true,
             department: { select: { name: true } },
             fiscalYear: true,
+            developmentGoal: {
+                select: {
+                    issue: {
+                        select: { name: true }
+                    }
+                }
+            },
+            reports: {
+                take: 1,
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    issues: true
+                }
+            },
             indicators: {
                 select: {
                     id: true,
@@ -208,9 +222,24 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
 
     // Count by department
     const departmentCounts: Record<string, number> = {};
+    const departmentProgress: Record<string, { total: number; count: number }> = {};
+
     projects.forEach(p => {
         const deptName = p.department?.name || "ไม่ระบุ";
         departmentCounts[deptName] = (departmentCounts[deptName] || 0) + 1;
+
+        // Accumulate progress for avg calculation
+        if (!departmentProgress[deptName]) {
+            departmentProgress[deptName] = { total: 0, count: 0 };
+        }
+        departmentProgress[deptName].total += p.progressPercent || 0;
+        departmentProgress[deptName].count += 1;
+    });
+
+    // Calculate avg progress per department
+    const avgProgressByDepartment: Record<string, number> = {};
+    Object.entries(departmentProgress).forEach(([dept, data]) => {
+        avgProgressByDepartment[dept] = Math.round(data.total / data.count);
     });
 
     // Count by fiscal year
@@ -219,6 +248,10 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         const year = p.fiscalYear.toString();
         yearlyCounts[year] = (yearlyCounts[year] || 0) + 1;
     });
+
+    // Strategy & Risk
+    const strategicCounts: Record<string, number> = {};
+    let projectsWithIssuesCount = 0;
 
     // Aggregations for Budget and Progress
     const budgetByDepartment: Record<string, { total: number; spent: number }> = {};
@@ -235,6 +268,17 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
     let totalAchievementPercent = 0;
 
     projects.forEach(p => {
+        // Strategic Alignment
+        if (p.developmentGoal?.issue?.name) {
+            const issueName = p.developmentGoal.issue.name;
+            strategicCounts[issueName] = (strategicCounts[issueName] || 0) + 1;
+        }
+
+        // Risk (Projects with active issues in latest report)
+        if (p.reports && p.reports.length > 0 && p.reports[0].issues) {
+            projectsWithIssuesCount++;
+        }
+
         // Budget by Department
         const deptName = p.department?.name || "ไม่ระบุ";
         if (!budgetByDepartment[deptName]) {
@@ -287,6 +331,9 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         progressDistribution,
         pendingReports: statusCounts.IN_PROGRESS,
         kpiStats,
+        strategicCounts,
+        projectsWithIssuesCount,
+        avgProgressByDepartment
     };
 }
 
