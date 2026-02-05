@@ -1,255 +1,197 @@
 "use client";
 
-import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faFile,
+    faFileAlt,
+    faImage,
+    faTrash,
+    faDownload,
     faFilePdf,
     faFileWord,
     faFileExcel,
-    faImage,
-    faDownload,
-    faTrash,
-    faEye,
-    faSpinner,
+    faSearch
 } from "@fortawesome/free-solid-svg-icons";
+import { deleteAttachmentAction } from "@/actions/attachmentActions";
+import { toast } from "sonner";
+import { useState } from "react";
 
 interface FileAttachment {
     id: number;
     fileName: string;
     fileUrl: string;
-    fileType: string | null;
-    uploadedAt: Date;
-    uploadedBy: {
-        id: number;
-        firstName: string | null;
-        lastName: string | null;
-        email: string | null;
-    };
+    fileType: string;
+    createdAt: Date;
+    reportId?: number | null;
 }
 
 interface FileListProps {
-    attachments: FileAttachment[];
-    onDelete?: (id: number) => void;
-    onRefresh?: () => void;
+    attachments: any[]; // relaxed type for now to match what's passed
+    onDelete: () => void;
+    onRefresh: () => void;
     canDelete?: boolean;
 }
 
 export function FileList({ attachments, onDelete, onRefresh, canDelete = false }: FileListProps) {
-    const [deleting, setDeleting] = useState<number | null>(null);
-    const [previewFile, setPreviewFile] = useState<FileAttachment | null>(null);
+    const [deletingId, setDeletingId] = useState<number | null>(null);
 
-    const getFileIcon = (fileType: string | null) => {
-        if (!fileType) return faFile;
-
-        if (fileType.startsWith("image/")) return faImage;
-        if (fileType === "application/pdf") return faFilePdf;
-        if (fileType.includes("word")) return faFileWord;
-        if (fileType.includes("excel") || fileType.includes("spreadsheet")) return faFileExcel;
-
-        return faFile;
-    };
-
-    const getFileIconColor = (fileType: string | null) => {
-        if (!fileType) return "text-base-content/50";
-
-        if (fileType.startsWith("image/")) return "text-info";
-        if (fileType === "application/pdf") return "text-error";
-        if (fileType.includes("word")) return "text-primary";
-        if (fileType.includes("excel")) return "text-success";
-
-        return "text-base-content/50";
-    };
-
-    const handleDownload = async (attachment: FileAttachment) => {
-        try {
-            const response = await fetch(`/api/attachments/${attachment.id}`);
-            if (!response.ok) throw new Error("Download failed");
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = attachment.fileName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        } catch (error) {
-            console.error("Download error:", error);
-            alert("เกิดข้อผิดพลาดในการดาวน์โหลดไฟล์");
-        }
-    };
-
-    const handleDelete = async (id: number) => {
-        if (!confirm("คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์นี้?")) return;
-
-        setDeleting(id);
-        try {
-            const response = await fetch(`/api/attachments/${id}`, {
-                method: "DELETE",
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                onDelete?.(id);
-                onRefresh?.();
-            } else {
-                alert(result.error || "เกิดข้อผิดพลาดในการลบไฟล์");
-            }
-        } catch (error) {
-            console.error("Delete error:", error);
-            alert("เกิดข้อผิดพลาดในการลบไฟล์");
-        } finally {
-            setDeleting(null);
-        }
-    };
-
-    const handlePreview = (attachment: FileAttachment) => {
-        const fileType = attachment.fileType || "";
-        // Only allow preview for images and PDFs
-        if (fileType.startsWith("image/") || fileType === "application/pdf") {
-            setPreviewFile(attachment);
-        } else {
-            handleDownload(attachment);
-        }
-    };
-
-    const formatDate = (date: Date) => {
-        return new Date(date).toLocaleDateString("th-TH", {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
-
-    const getUserName = (user: FileAttachment["uploadedBy"]) => {
-        if (user.firstName && user.lastName) {
-            return `${user.firstName} ${user.lastName}`;
-        }
-        return user.email || "ไม่ทราบชื่อ";
-    };
-
-    if (attachments.length === 0) {
+    // Initial Empty State
+    if (!attachments || attachments.length === 0) {
         return (
-            <div className="text-center py-12 border-2 border-dashed border-base-300 rounded-lg">
-                <FontAwesomeIcon icon={faFile} className="h-12 w-12 opacity-30 mb-4" />
-                <p className="opacity-60">ยังไม่มีไฟล์แนบ</p>
+            <div className="text-center py-8 text-base-content/50 bg-base-50 rounded-lg border border-base-200">
+                ไม่มีไฟล์แนบ
             </div>
         );
     }
 
+    const handleDelete = async (id: number) => {
+        if (!confirm("คุณต้องการลบไฟล์นี้ใช่หรือไม่?")) return;
+
+        setDeletingId(id);
+        try {
+            const result = await deleteAttachmentAction(id);
+            if (result.success) {
+                toast.success("ลบไฟล์เรียบร้อยแล้ว");
+                onDelete();
+            } else {
+                toast.error(result.error);
+            }
+        } catch (error) {
+            console.error("Delete error:", error);
+            toast.error("เกิดข้อผิดพลาดในการลบไฟล์");
+        } finally {
+            setDeletingId(null);
+        }
+    };
+
+    const getFileIcon = (fileType: string) => {
+        if (!fileType) return faFileAlt;
+        if (fileType.includes("pdf")) return faFilePdf;
+        if (fileType.includes("word") || fileType.includes("document")) return faFileWord;
+        if (fileType.includes("excel") || fileType.includes("sheet")) return faFileExcel;
+        if (fileType.startsWith("image/")) return faImage;
+        return faFileAlt;
+    };
+
+    const getIconColor = (fileType: string) => {
+        if (!fileType) return "text-gray-500";
+        if (fileType.includes("pdf")) return "text-red-500";
+        if (fileType.includes("word") || fileType.includes("document")) return "text-blue-500";
+        if (fileType.includes("excel") || fileType.includes("sheet")) return "text-green-500";
+        if (fileType.startsWith("image/")) return "text-purple-500";
+        return "text-gray-500";
+    };
+
+    // Helper safely check string
+    const isImage = (type: string) => type && type.startsWith("image/");
+
+    // Filter attachments
+    const images = attachments.filter(att => isImage(att.fileType));
+    const files = attachments.filter(att => !isImage(att.fileType));
+
     return (
-        <>
-            <div className="overflow-x-auto">
-                <table className="table table-zebra">
-                    <thead>
-                        <tr>
-                            <th className="w-12"></th>
-                            <th>ชื่อไฟล์</th>
-                            <th>อัปโหลดโดย</th>
-                            <th>วันที่</th>
-                            <th className="text-right">จัดการ</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {attachments.map((attachment) => (
-                            <tr key={attachment.id}>
-                                <td>
-                                    <FontAwesomeIcon
-                                        icon={getFileIcon(attachment.fileType)}
-                                        className={`h-6 w-6 ${getFileIconColor(attachment.fileType)}`}
-                                    />
-                                </td>
-                                <td>
-                                    <button
-                                        onClick={() => handlePreview(attachment)}
-                                        className="font-medium hover:underline text-left"
-                                    >
-                                        {attachment.fileName}
-                                    </button>
-                                </td>
-                                <td>{getUserName(attachment.uploadedBy)}</td>
-                                <td className="text-sm opacity-70">{formatDate(attachment.uploadedAt)}</td>
-                                <td className="text-right">
-                                    <div className="flex gap-2 justify-end">
-                                        {(attachment.fileType?.startsWith("image/") ||
-                                            attachment.fileType === "application/pdf") && (
-                                                <button
-                                                    onClick={() => handlePreview(attachment)}
-                                                    className="btn btn-sm btn-ghost btn-square"
-                                                    title="ดูตัวอย่าง"
-                                                >
-                                                    <FontAwesomeIcon icon={faEye} />
-                                                </button>
-                                            )}
-                                        <button
-                                            onClick={() => handleDownload(attachment)}
-                                            className="btn btn-sm btn-ghost btn-square"
-                                            title="ดาวน์โหลด"
-                                        >
-                                            <FontAwesomeIcon icon={faDownload} />
-                                        </button>
-                                        {canDelete && (
-                                            <button
-                                                onClick={() => handleDelete(attachment.id)}
-                                                className="btn btn-sm btn-ghost btn-square text-error"
-                                                title="ลบ"
-                                                disabled={deleting === attachment.id}
-                                            >
-                                                {deleting === attachment.id ? (
-                                                    <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
-                                                ) : (
-                                                    <FontAwesomeIcon icon={faTrash} />
-                                                )}
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Preview Modal */}
-            {previewFile && (
-                <div className="modal modal-open">
-                    <div className="modal-box max-w-4xl">
-                        <h3 className="font-bold text-lg mb-4">{previewFile.fileName}</h3>
-
-                        <div className="mb-4">
-                            {previewFile.fileType?.startsWith("image/") ? (
+        <div className="space-y-8">
+            {/* Image Gallery */}
+            {images.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <h4 className="text-sm font-bold opacity-70 mb-3 flex items-center gap-2 border-b pb-2">
+                        <FontAwesomeIcon icon={faImage} className="text-primary" />
+                        รูปภาพแนบ ({images.length})
+                    </h4>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                        {images.map((att) => (
+                            <div key={att.id} className="group relative aspect-square bg-base-200 rounded-xl overflow-hidden border border-base-300 shadow-sm hover:shadow-md transition-all">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={`/api/attachments/${previewFile.id}`}
-                                    alt={previewFile.fileName}
-                                    className="w-full rounded-lg"
+                                    src={att.fileUrl}
+                                    alt={att.fileName}
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-zoom-in"
+                                    onClick={() => window.open(att.fileUrl, '_blank')}
                                 />
-                            ) : previewFile.fileType === "application/pdf" ? (
-                                <iframe
-                                    src={`/api/attachments/${previewFile.id}`}
-                                    className="w-full h-[600px] rounded-lg"
-                                    title={previewFile.fileName}
-                                />
-                            ) : null}
-                        </div>
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                                    <span className="text-white text-xs font-medium border border-white/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                                        <FontAwesomeIcon icon={faSearch} className="mr-1" />
+                                        ดูรูปใหญ่
+                                    </span>
+                                </div>
 
-                        <div className="modal-action">
-                            <button onClick={() => handleDownload(previewFile)} className="btn btn-primary">
-                                <FontAwesomeIcon icon={faDownload} className="mr-2" />
-                                ดาวน์โหลด
-                            </button>
-                            <button onClick={() => setPreviewFile(null)} className="btn">
-                                ปิด
-                            </button>
-                        </div>
+                                {canDelete && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(att.id);
+                                        }}
+                                        className="absolute top-2 right-2 btn btn-circle btn-xs btn-error text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 scale-90 hover:scale-100 shadow-md"
+                                        title="ลบ"
+                                        disabled={deletingId === att.id}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} className="h-3 w-3" />
+                                    </button>
+                                )}
+                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-6">
+                                    <div className="text-white text-[10px] truncate font-medium">
+                                        {att.fileName}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
-                    <div className="modal-backdrop" onClick={() => setPreviewFile(null)} />
                 </div>
             )}
-        </>
+
+            {/* File List */}
+            {files.length > 0 && (
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+                    <h4 className="text-sm font-bold opacity-70 mb-3 flex items-center gap-2 border-b pb-2">
+                        <FontAwesomeIcon icon={faFileAlt} className="text-secondary" />
+                        เอกสารแนบ ({files.length})
+                    </h4>
+                    <div className="flex flex-col gap-2">
+                        {files.map((att) => (
+                            <div key={att.id} className="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-xl hover:border-primary/50 hover:bg-base-50 hover:shadow-sm transition-all group">
+                                <div className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1" onClick={() => window.open(att.fileUrl, '_blank')}>
+                                    <div className={`w-12 h-12 rounded-xl bg-base-200 flex items-center justify-center text-2xl ${getIconColor(att.fileType)} shadow-inner group-hover:scale-105 transition-transform`}>
+                                        <FontAwesomeIcon icon={getFileIcon(att.fileType)} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <div className="font-medium truncate text-sm group-hover:text-primary transition-colors">{att.fileName}</div>
+                                        <div className="text-[11px] opacity-50 flex gap-2 items-center mt-0.5">
+                                            <span className="bg-base-200 px-1.5 py-0.5 rounded text-[10px]">
+                                                {new Date(att.createdAt).toLocaleDateString('th-TH')}
+                                            </span>
+                                            {att.reportId && <span className="text-info/80">• จากรายงาน #{att.reportId}</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1 pl-2">
+                                    <a
+                                        href={att.fileUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="btn btn-ghost btn-sm btn-circle text-base-content/50 hover:text-primary tooltip tooltip-left"
+                                        data-tip="ดาวน์โหลด"
+                                    >
+                                        <FontAwesomeIcon icon={faDownload} />
+                                    </a>
+                                    {canDelete && (
+                                        <button
+                                            onClick={() => handleDelete(att.id)}
+                                            className="btn btn-ghost btn-sm btn-circle text-error/50 hover:text-error hover:bg-error/10 tooltip tooltip-left"
+                                            data-tip="ลบ"
+                                            disabled={deletingId === att.id}
+                                        >
+                                            {deletingId === att.id ? (
+                                                <span className="loading loading-spinner loading-xs"></span>
+                                            ) : (
+                                                <FontAwesomeIcon icon={faTrash} />
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }
