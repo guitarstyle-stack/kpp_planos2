@@ -34,7 +34,15 @@ interface FileListProps {
 export function FileList({ attachments, onDelete, onRefresh, canDelete = false }: FileListProps) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
 
-    // Initial Empty State
+    // Helper to get valid URL
+    const getAttachmentUrl = (att: any) => {
+        // If it's already a full URL, use it (legacy or ext links)
+        if (att.fileUrl && (att.fileUrl.startsWith('http://') || att.fileUrl.startsWith('https://'))) {
+            return att.fileUrl;
+        }
+        // Otherwise use our API proxy
+        return `/api/attachments/${att.id}`;
+    };
     if (!attachments || attachments.length === 0) {
         return (
             <div className="text-center py-12 text-base-content/40 bg-base-50/50 rounded-2xl border-2 border-dashed border-base-200">
@@ -109,10 +117,10 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
-                                    src={att.fileUrl}
+                                    src={getAttachmentUrl(att)}
                                     alt={att.fileName}
                                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-zoom-in"
-                                    onClick={() => window.open(att.fileUrl, '_blank')}
+                                    onClick={() => window.open(getAttachmentUrl(att), '_blank')}
                                 />
 
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 pointer-events-none">
@@ -126,7 +134,7 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
 
                                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-1 z-10">
                                     <button
-                                        onClick={() => window.open(att.fileUrl, '_blank')}
+                                        onClick={() => window.open(getAttachmentUrl(att), '_blank')}
                                         className="btn btn-circle btn-xs btn-neutral bg-black/50 border-none text-white hover:bg-black/70 backdrop-blur-md"
                                         title="ดูรูปภาพ"
                                     >
@@ -172,7 +180,7 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
                             >
                                 <div
                                     className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1"
-                                    onClick={() => window.open(att.fileUrl, '_blank')}
+                                    onClick={() => window.open(getAttachmentUrl(att), '_blank')}
                                 >
                                     <div className={`w-12 h-12 rounded-xl bg-base-50 border border-base-100 flex items-center justify-center text-2xl ${getIconColor(att.fileType)} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                                         <FontAwesomeIcon icon={getFileIcon(att.fileType)} />
@@ -196,7 +204,7 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
                                 </div>
                                 <div className="flex items-center gap-1 pl-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                     <a
-                                        href={att.fileUrl}
+                                        href={getAttachmentUrl(att)}
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="btn btn-ghost btn-sm btn-circle text-base-content/40 hover:text-primary hover:bg-primary/10"
