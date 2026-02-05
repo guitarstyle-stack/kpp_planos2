@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { assignRole, removeRole } from "@/services/userRoleService";
 import { createDepartment } from "@/services/departmentService";
-import { updateUser, updateUserStatus, updateUserDepartment } from "@/services/userService";
+import { updateUser, updateUserStatus, updateUserDepartment, getUsers } from "@/services/userService";
 
 const UserUpdateSchema = z.object({
     name: z.string().min(1, "กรุณาระบุชื่อ"),
@@ -151,5 +151,20 @@ export async function updateDepartmentAction(userId: number, departmentId: numbe
     } catch (error) {
         console.error(error);
         return { message: "Failed to update department" };
+    }
+}
+
+export async function getAdminUsersAction() {
+    try {
+        const users = await getUsers();
+        // Filter only users with ADMIN role
+        const adminUsers = users.filter(user =>
+            user.roles.some((r: any) => r.role.name === "ADMIN")
+        );
+
+        return { success: true, data: adminUsers };
+    } catch (error) {
+        console.error("Error fetching admin users:", error);
+        return { success: false, error: "Failed to fetch admin users" };
     }
 }

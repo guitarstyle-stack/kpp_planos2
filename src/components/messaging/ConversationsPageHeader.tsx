@@ -1,0 +1,43 @@
+"use client";
+
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPlus, faEnvelope } from "@fortawesome/free-solid-svg-icons";
+import { NewConversationModal } from "./NewConversationModal";
+
+interface ConversationsPageHeaderProps {
+    adminUsers: Array<{ id: number; name: string; department: { name: string } }>;
+}
+
+export function ConversationsPageHeader({ adminUsers }: ConversationsPageHeaderProps) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center gap-3">
+                    <FontAwesomeIcon icon={faEnvelope} />
+                    กล่องข้อความ
+                </h1>
+                <p className="text-sm opacity-70">
+                    สนทนาและสอบถามข้อมูลกับผู้ดูแลระบบ
+                </p>
+            </div>
+            <div className="flex gap-3">
+                <button
+                    onClick={() => setIsModalOpen(true)}
+                    className="btn btn-primary gap-2 shadow-lg shadow-primary/20"
+                >
+                    <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
+                    สร้างการสนทนาใหม่
+                </button>
+            </div>
+
+            <NewConversationModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                adminUsers={adminUsers}
+            />
+        </div>
+    );
+}

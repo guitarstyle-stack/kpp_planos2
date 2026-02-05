@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { ConversationStatusBadge } from "./ConversationStatusBadge";
 import Link from "next/link";
+import { markAsReadAction } from "@/actions/conversationActions";
 
 interface Message {
     id: number;
@@ -63,6 +64,21 @@ export function ConversationDetail({ conversation, currentUserId }: Conversation
     useEffect(() => {
         scrollToBottom();
     }, [conversation.messages.length]);
+
+    // Mark messages as read on mount or new messages
+    useEffect(() => {
+        const unreadMessageIds = conversation.messages
+            .filter(msg =>
+                msg.sender.id !== currentUserId &&
+                !msg.readBy.some(r => r.user.id === currentUserId)
+            )
+            .map(msg => msg.id);
+
+        if (unreadMessageIds.length > 0) {
+            markAsReadAction(conversation.id, unreadMessageIds)
+                .catch(err => console.error("Failed to mark messages as read", err));
+        }
+    }, [conversation.messages, conversation.id, currentUserId]);
 
     const formatMessageDate = (date: Date) => {
         return new Date(date).toLocaleString("th-TH", {
