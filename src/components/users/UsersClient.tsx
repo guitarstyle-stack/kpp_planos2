@@ -1,17 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-    faEnvelope,
-    faBuilding,
-    faUserTag,
-    faCheckCircle,
-    faTimesCircle,
     faSearch,
-    faFilter,
 } from "@fortawesome/free-solid-svg-icons";
+import { ResponsiveUsersTable } from "./ResponsiveUsersTable";
 
 interface User {
     id: number;
@@ -145,100 +139,8 @@ export function UsersClient({ users, departments, roles }: UsersClientProps) {
 
             {/* Users Table */}
             <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>ชื่อ-นามสกุล</th>
-                                <th>หน่วยงาน</th>
-                                <th>สิทธิ์</th>
-                                <th>สถานะ</th>
-                                <th>เข้าสู่ระบบล่าสุด</th>
-                                <th><span className="sr-only">จัดการ</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredUsers.map((user: any) => (
-                                <tr key={user.id} className="hover">
-                                    <td className="whitespace-nowrap">
-                                        <div className="flex items-center gap-3">
-                                            <div className="avatar">
-                                                {user.image ? (
-                                                    <div className="w-10 rounded-full">
-                                                        <img src={user.image} alt={user.name} />
-                                                    </div>
-                                                ) : (
-                                                    <div className="avatar placeholder">
-                                                        <div className="bg-neutral text-neutral-content rounded-full w-10">
-                                                            <span className="text-xl">{user.name.charAt(0).toUpperCase()}</span>
-                                                        </div>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold">{user.name}</div>
-                                                <div className="text-xs opacity-50 flex items-center gap-1">
-                                                    <FontAwesomeIcon icon={faEnvelope} className="w-3 h-3" />
-                                                    {user.email || "ไม่มีอีเมล"}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap">
-                                        <div className="flex items-center gap-2">
-                                            <FontAwesomeIcon icon={faBuilding} className="w-4 h-4 opacity-50" />
-                                            <span>{user.department?.name || "ไม่ระบุสังกัด"}</span>
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap">
-                                        <div className="flex flex-wrap gap-1">
-                                            {user.roles.length > 0 ? (
-                                                user.roles.map(({ role }: any) => (
-                                                    <span
-                                                        key={role.id}
-                                                        className="badge badge-info badge-sm"
-                                                    >
-                                                        <FontAwesomeIcon icon={faUserTag} className="mr-1 w-3 h-3" />
-                                                        {role.label || role.name}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="italic opacity-50">ไม่มีสิทธิ์</span>
-                                            )}
-                                        </div>
-                                    </td>
-                                    <td className="whitespace-nowrap">
-                                        {user.isActive ? (
-                                            <span className="badge badge-success badge-sm gap-1">
-                                                <FontAwesomeIcon icon={faCheckCircle} className="w-3 h-3" />
-                                                ใช้งานปกติ
-                                            </span>
-                                        ) : (
-                                            <span className="badge badge-error badge-sm gap-1">
-                                                <FontAwesomeIcon icon={faTimesCircle} className="w-3 h-3" />
-                                                ระงับการใช้งาน
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="whitespace-nowrap opacity-70">
-                                        {user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleDateString("th-TH") : "-"}
-                                    </td>
-                                    <td className="whitespace-nowrap text-right">
-                                        <Link href={`/users/${user.id}/edit`} className="btn btn-link btn-xs no-underline hover:text-primary">
-                                            แก้ไข
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredUsers.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="text-center py-12 opacity-50">
-                                        ไม่พบข้อมูลผู้ใช้งาน
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="p-0 md:p-4">
+                    <ResponsiveUsersTable users={filteredUsers} />
                 </div>
             </div>
         </div>

@@ -1,11 +1,26 @@
 'use client';
 
 import { LoginCard } from "@/components/auth/LoginCard";
+import { useEffect, useState } from "react";
 
 
 export default function Home() {
   // Use the server-side API route to handle the redirect securely
   const loginUrl = '/api/auth/login';
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Generate particles data only on client
+  const particles = mounted ? [...Array(20)].map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    top: `${Math.random() * 100}%`,
+    duration: `${5 + Math.random() * 10}s`,
+    delay: `${Math.random() * 5}s`,
+  })) : [];
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -19,21 +34,23 @@ export default function Home() {
         {/* Grid Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f15_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f15_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
 
-        {/* Floating Particles */}
-        <div className="absolute inset-0">
-          {[...Array(20)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full opacity-30"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animation: `float ${5 + Math.random() * 10}s linear infinite`,
-                animationDelay: `${Math.random() * 5}s`,
-              }}
-            ></div>
-          ))}
-        </div>
+        {/* Floating Particles - Client-side only */}
+        {mounted && (
+          <div className="absolute inset-0" suppressHydrationWarning>
+            {particles.map((particle) => (
+              <div
+                key={particle.id}
+                className="absolute w-1 h-1 bg-white rounded-full opacity-30"
+                style={{
+                  left: particle.left,
+                  top: particle.top,
+                  animation: `float ${particle.duration} linear infinite`,
+                  animationDelay: particle.delay,
+                }}
+              ></div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Content */}

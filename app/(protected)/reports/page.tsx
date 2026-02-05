@@ -1,16 +1,10 @@
 import Link from "next/link";
-import { getReports, ReportWithDetails } from "@/services/reportService";
+import { getReports } from "@/services/reportService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEye, faFileAlt, faEdit } from "@fortawesome/free-solid-svg-icons";
-
-const periodLabels: Record<string, string> = {
-    MID_6M: "รอบ 6 เดือน",
-    MID_9M: "รอบ 9 เดือน",
-    FULL_12M: "รอบ 12 เดือน",
-};
-
+import { faPlus, faFileAlt } from "@fortawesome/free-solid-svg-icons";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
+import { ReportsListClient } from "@/components/reports/ReportsListClient";
 
 export default async function ReportsPage() {
     const user = await getCurrentUser();
@@ -19,7 +13,7 @@ export default async function ReportsPage() {
     // If not admin, filter by user's department
     const departmentId = !isAdmin && user?.departmentId ? user.departmentId : undefined;
 
-    const reports = await getReports(departmentId) as ReportWithDetails[];
+    const reports = await getReports(departmentId);
 
     return (
         <div className="space-y-6">
@@ -50,81 +44,15 @@ export default async function ReportsPage() {
                 </div>
             </div>
 
-            {/* Reports Table */}
+            {/* Reports List */}
             <div className="card bg-base-100 shadow-sm border border-base-300">
-                <div className="overflow-x-auto">
-                    <table className="table table-zebra w-full">
-                        <thead>
-                            <tr>
-                                <th>โครงการ</th>
-                                <th>ปีงบประมาณ</th>
-                                <th>รอบรายงาน</th>
-                                <th>ความก้าวหน้า</th>
-                                <th>ผู้จัดทำ</th>
-                                <th>วันที่สร้าง</th>
-                                <th><span className="sr-only">ดู</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {reports.map((report: ReportWithDetails) => (
-                                <tr key={report.id} className="hover">
-                                    <td className="font-medium">
-                                        <div>
-                                            <div className="font-bold truncate max-w-[250px]" title={report.project.name}>{report.project.name}</div>
-                                            <div className="text-xs opacity-50">{report.project.code}</div>
-                                        </div>
-                                    </td>
-                                    <td>{report.fiscalYear}</td>
-                                    <td>
-                                        <span className="badge badge-outline whitespace-nowrap min-w-max h-auto py-1">
-                                            {periodLabels[report.periodType] || report.periodType}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div className="flex items-center gap-2">
-                                            <progress
-                                                className="progress progress-primary w-20"
-                                                value={report.overallProgressPercent || 0}
-                                                max="100"
-                                            />
-                                            <span className="text-sm">{report.overallProgressPercent || 0}%</span>
-                                        </div>
-                                    </td>
-                                    <td>{report.createdBy.name}</td>
-                                    <td className="opacity-70">
-                                        {new Date(report.createdAt).toLocaleDateString("th-TH")}
-                                    </td>
-                                    <td>
-                                        <div className="flex gap-2">
-                                            <Link
-                                                href={`/reports/${report.id}`}
-                                                className="btn btn-ghost btn-sm gap-1"
-                                            >
-                                                <FontAwesomeIcon icon={faEye} className="h-4 w-4" />
-                                                ดู
-                                            </Link>
-                                            {(isAdmin || (user && (user.id === report.project.ownerUserId || user.departmentId === report.project.departmentId))) && (
-                                                <Link
-                                                    href={`/reports/${report.id}/edit`}
-                                                    className="btn btn-ghost btn-sm gap-1 text-primary"
-                                                >
-                                                    <FontAwesomeIcon icon={faEdit} className="h-4 w-4" />
-                                                    แก้ไข
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {reports.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="text-center py-12 opacity-50">
-                                        ยังไม่มีรายงาน
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="p-0 md:p-4">
+                    <ReportsListClient
+                        reports={reports}
+                        isAdmin={isAdmin}
+                        userId={user?.id}
+                        userDepartmentId={user?.departmentId}
+                    />
                 </div>
             </div>
         </div>
