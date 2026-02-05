@@ -8,13 +8,13 @@ import { ConversationPriority } from "@/services/conversationService";
 interface NewConversationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    adminUsers?: Array<{ id: number; name: string; department: { name: string } }>;
+    availableUsers?: Array<{ id: number; name: string; department: { name: string } }>;
 }
 
 export function NewConversationModal({
     isOpen,
     onClose,
-    adminUsers = [],
+    availableUsers = [],
 }: NewConversationModalProps) {
     const router = useRouter();
     const [title, setTitle] = useState("");
@@ -141,15 +141,15 @@ export function NewConversationModal({
                     </div>
 
                     {/* Participants (Admin selection) */}
-                    {adminUsers.length > 0 && (
+                    {availableUsers.length > 0 && (
                         <div className="form-control">
                             <label className="label">
                                 <span className="label-text">
-                                    เพิ่มผู้ดูแลระบบเข้าร่วม (ไม่บังคับ)
+                                    เพิ่มผู้เข้าร่วม (ไม่บังคับ)
                                 </span>
                             </label>
                             <div className="border border-base-300 rounded-lg max-h-40 overflow-y-auto">
-                                {adminUsers.map((user) => (
+                                {availableUsers.map((user) => (
                                     <label
                                         key={user.id}
                                         className="flex items-center gap-3 px-4 py-2 hover:bg-base-200 cursor-pointer"

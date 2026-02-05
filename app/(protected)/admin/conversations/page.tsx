@@ -7,6 +7,8 @@ import {
     getConversationStatsAction,
 } from "@/actions/conversationActions";
 import { ConversationList } from "@/components/messaging/ConversationList";
+import { AdminConversationListActions } from "@/components/messaging/AdminConversationListActions";
+import { getUsers } from "@/services/userService";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +32,7 @@ export default async function AdminConversationsPage({
     const status = params.status as any;
     const priority = params.priority as any;
 
-    const [conversationsResult, statsResult] = await Promise.all([
+    const [conversationsResult, statsResult, users] = await Promise.all([
         getAllConversationsAction({
             status,
             priority,
@@ -38,6 +40,7 @@ export default async function AdminConversationsPage({
             limit: 20,
         }),
         getConversationStatsAction(),
+        getUsers(),
     ]);
 
     if (!conversationsResult.success || !conversationsResult.data) {
@@ -55,13 +58,16 @@ export default async function AdminConversationsPage({
 
     return (
         <div className="p-6">
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">
-                    จัดการข้อความ (ผู้ดูแลระบบ)
-                </h1>
-                <p className="text-gray-600 mt-1">
-                    ดูและจัดการการสนทนาทั้งหมดในระบบ
-                </p>
+            <div className="mb-6 flex justify-between items-start">
+                <div>
+                    <h1 className="text-3xl font-bold text-gray-900">
+                        จัดการข้อความ (ผู้ดูแลระบบ)
+                    </h1>
+                    <p className="text-gray-600 mt-1">
+                        ดูและจัดการการสนทนาทั้งหมดในระบบ
+                    </p>
+                </div>
+                <AdminConversationListActions availableUsers={users} />
             </div>
 
             {/* Statistics */}

@@ -36,7 +36,7 @@ export function ConversationsPageHeader({ adminUsers }: ConversationsPageHeaderP
             <NewConversationModal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                adminUsers={adminUsers}
+                availableUsers={adminUsers}
             />
         </div>
     );

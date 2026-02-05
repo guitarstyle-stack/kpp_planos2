@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getConversationAction } from "@/actions/conversationActions";
+import { isAdmin } from "@/lib/rbac";
 import { ConversationDetail } from "@/components/messaging/ConversationDetail";
 import { MessageForm } from "@/components/messaging/MessageForm";
 import Link from "next/link";
@@ -22,6 +23,7 @@ export default async function ConversationPage({ params }: ConversationPageProps
 
     const { id } = await params;
     const conversationId = parseInt(id);
+    const admin = await isAdmin();
 
     // Fetch conversation
     const result = await getConversationAction(conversationId);
@@ -56,6 +58,7 @@ export default async function ConversationPage({ params }: ConversationPageProps
                 <ConversationDetail
                     conversation={conversation}
                     currentUserId={session.user.id}
+                    isAdmin={admin}
                 />
             </Suspense>
 

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { ConversationStatusBadge } from "./ConversationStatusBadge";
 import Link from "next/link";
 import { markAsReadAction } from "@/actions/conversationActions";
+import { AdminConversationControls } from "./AdminConversationControls";
 
 interface Message {
     id: number;
@@ -52,9 +53,10 @@ interface ConversationDetailProps {
         messages: Message[];
     };
     currentUserId: number;
+    isAdmin?: boolean;
 }
 
-export function ConversationDetail({ conversation, currentUserId }: ConversationDetailProps) {
+export function ConversationDetail({ conversation, currentUserId, isAdmin = false }: ConversationDetailProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -116,6 +118,19 @@ export function ConversationDetail({ conversation, currentUserId }: Conversation
 
     return (
         <div className="space-y-4">
+            {/* Admin Controls */}
+            {isAdmin && (
+                <AdminConversationControls
+                    conversationId={conversation.id}
+                    currentStatus={conversation.status as any}
+                    currentTitle={conversation.title}
+                    currentPriority={conversation.priority as any}
+                    onStatusChanged={() => {
+                        // Optional: Refresh logic if needed, but actions usually revalidate path
+                    }}
+                />
+            )}
+
             {/* Header */}
             <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="card-body">
