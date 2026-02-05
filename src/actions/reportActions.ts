@@ -24,6 +24,8 @@ const ReportSchema = z.object({
     kpiAchievedCount: z.coerce.number().min(0).optional(),
     kpiTotalCount: z.coerce.number().min(0).optional(),
     kpiAchievementPercent: z.coerce.number().min(0).optional(),
+
+    newAttachmentIds: z.string().optional(), // JSON string of IDs
 });
 
 export async function createReportAction(prevState: any, formData: FormData) {
@@ -99,7 +101,19 @@ export async function createReportAction(prevState: any, formData: FormData) {
                 });
             }
 
+            // Link Attachments
+            if (validatedData.newAttachmentIds) {
+                const attachmentIds = JSON.parse(validatedData.newAttachmentIds) as number[];
+                if (attachmentIds.length > 0) {
+                    await tx.projectAttachment.updateMany({
+                        where: { id: { in: attachmentIds } },
+                        data: { reportId: report.id }
+                    });
+                }
+            }
+
             // Update project with latest report data
+
             const project = await tx.project.findUnique({
                 where: { id: validatedData.projectId },
                 select: { budgetTotal: true },
@@ -219,8 +233,20 @@ export async function updateReportAction(id: number, formData: FormData) {
                 });
             }
 
-            // 3. Sync Project Status (Only if this is the latest report)
+            // 3. Link New Attachments
+            if (validatedData.newAttachmentIds) {
+                const attachmentIds = JSON.parse(validatedData.newAttachmentIds) as number[];
+                if (attachmentIds.length > 0) {
+                    await tx.projectAttachment.updateMany({
+                        where: { id: { in: attachmentIds } },
+                        data: { reportId: id }
+                    });
+                }
+            }
+
+            // 4. Sync Project Status (Only if this is the latest report)
             // Find the latest report for this project
+
             const latestReport = await tx.report.findFirst({
                 where: { projectId: Number(validatedData.projectId) },
                 orderBy: { createdAt: 'desc' },

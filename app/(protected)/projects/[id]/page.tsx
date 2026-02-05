@@ -348,7 +348,7 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                             <h3 className="card-title text-base mb-4">ไฟล์แนบโครงการ</h3>
                             <AttachmentManager
                                 projectId={project.id}
-                                canUpload={canDelete}
+                                canUpload={false} // Upload only in Report page as requested
                                 canDelete={canDelete}
                             />
                         </div>

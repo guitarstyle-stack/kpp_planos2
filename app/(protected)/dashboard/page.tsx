@@ -5,7 +5,7 @@ import { getDevelopmentIssues } from "@/services/developmentPlanService";
 import db from "@/lib/db";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFolder, faChartLine, faMoneyBillTrendUp, faClock, faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart } from "@/components/dashboard/Charts";
+import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart, KPIChart } from "@/components/dashboard/Charts";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
@@ -126,6 +126,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                         <ProgressDistributionChart distribution={stats.progressDistribution} />
                     </div>
                 </div>
+
+                {/* KPI Chart */}
+                <div className="card bg-base-100 shadow-sm border border-base-300">
+                    <div className="card-body">
+                        <h3 className="card-title text-base mb-4">ผลการดำเนินงานตัวชี้วัด (KPI)</h3>
+                        <KPIChart stats={stats.kpiStats} />
+                    </div>
+                </div>
+
                 <div className="card bg-base-100 shadow-sm border border-base-300 lg:col-span-2">
                     <div className="card-body">
                         <h3 className="card-title text-base mb-4">โครงการแยกตามหน่วยงาน</h3>
@@ -165,10 +174,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                                     </td>
                                     <td>
                                         <span className={`badge badge-sm ${project.status === "NOT_STARTED" ? "badge-ghost" :
-                                                project.status === "IN_PROGRESS" ? "badge-info" :
-                                                    project.status === "COMPLETED" ? "badge-success" :
-                                                        project.status === "CANCELLED" ? "badge-error" :
-                                                            "badge-info"
+                                            project.status === "IN_PROGRESS" ? "badge-info" :
+                                                project.status === "COMPLETED" ? "badge-success" :
+                                                    project.status === "CANCELLED" ? "badge-error" :
+                                                        "badge-info"
                                             }`}>
                                             {project.status === "NOT_STARTED" ? "ยังไม่เริ่ม" :
                                                 project.status === "IN_PROGRESS" ? "กำลังดำเนินการ" :

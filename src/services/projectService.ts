@@ -172,6 +172,17 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
             departmentId: true,
             department: { select: { name: true } },
             fiscalYear: true,
+            indicators: {
+                select: {
+                    id: true,
+                    targetValue: true,
+                    reportResults: {
+                        select: {
+                            actualValue: true,
+                        },
+                    },
+                },
+            },
         },
     });
 
@@ -208,6 +219,7 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         const year = p.fiscalYear.toString();
         yearlyCounts[year] = (yearlyCounts[year] || 0) + 1;
     });
+
     // Aggregations for Budget and Progress
     const budgetByDepartment: Record<string, { total: number; spent: number }> = {};
     const progressDistribution = {
@@ -216,6 +228,11 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         "51-75%": 0,
         "76-100%": 0,
     };
+
+    // KPI Stats Aggregation
+    let totalIndicators = 0;
+    let achievedIndicators = 0;
+    let totalAchievementPercent = 0;
 
     projects.forEach(p => {
         // Budget by Department
@@ -232,7 +249,31 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         else if (progress <= 50) progressDistribution["26-50%"]++;
         else if (progress <= 75) progressDistribution["51-75%"]++;
         else progressDistribution["76-100%"]++;
+
+        // KPI Stats
+        if (p.indicators && p.indicators.length > 0) {
+            p.indicators.forEach(ind => {
+                totalIndicators++;
+                const totalActual = ind.reportResults.reduce((sum, r) => sum + (r.actualValue || 0), 0);
+                const target = ind.targetValue || 0;
+
+                if (target > 0) {
+                    const percent = (totalActual / target) * 100;
+                    totalAchievementPercent += Math.min(percent, 100); // Cap at 100 for average calculation to avoid skew? Or not? Let's cap for "Overall Health"
+
+                    if (totalActual >= target) {
+                        achievedIndicators++;
+                    }
+                }
+            });
+        }
     });
+
+    const kpiStats = {
+        totalIndicators,
+        achievedIndicators,
+        avgAchievement: totalIndicators > 0 ? Math.round(totalAchievementPercent / totalIndicators) : 0,
+    };
 
     return {
         totalProjects,
@@ -244,7 +285,8 @@ export async function getProjectStats(filters: ProjectStatsFilters = {}) {
         yearlyCounts,
         budgetByDepartment,
         progressDistribution,
-        pendingReports: statusCounts.IN_PROGRESS, // Projects in progress need updates
+        pendingReports: statusCounts.IN_PROGRESS,
+        kpiStats,
     };
 }
 

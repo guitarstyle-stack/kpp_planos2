@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
+import { FileUpload } from "@/components/attachments/FileUpload";
+
 
 interface Project {
     id: number;
@@ -100,7 +102,11 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
         }), {}) || {}
     );
 
+    // New attachments state
+    const [newAttachments, setNewAttachments] = useState<any[]>([]);
+
     const isEdit = !!initialData?.id;
+
 
     // Trigger auto-calculation on project change
     function handleProjectChange(e: React.ChangeEvent<HTMLSelectElement>) {
@@ -199,7 +205,13 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
         formData.append("kpiTotalCount", kpiTotal.toString());
         formData.append("kpiAchievementPercent", kpiPercent.toString());
 
+        // Append new attachment IDs
+        if (newAttachments.length > 0) {
+            formData.append("newAttachmentIds", JSON.stringify(newAttachments.map(a => a.id)));
+        }
+
         try {
+
             const { createReportAction, updateReportAction } = await import("@/actions/reportActions");
 
             if (isEdit && initialData?.id) {
@@ -524,7 +536,32 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                 </div>
             </div>
 
+            {/* Attachments Section */}
+            {selectedProject && (
+                <div className="card bg-base-100 shadow-sm border border-base-300">
+                    <div className="card-body">
+                        <h2 className="card-title border-b border-base-200 pb-4">
+                            เอกสารแนบ / รูปภาพประกอบ
+                        </h2>
+
+                        <div className="mt-4">
+                            <FileUpload
+                                projectId={selectedProject.id}
+                                reportId={initialData?.id} // Only if editing
+                                onUploadSuccess={(att) => setNewAttachments(prev => [...prev, att])}
+                            />
+
+                            <NewAttachmentsList
+                                attachments={newAttachments}
+                                onRemove={(id) => setNewAttachments(prev => prev.filter(a => a.id !== id))}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Actions */}
+
             <div className="flex justify-between w-full">
                 {isEdit && initialData?.id && (
                     <button
@@ -577,5 +614,37 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                 </div>
             </div>
         </form>
+    );
+}
+
+function NewAttachmentsList({ attachments, onRemove }: { attachments: any[], onRemove: (id: number) => void }) {
+    if (attachments.length === 0) return null;
+
+    return (
+        <div className="space-y-2 mt-4">
+            <h4 className="font-semibold text-sm">ไฟล์ที่อัปโหลดแล้ว ({attachments.length})</h4>
+            <div className="grid gap-2">
+                {attachments.map((att) => (
+                    <div key={att.id} className="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-lg">
+                        <div className="flex items-center gap-3 overflow-hidden">
+                            <div className="w-8 h-8 rounded bg-base-200 flex items-center justify-center flex-shrink-0 text-xs font-bold text-base-content/50 uppercase">
+                                {att.fileType ? att.fileType.split('/')[1] || 'FILE' : 'FILE'}
+                            </div>
+                            <div className="min-w-0">
+                                <div className="text-sm font-medium truncate">{att.fileName}</div>
+                                <div className="text-xs opacity-50">พร้อมบันทึก</div>
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => onRemove(att.id)}
+                            className="btn btn-ghost btn-xs text-error"
+                        >
+                            <FontAwesomeIcon icon={faTimes} />
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }

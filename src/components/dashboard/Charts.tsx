@@ -200,3 +200,45 @@ export function ProgressDistributionChart({ distribution }: ProgressDistribution
         </div>
     );
 }
+
+export interface KPIChartProps {
+    stats: {
+        totalIndicators: number;
+        achievedIndicators: number;
+        avgAchievement: number;
+    };
+}
+
+export function KPIChart({ stats }: KPIChartProps) {
+    if (stats.totalIndicators === 0) return <div className="text-center text-base-content/50 py-8">ไม่มีข้อมูลตัวชี้วัด</div>;
+
+    const achievedPercent = Math.round((stats.achievedIndicators / stats.totalIndicators) * 100);
+
+    return (
+        <div className="flex flex-col items-center justify-center py-4 space-y-6">
+            {/* Circular Progress for Average Achievement */}
+            <div className="relative">
+                <div className="radial-progress text-primary" style={{ "--value": stats.avgAchievement, "--size": "8rem", "--thickness": "0.75rem" } as any} role="progressbar">
+                    <span className="text-2xl font-bold">{stats.avgAchievement}%</span>
+                </div>
+                <div className="text-center text-sm font-medium mt-2">ความสำเร็จเฉลี่ย</div>
+            </div>
+
+            {/* Bar for Count */}
+            <div className="w-full space-y-2">
+                <div className="flex justify-between text-sm">
+                    <span>ต้วชี้วัดที่บรรลุเป้า</span>
+                    <span className="font-bold">{stats.achievedIndicators} / {stats.totalIndicators}</span>
+                </div>
+                <div className="w-full bg-base-200 rounded-full h-4 relative overflow-hidden">
+                    <div
+                        className="bg-success h-full rounded-full transition-all duration-500 flex items-center justify-end px-2"
+                        style={{ width: `${achievedPercent}%` }}
+                    >
+                        {achievedPercent > 10 && <span className="text-[10px] text-white font-bold">{achievedPercent}%</span>}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
