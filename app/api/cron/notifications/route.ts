@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { processDueSchedules } from "@/services/notificationService";
-
+// test
 export const dynamic = "force-dynamic"; // static by default, unless reading the request
 
 export async function GET(request: NextRequest) {
