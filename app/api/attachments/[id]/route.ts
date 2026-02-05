@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { getAttachmentById, deleteAttachment } from "@/services/attachmentService";
-import { getFileStream, deleteFile as deleteDriveFile, getFile } from "@/services/googleDriveService";
+import { deleteFile as deleteDriveFile, getFile, getFileStream } from "@/services/supabaseStorageService";
 import { hasRole } from "@/services/userRoleService";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
                     fileStream.on("end", () => {
                         controller.close();
                     });
-                    fileStream.on("error", (err) => {
+                    fileStream.on("error", (err: any) => {
                         console.error("Stream error:", err);
                         controller.error(err);
                     });

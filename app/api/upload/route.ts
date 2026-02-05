@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { uploadFile, validateFile } from "@/services/googleDriveService";
+import { uploadFile, validateFile } from "@/services/supabaseStorageService";
 import { createAttachment } from "@/services/attachmentService";
 import formidable from "formidable";
 import { Readable } from "stream";
