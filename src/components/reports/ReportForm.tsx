@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/attachments/FileUpload";
+import { AttachmentManager } from "@/components/attachments/AttachmentManager";
 
 
 interface Project {
@@ -545,16 +546,27 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                         </h2>
 
                         <div className="mt-4">
-                            <FileUpload
-                                projectId={selectedProject.id}
-                                reportId={initialData?.id} // Only if editing
-                                onUploadSuccess={(att) => setNewAttachments(prev => [...prev, att])}
-                            />
+                            {isEdit && initialData?.id ? (
+                                <AttachmentManager
+                                    projectId={selectedProject.id}
+                                    reportId={initialData.id}
+                                    canUpload={true}
+                                    canDelete={true}
+                                />
+                            ) : (
+                                <>
+                                    <FileUpload
+                                        projectId={selectedProject.id}
+                                        // reportId is undefined in create mode
+                                        onUploadSuccess={(att) => setNewAttachments(prev => [...prev, att])}
+                                    />
 
-                            <NewAttachmentsList
-                                attachments={newAttachments}
-                                onRemove={(id) => setNewAttachments(prev => prev.filter(a => a.id !== id))}
-                            />
+                                    <NewAttachmentsList
+                                        attachments={newAttachments}
+                                        onRemove={(id) => setNewAttachments(prev => prev.filter(a => a.id !== id))}
+                                    />
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

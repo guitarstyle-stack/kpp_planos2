@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { AttachmentManager } from "@/components/attachments/AttachmentManager";
 import { getReportById } from "@/services/reportService";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
@@ -218,6 +219,21 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                                     {r.resolutionPlan || <span className="italic opacity-50">ไม่มีข้อมูล</span>}
                                 </p>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* Attachments Section */}
+                    <div className="card bg-base-100 shadow-sm border border-base-300">
+                        <div className="card-body">
+                            <div className="border-b border-base-200 pb-4 mb-4">
+                                <h2 className="card-title text-lg">เอกสารแนบ</h2>
+                            </div>
+                            <AttachmentManager
+                                projectId={r.projectId}
+                                reportId={r.id}
+                                canUpload={false}
+                                canDelete={false}
+                            />
                         </div>
                     </div>
                 </div>
