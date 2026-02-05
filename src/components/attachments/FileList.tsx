@@ -37,8 +37,8 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
     // Initial Empty State
     if (!attachments || attachments.length === 0) {
         return (
-            <div className="text-center py-8 text-base-content/50 bg-base-50 rounded-lg border border-base-200">
-                ไม่มีไฟล์แนบ
+            <div className="text-center py-12 text-base-content/40 bg-base-50/50 rounded-2xl border-2 border-dashed border-base-200">
+                <p>ไม่มีไฟล์แนบในโครงการนี้</p>
             </div>
         );
     }
@@ -89,48 +89,63 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
     const files = attachments.filter(att => !isImage(att.fileType));
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-10">
             {/* Image Gallery */}
             {images.length > 0 && (
-                <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
-                    <h4 className="text-sm font-bold opacity-70 mb-3 flex items-center gap-2 border-b pb-2">
-                        <FontAwesomeIcon icon={faImage} className="text-primary" />
-                        รูปภาพแนบ ({images.length})
-                    </h4>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        {images.map((att) => (
-                            <div key={att.id} className="group relative aspect-square bg-base-200 rounded-xl overflow-hidden border border-base-300 shadow-sm hover:shadow-md transition-all">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 ease-out">
+                    <div className="flex items-center justify-between mb-4 border-b border-base-200 pb-3">
+                        <h4 className="text-sm font-bold opacity-80 uppercase tracking-wider flex items-center gap-2 text-primary">
+                            <FontAwesomeIcon icon={faImage} />
+                            รูปภาพ ({images.length})
+                        </h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {images.map((att, index) => (
+                            <div
+                                key={att.id}
+                                className="group relative aspect-square bg-base-100 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-primary/10 transition-all duration-500 border border-base-200"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
                                     src={att.fileUrl}
                                     alt={att.fileName}
-                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 cursor-zoom-in"
+                                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-zoom-in"
                                     onClick={() => window.open(att.fileUrl, '_blank')}
                                 />
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                                    <span className="text-white text-xs font-medium border border-white/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                                        <FontAwesomeIcon icon={faSearch} className="mr-1" />
-                                        ดูรูปใหญ่
-                                    </span>
+
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-3 pointer-events-none">
+                                    <p className="text-white text-xs font-medium truncate translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                                        {att.fileName}
+                                    </p>
+                                    <p className="text-white/70 text-[10px] translate-y-2 group-hover:translate-y-0 transition-transform duration-300 delay-75">
+                                        {new Date(att.createdAt).toLocaleDateString('th-TH')}
+                                    </p>
                                 </div>
 
-                                {canDelete && (
+                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-1 z-10">
                                     <button
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDelete(att.id);
-                                        }}
-                                        className="absolute top-2 right-2 btn btn-circle btn-xs btn-error text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 scale-90 hover:scale-100 shadow-md"
-                                        title="ลบ"
-                                        disabled={deletingId === att.id}
+                                        onClick={() => window.open(att.fileUrl, '_blank')}
+                                        className="btn btn-circle btn-xs btn-neutral bg-black/50 border-none text-white hover:bg-black/70 backdrop-blur-md"
+                                        title="ดูรูปภาพ"
                                     >
-                                        <FontAwesomeIcon icon={faTrash} className="h-3 w-3" />
+                                        <FontAwesomeIcon icon={faSearch} className="h-3 w-3" />
                                     </button>
-                                )}
-                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 pt-6">
-                                    <div className="text-white text-[10px] truncate font-medium">
-                                        {att.fileName}
-                                    </div>
+
+                                    {canDelete && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleDelete(att.id);
+                                            }}
+                                            className="btn btn-circle btn-xs btn-error text-white shadow-lg"
+                                            title="ลบ"
+                                            disabled={deletingId === att.id}
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} className="h-3 w-3" />
+                                        </button>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -140,43 +155,60 @@ export function FileList({ attachments, onDelete, onRefresh, canDelete = false }
 
             {/* File List */}
             {files.length > 0 && (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-                    <h4 className="text-sm font-bold opacity-70 mb-3 flex items-center gap-2 border-b pb-2">
-                        <FontAwesomeIcon icon={faFileAlt} className="text-secondary" />
-                        เอกสารแนบ ({files.length})
-                    </h4>
-                    <div className="flex flex-col gap-2">
-                        {files.map((att) => (
-                            <div key={att.id} className="flex items-center justify-between p-3 bg-base-100 border border-base-200 rounded-xl hover:border-primary/50 hover:bg-base-50 hover:shadow-sm transition-all group">
-                                <div className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1" onClick={() => window.open(att.fileUrl, '_blank')}>
-                                    <div className={`w-12 h-12 rounded-xl bg-base-200 flex items-center justify-center text-2xl ${getIconColor(att.fileType)} shadow-inner group-hover:scale-105 transition-transform`}>
+                <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-150 ease-out">
+                    <div className="flex items-center justify-between mb-4 border-b border-base-200 pb-3">
+                        <h4 className="text-sm font-bold opacity-80 uppercase tracking-wider flex items-center gap-2 text-secondary">
+                            <FontAwesomeIcon icon={faFileAlt} />
+                            เอกสาร ({files.length})
+                        </h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {files.map((att, index) => (
+                            <div
+                                key={att.id}
+                                className="flex items-center p-3 bg-base-100 border border-base-200 rounded-2xl hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300 group hover:-translate-y-0.5"
+                                style={{ animationDelay: `${index * 50}ms` }}
+                            >
+                                <div
+                                    className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1"
+                                    onClick={() => window.open(att.fileUrl, '_blank')}
+                                >
+                                    <div className={`w-12 h-12 rounded-xl bg-base-50 border border-base-100 flex items-center justify-center text-2xl ${getIconColor(att.fileType)} group-hover:scale-110 transition-transform duration-300 shadow-sm`}>
                                         <FontAwesomeIcon icon={getFileIcon(att.fileType)} />
                                     </div>
                                     <div className="min-w-0 flex-1">
-                                        <div className="font-medium truncate text-sm group-hover:text-primary transition-colors">{att.fileName}</div>
-                                        <div className="text-[11px] opacity-50 flex gap-2 items-center mt-0.5">
-                                            <span className="bg-base-200 px-1.5 py-0.5 rounded text-[10px]">
+                                        <div className="font-semibold truncate text-sm text-base-content group-hover:text-primary transition-colors">
+                                            {att.fileName}
+                                        </div>
+                                        <div className="text-[11px] text-base-content/50 flex flex-wrap gap-2 items-center mt-1">
+                                            <span className="bg-base-200/50 px-2 py-0.5 rounded-full">
                                                 {new Date(att.createdAt).toLocaleDateString('th-TH')}
                                             </span>
-                                            {att.reportId && <span className="text-info/80">• จากรายงาน #{att.reportId}</span>}
+                                            {att.reportId && (
+                                                <span className="text-info/80 flex items-center gap-1">
+                                                    <span className="w-1 h-1 rounded-full bg-info"></span>
+                                                    รายงาน #{att.reportId}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1 pl-2">
+                                <div className="flex items-center gap-1 pl-2 opacity-80 group-hover:opacity-100 transition-opacity">
                                     <a
                                         href={att.fileUrl}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="btn btn-ghost btn-sm btn-circle text-base-content/50 hover:text-primary tooltip tooltip-left"
-                                        data-tip="ดาวน์โหลด"
+                                        className="btn btn-ghost btn-sm btn-circle text-base-content/40 hover:text-primary hover:bg-primary/10"
+                                        title="ดาวน์โหลด"
                                     >
                                         <FontAwesomeIcon icon={faDownload} />
                                     </a>
                                     {canDelete && (
                                         <button
                                             onClick={() => handleDelete(att.id)}
-                                            className="btn btn-ghost btn-sm btn-circle text-error/50 hover:text-error hover:bg-error/10 tooltip tooltip-left"
-                                            data-tip="ลบ"
+                                            className="btn btn-ghost btn-sm btn-circle text-error/40 hover:text-error hover:bg-error/10"
+                                            title="ลบ"
                                             disabled={deletingId === att.id}
                                         >
                                             {deletingId === att.id ? (
