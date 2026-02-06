@@ -189,7 +189,7 @@ export function ConversationDetail({ conversation, currentUserId, isAdmin = fals
             </div>
 
             {/* Messages */}
-            <div className="card bg-base-100 shadow-sm border border-base-200 max-h-[600px] overflow-y-auto">
+            <div className="card bg-base-100 shadow-sm border border-base-200 max-h-[50vh] lg:max-h-[600px] overflow-y-auto mb-20 lg:mb-0">
                 <div className="card-body space-y-4">
                     {conversation.messages.length === 0 ? (
                         <div className="text-center opacity-50 py-8">

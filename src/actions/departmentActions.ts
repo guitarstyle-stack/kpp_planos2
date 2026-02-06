@@ -45,7 +45,12 @@ export async function createDepartmentAction(prevState: any, formData: FormData)
         }
 
         await db.department.create({
-            data: validatedData as any,
+            data: {
+                name: validatedData.name,
+                code: validatedData.code!,
+                typeId: validatedData.typeId || null,
+                isActive: validatedData.isActive || false,
+            },
         });
 
         revalidatePath("/settings/departments");
@@ -68,7 +73,12 @@ export async function updateDepartmentAction(id: number, formData: FormData) {
 
         await db.department.update({
             where: { id },
-            data: validatedData as any,
+            data: {
+                name: validatedData.name,
+                code: validatedData.code,
+                typeId: validatedData.typeId || null,
+                isActive: validatedData.isActive || false,
+            },
         });
 
         revalidatePath("/settings/departments");

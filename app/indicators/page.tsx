@@ -26,10 +26,15 @@ export default async function IndicatorsPage() {
         );
     }
 
-    const data = indicatorsResult.data;
-    const indicators = data?.indicators || [];
-    const total = data?.total || 0;
-    const stats = statsResult.data || { total: 0, achieved: 0, notAchieved: 0, noData: 0, achievementRate: 0 };
+    const indicators = (indicatorsResult.success && 'data' in indicatorsResult && indicatorsResult.data)
+        ? indicatorsResult.data.indicators
+        : [];
+    const total = (indicatorsResult.success && 'data' in indicatorsResult && indicatorsResult.data)
+        ? indicatorsResult.data.total
+        : 0;
+    const stats = (statsResult.success && 'data' in statsResult && statsResult.data)
+        ? statsResult.data
+        : { total: 0, achieved: 0, notAchieved: 0, noData: 0, achievementRate: 0 };
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">

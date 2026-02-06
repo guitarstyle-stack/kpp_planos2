@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
 import { getIndicatorAction, getIndicatorTrendAction, calculateIndicatorProgressAction } from "@/actions/indicatorActions";
+import { cssVars } from "@/lib/utils";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faArrowLeft,
@@ -39,13 +40,14 @@ export default async function IndicatorDetailPage({ params }: IndicatorDetailPag
         calculateIndicatorProgressAction(indicatorId),
     ]);
 
-    if (!indicatorResult.success || !indicatorResult.data) {
+    if (!indicatorResult.success || !('data' in indicatorResult) || !indicatorResult.data) {
         notFound();
     }
 
     const indicator = indicatorResult.data;
-    const trend = trendResult.success && trendResult.data ? trendResult.data : [];
-    const progress = progressResult.success ? progressResult.data : null;
+    const trendData = (trendResult.success && 'data' in trendResult) ? trendResult.data : [];
+    const trend = Array.isArray(trendData) ? trendData : [];
+    const progress = (progressResult.success && 'data' in progressResult) ? progressResult.data : null;
 
     // Prepare chart data
     const chartData = Array.isArray(trend) ? trend.map((result: any) => ({
@@ -168,7 +170,7 @@ export default async function IndicatorDetailPage({ params }: IndicatorDetailPag
                 {progress && progress.percentage !== undefined && (
                     <div className="stat">
                         <div className="stat-figure text-accent">
-                            <div className="radial-progress text-accent" style={{ "--value": Math.min(progress.percentage, 100) } as any}>
+                            <div className="radial-progress text-accent" style={cssVars({ "--value": Math.min(progress.percentage, 100) })}>
                                 {Math.min(progress.percentage, 100)}%
                             </div>
                         </div>

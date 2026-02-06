@@ -2,10 +2,8 @@ import { Suspense } from "react";
 import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { isAdmin } from "@/lib/rbac";
-import {
-    getAllConversationsAction,
-    getConversationStatsAction,
-} from "@/actions/conversationActions";
+import { getAllConversationsAction, getConversationStatsAction } from "@/actions/conversationActions";
+import { ConversationStatus, ConversationPriority } from "@/services/conversationService";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { AdminConversationListActions } from "@/components/messaging/AdminConversationListActions";
 import { getUsers } from "@/services/userService";
@@ -29,8 +27,8 @@ export default async function AdminConversationsPage({
 
     const params = await searchParams;
     const page = parseInt(params.page || "1");
-    const status = params.status as any;
-    const priority = params.priority as any;
+    const status = params.status as ConversationStatus;
+    const priority = params.priority as ConversationPriority;
 
     const [conversationsResult, statsResult, users] = await Promise.all([
         getAllConversationsAction({

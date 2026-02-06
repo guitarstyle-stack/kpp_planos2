@@ -1,5 +1,7 @@
 "use client";
 
+import { cssVars } from "@/lib/utils";
+
 interface StatusChartProps {
     statusCounts: {
         NOT_STARTED: number;
@@ -218,7 +220,7 @@ export function KPIChart({ stats }: KPIChartProps) {
         <div className="flex flex-col items-center justify-center py-4 space-y-6">
             {/* Circular Progress for Average Achievement */}
             <div className="relative">
-                <div className="radial-progress text-primary" style={{ "--value": stats.avgAchievement, "--size": "8rem", "--thickness": "0.75rem" } as any} role="progressbar">
+                <div className="radial-progress text-primary" style={cssVars({ "--value": stats.avgAchievement, "--size": "8rem", "--thickness": "0.75rem" })} role="progressbar">
                     <span className="text-2xl font-bold">{stats.avgAchievement}%</span>
                 </div>
                 <div className="text-center text-sm font-medium mt-2">ความสำเร็จเฉลี่ย</div>
@@ -347,7 +349,7 @@ export function RiskSummaryCard({ projectsWithIssuesCount, totalProjects }: Risk
 
     return (
         <div className="text-center space-y-4">
-            <div className="radial-progress text-error bg-base-200/50 border-4 border-base-100 shadow-inner" style={{ "--value": riskPercent, "--size": "8rem", "--thickness": "0.8rem" } as any}>
+            <div className="radial-progress text-error bg-base-200/50 border-4 border-base-100 shadow-inner" style={cssVars({ "--value": riskPercent, "--size": "8rem", "--thickness": "0.8rem" })}>
                 <div className="flex flex-col items-center">
                     <span className="text-3xl font-extrabold">{projectsWithIssuesCount}</span>
                     <span className="text-xs opacity-70">โครงการ</span>

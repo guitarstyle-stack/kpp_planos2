@@ -6,6 +6,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft, faEdit, faCalendar, faUser, faBuilding, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { cssVars } from "@/lib/utils";
 
 const periodLabels: Record<string, string> = {
     MID_6M: "รอบ 6 เดือน",
@@ -245,7 +246,7 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                         <div className="card-body text-center">
                             <h2 className="card-title text-lg justify-center mb-4">ความก้าวหน้าโครงการรวม</h2>
                             <div className="flex flex-col items-center py-2">
-                                <div className="radial-progress text-primary border-4 border-primary/10" style={{ "--value": Math.min(r.overallProgressPercent || 0, 100), "--size": "10rem", "--thickness": "0.8rem" } as React.CSSProperties}>
+                                <div className="radial-progress text-primary border-4 border-primary/10" style={cssVars({ "--value": Math.min(r.overallProgressPercent || 0, 100), "--size": "10rem", "--thickness": "0.8rem" })}>
                                     <span className="text-2xl font-black">{r.overallProgressPercent || 0}%</span>
                                 </div>
                             </div>

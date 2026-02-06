@@ -15,7 +15,7 @@ export function ConversationsPageHeader({ adminUsers }: ConversationsPageHeaderP
     return (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight text-primary flex items-center gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-primary flex items-center gap-3">
                     <FontAwesomeIcon icon={faEnvelope} />
                     กล่องข้อความ
                 </h1>
@@ -26,7 +26,7 @@ export function ConversationsPageHeader({ adminUsers }: ConversationsPageHeaderP
             <div className="flex gap-3">
                 <button
                     onClick={() => setIsModalOpen(true)}
-                    className="btn btn-primary gap-2 shadow-lg shadow-primary/20"
+                    className="btn btn-primary w-full sm:w-auto gap-2 shadow-lg shadow-primary/20"
                 >
                     <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />
                     สร้างการสนทนาใหม่

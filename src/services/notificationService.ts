@@ -357,7 +357,7 @@ export async function processDueSchedules() {
                 title: schedule.title,
                 message: schedule.message,
                 link: schedule.link || "",
-                type: schedule.type as any,
+                type: schedule.type as "INFO" | "WARNING" | "SUCCESS" | "ERROR",
                 imageUrl: schedule.imageUrl || undefined
             };
 

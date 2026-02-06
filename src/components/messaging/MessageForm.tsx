@@ -52,9 +52,9 @@ export function MessageForm({ conversationId, onMessageSent }: MessageFormProps)
     };
 
     return (
-        <form onSubmit={handleSubmit} className="bg-base-100 border-t border-base-300 p-4">
+        <form onSubmit={handleSubmit} className="bg-base-100 border-t border-base-300 p-4 mb-20 lg:mb-0">
             {error && (
-                <div className="alert alert-error mb-3">
+                <div className="alert alert-error mb-3 py-2 text-sm">
                     <span>{error}</span>
                 </div>
             )}

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { getConversationsAction } from "@/actions/conversationActions";
 import { getAdminUsersAction } from "@/actions/userActions";
+import { ConversationStatus, ConversationPriority } from "@/services/conversationService";
 import { ConversationList } from "@/components/messaging/ConversationList";
 import { ConversationsPageHeader } from "@/components/messaging/ConversationsPageHeader";
 import { getSession } from "@/lib/auth";
@@ -20,8 +21,8 @@ export default async function ConversationsPage({ searchParams }: ConversationsP
 
     const params = await searchParams;
     const page = Number(params.page) || 1;
-    const status = params.status as any;
-    const priority = params.priority as any;
+    const status = params.status as ConversationStatus;
+    const priority = params.priority as ConversationPriority;
 
     // Fetch conversations and admin users in parallel
     const [conversationsResult, adminUsersResult] = await Promise.all([

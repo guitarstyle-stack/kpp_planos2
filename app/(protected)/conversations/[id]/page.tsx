@@ -45,7 +45,7 @@ export default async function ConversationPage({ params }: ConversationPageProps
     const conversation = result.data;
 
     return (
-        <div className="space-y-4 max-w-4xl mx-auto pb-4 animate-in slide-in-from-right duration-300">
+        <div className="space-y-4 pb-4 animate-in slide-in-from-right duration-300">
             {/* Back Button */}
             <div className="flex items-center gap-2">
                 <Link href="/conversations" className="btn btn-ghost btn-sm gap-2 pl-0 hover:bg-transparent hover:text-primary">

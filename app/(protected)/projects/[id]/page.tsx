@@ -18,6 +18,7 @@ import { deleteProjectAction } from "@/actions/projectActions";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
 import { AttachmentManager } from "@/components/attachments/AttachmentManager";
+import { cssVars } from "@/lib/utils";
 
 // Map status to Thai label and color
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -120,7 +121,7 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
 
                 <div className="stat">
                     <div className="stat-figure text-accent">
-                        <div className="radial-progress bg-primary text-primary-content border-4 border-primary" style={{ "--value": Math.min(project.progressPercent || 0, 100) } as any} role="progressbar">
+                        <div className="radial-progress bg-primary text-primary-content border-4 border-primary" style={cssVars({ "--value": Math.min(project.progressPercent || 0, 100) })} role="progressbar">
                             {project.progressPercent}%
                         </div>
                     </div>

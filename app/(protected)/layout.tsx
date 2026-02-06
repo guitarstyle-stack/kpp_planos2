@@ -26,9 +26,9 @@ export default async function ProtectedLayout({
                 />
 
                 {/* Main Content */}
-                <main className="flex-1 p-4 md:p-6 lg:p-10 bg-base-200/50 pb-20 lg:pb-6">
+                <main className="flex-1 p-4 md:p-6 lg:p-10 bg-base-200/50 pb-24 lg:pb-6">
                     <PullToRefreshWrapper>
-                        <div className="mx-auto max-w-7xl space-y-6 md:space-y-8">
+                        <div className="mx-auto max-w-screen-2xl space-y-6 md:space-y-8">
                             {children}
                         </div>
                     </PullToRefreshWrapper>
