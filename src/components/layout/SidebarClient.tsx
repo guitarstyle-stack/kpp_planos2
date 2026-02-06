@@ -101,14 +101,14 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
                 <button
                     onClick={onToggle}
                     className={cn(
-                        "absolute -right-3.5 top-1/2 -translate-y-1/2 z-50 hidden lg:flex",
-                        "btn btn-circle btn-xs bg-base-100 border-base-300 hover:bg-primary hover:text-white shadow-lg transition-all duration-300 group"
+                        "absolute -right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex",
+                        "btn btn-circle btn-sm bg-base-100 border-base-300 hover:bg-primary hover:text-white shadow-lg transition-all duration-300 group"
                     )}
                     aria-label={isCollapsed ? "ขยาย sidebar" : "ย่อ sidebar"}
                 >
                     <FontAwesomeIcon
                         icon={isCollapsed ? faChevronRight : faChevronLeft}
-                        className="w-2.5 h-2.5 transition-transform group-hover:scale-125"
+                        className="w-3.5 h-3.5 transition-transform group-hover:scale-125"
                     />
                 </button>
             )}
