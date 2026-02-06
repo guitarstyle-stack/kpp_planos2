@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTimes, faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { createPortal } from "react-dom";
 import { createConversationAction } from "@/actions/conversationActions";
 import { useRouter } from "next/navigation";
@@ -181,10 +183,8 @@ export function NewConversationModal({
                                                 className="checkbox checkbox-primary checkbox-sm rounded"
                                                 disabled={isSubmitting}
                                             />
-                                            <div className="avatar placeholder">
-                                                <div className="bg-neutral-focus text-neutral-content rounded-full w-8 h-8 flex items-center justify-center bg-base-300 text-base-content/50">
-                                                    <span className="text-xs font-bold">{user.name.charAt(0)}</span>
-                                                </div>
+                                            <div className="w-8 h-8 flex items-center justify-center text-base-content/50">
+                                                <FontAwesomeIcon icon={faUserCircle} className="w-7 h-7" />
                                             </div>
                                             <div className="min-w-0">
                                                 <div className="text-sm font-semibold truncate">
