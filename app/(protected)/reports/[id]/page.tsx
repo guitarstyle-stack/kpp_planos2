@@ -106,7 +106,14 @@ export default async function ReportViewPage({ params }: ReportViewPageProps) {
                             <h2 className="font-bold">ข้อมูลการเบิกจ่ายงบประมาณ</h2>
                         </div>
                         <div className="card-body p-0">
-                            <div className="grid grid-cols-1 md:grid-cols-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+                                <div className="p-6 border-r border-base-200 last:border-0">
+                                    <div className="text-xs opacity-60 uppercase mb-1">งบประมาณรวมทั้งโครงการ</div>
+                                    <div className="text-xl font-bold text-secondary">
+                                        {(r.project?.budgetTotal || 0).toLocaleString("th-TH", { minimumFractionDigits: 2 })}
+                                        <span className="text-sm font-normal ml-1">บาท</span>
+                                    </div>
+                                </div>
                                 <div className="p-6 border-r border-base-200 last:border-0">
                                     <div className="text-xs opacity-60 uppercase mb-1">เบิกจ่ายในรอบนี้</div>
                                     <div className="text-xl font-bold">

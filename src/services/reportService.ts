@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 
 export type ReportWithDetails = Prisma.ReportGetPayload<{
     include: {
-        project: { select: { id: true; name: true; code: true; departmentId: true; ownerUserId: true } };
+        project: { select: { id: true; name: true; code: true; departmentId: true; ownerUserId: true; budgetTotal: true } };
         createdBy: { select: { id: true; name: true } };
         attachments: true;
     };
@@ -18,7 +18,7 @@ export async function getReports(departmentId?: number) {
         } : undefined,
         include: {
             project: {
-                select: { id: true, name: true, code: true, departmentId: true, ownerUserId: true },
+                select: { id: true, name: true, code: true, departmentId: true, ownerUserId: true, budgetTotal: true },
             },
             createdBy: {
                 select: { id: true, name: true },
@@ -33,7 +33,7 @@ export async function getReportById(id: number) {
         where: { id },
         include: {
             project: {
-                select: { id: true, name: true, code: true, departmentId: true, ownerUserId: true },
+                select: { id: true, name: true, code: true, departmentId: true, ownerUserId: true, budgetTotal: true },
             },
             createdBy: {
                 select: { id: true, name: true },
