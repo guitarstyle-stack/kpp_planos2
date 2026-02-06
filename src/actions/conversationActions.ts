@@ -15,6 +15,7 @@ import {
     ConversationPriority,
 } from "@/services/conversationService";
 import { revalidatePath } from "next/cache";
+import { createAuditLog } from "@/lib/audit";
 
 // ============================================
 // Types for Actions
@@ -58,6 +59,16 @@ export async function createConversationAction(formData: {
             relatedId,
             priority,
             participantIds,
+        });
+
+        // Audit Log
+        await createAuditLog({
+            action: "CREATE",
+            entityType: "Conversation",
+            entityId: conversation.id,
+            userId: session.user.id,
+            diffAfter: conversation,
+            description: `Started new conversation: ${title}`
         });
 
         revalidatePath("/conversations");
@@ -210,6 +221,15 @@ export async function updateStatusAction(
             session.user.id
         );
 
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "Conversation",
+            entityId: conversationId,
+            userId: session.user.id,
+            description: `Updated conversation status to ${status}`
+        });
+
         revalidatePath(`/conversations/${conversationId}`);
         revalidatePath("/conversations");
         revalidatePath("/admin/conversations");
@@ -316,9 +336,26 @@ export async function deleteConversationAction(
         // Import db (prisma client)
         const db = (await import("@/lib/db")).default;
 
+        // Fetch before delete for audit
+        const conversation = await db.conversation.findUnique({
+            where: { id: conversationId }
+        });
+
         await db.conversation.delete({
             where: { id: conversationId },
         });
+
+        // Audit Log
+        if (conversation) {
+            await createAuditLog({
+                action: "DELETE",
+                entityType: "Conversation",
+                entityId: conversationId,
+                userId: session.user.id,
+                diffBefore: conversation,
+                description: `Deleted conversation: ${conversation.title}`
+            });
+        }
 
         revalidatePath("/conversations");
         revalidatePath("/admin/conversations");
@@ -354,9 +391,25 @@ export async function updateConversationAction(
         // Import db (prisma client)
         const db = (await import("@/lib/db")).default;
 
+        // Fetch before update
+        const oldConversation = await db.conversation.findUnique({
+            where: { id: conversationId }
+        });
+
         const conversation = await db.conversation.update({
             where: { id: conversationId },
             data,
+        });
+
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "Conversation",
+            entityId: conversationId,
+            userId: session.user.id,
+            diffBefore: oldConversation,
+            diffAfter: conversation,
+            description: `Updated conversation details for: ${conversation.title}`
         });
 
         revalidatePath(`/conversations/${conversationId}`);

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
+import { createAuditLog } from "@/lib/audit";
+import { getReportById } from "@/services/reportService";
 
 const ReportSchema = z.object({
     projectId: z.coerce.number(),
@@ -116,7 +118,7 @@ export async function createReportAction(prevState: any, formData: FormData) {
 
             const project = await tx.project.findUnique({
                 where: { id: validatedData.projectId },
-                select: { budgetTotal: true },
+                select: { id: true, name: true, budgetTotal: true },
             });
 
             if (project) {
@@ -149,6 +151,16 @@ export async function createReportAction(prevState: any, formData: FormData) {
                     },
                 });
             }
+
+            // Audit Log
+            await createAuditLog({
+                action: "CREATE",
+                entityType: "Report",
+                entityId: report.id,
+                userId: user.id,
+                diffAfter: report,
+                description: `Created report for project ${project?.name || validatedData.projectId} (Period: ${validatedData.periodType})`
+            });
         });
 
         revalidatePath("/reports");
@@ -166,16 +178,16 @@ export async function updateReportAction(id: number, formData: FormData) {
             return { message: "กรุณาเข้าสู่ระบบ" };
         }
 
+        const report = await db.report.findUnique({
+            where: { id },
+            include: { project: { select: { name: true, departmentId: true, ownerUserId: true } } }
+        });
+
+        if (!report) return { message: "Report not found" };
+
         // Permission Check
         const isAdmin = await hasRole(user.id, "ADMIN");
         if (!isAdmin) {
-            const report = await db.report.findUnique({
-                where: { id },
-                include: { project: { select: { departmentId: true, ownerUserId: true } } }
-            });
-
-            if (!report) return { message: "Report not found" };
-
             const matchesDepartment = user.departmentId === report.project.departmentId;
             const isOwner = user.id === report.project.ownerUserId;
 
@@ -287,12 +299,22 @@ export async function updateReportAction(id: number, formData: FormData) {
                             budgetSpent: validatedData.budgetSpentCumulative || 0,
                             progressPercent: Math.round(calculatedProgress),
                             status: newStatus,
-                            lastReportedAt: new Date(), // Update this to match report edit time or keep original? Usually update to now is fine or use report's date.
-                            // Let's use current time as "Last Reported" event happened just now.
+                            lastReportedAt: new Date(),
                         },
                     });
                 }
             }
+
+            // Audit Log
+            await createAuditLog({
+                action: "UPDATE",
+                entityType: "Report",
+                entityId: id,
+                userId: user.id,
+                diffBefore: report,
+                diffAfter: validatedData,
+                description: `Updated report for project ${report.project.name} (Period: ${validatedData.periodType})`
+            });
         });
 
         revalidatePath("/reports");
@@ -311,16 +333,16 @@ export async function deleteReportAction(id: number) {
             return { message: "กรุณาเข้าสู่ระบบ" };
         }
 
+        const report = await db.report.findUnique({
+            where: { id },
+            include: { project: { select: { name: true, departmentId: true, ownerUserId: true } } }
+        });
+
+        if (!report) return { message: "Report not found" };
+
         // Permission Check
         const isAdmin = await hasRole(user.id, "ADMIN");
         if (!isAdmin) {
-            const report = await db.report.findUnique({
-                where: { id },
-                include: { project: { select: { departmentId: true, ownerUserId: true } } }
-            });
-
-            if (!report) return { message: "Report not found" };
-
             const isProjectOwner = user.id === report.project.ownerUserId;
             const isReportCreator = user.id === report.createdById;
 
@@ -332,6 +354,18 @@ export async function deleteReportAction(id: number) {
         await db.report.delete({
             where: { id },
         });
+
+        // Audit Log
+        if (report) {
+            await createAuditLog({
+                action: "DELETE",
+                entityType: "Report",
+                entityId: id,
+                userId: user.id,
+                diffBefore: report,
+                description: `Deleted report for project ${report.project.name} (Period: ${report.periodType})`
+            });
+        }
 
         revalidatePath("/reports");
         return { success: true };

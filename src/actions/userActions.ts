@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ErrorCodes, createErrorResponse, createSuccessResponse } from "@/lib/errorCodes";
+import { getCurrentUser } from "@/lib/auth";
+import { createAuditLog } from "@/lib/audit";
 import { assignRole, removeRole } from "@/services/userRoleService";
 import { createDepartment } from "@/services/departmentService";
-import { updateUser, updateUserStatus, updateUserDepartment, getUsers } from "@/services/userService";
+import { updateUser, updateUserStatus, updateUserDepartment, getUsers, getUserById } from "@/services/userService";
 
 const UserUpdateSchema = z.object({
     name: z.string().min(1, "กรุณาระบุชื่อ"),
@@ -26,6 +28,16 @@ const ProfileUpdateSchema = z.object({
 
 export async function updateUserAction(id: number, formData: FormData) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return createErrorResponse("กรุณาเข้าสู่ระบบ", ErrorCodes.AUTH_LOGIN_REQUIRED);
+        }
+
+        const oldUser = await getUserById(id);
+        if (!oldUser) {
+            return createErrorResponse("ไม่พบผู้ใช้งาน", ErrorCodes.USER_NOT_FOUND);
+        }
+
         const rawData = {
             name: formData.get("name"),
             email: formData.get("email") || undefined,
@@ -34,7 +46,18 @@ export async function updateUserAction(id: number, formData: FormData) {
 
         const validatedData = UserUpdateSchema.parse(rawData);
 
-        await updateUser(id, validatedData);
+        const updatedUser = await updateUser(id, validatedData);
+
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "User",
+            entityId: id,
+            userId: currentUser.id,
+            diffBefore: oldUser,
+            diffAfter: updatedUser,
+            description: `Updated user info for ${updatedUser.name}`
+        });
 
         revalidatePath("/users");
         revalidatePath(`/users/${id}/edit`);
@@ -48,6 +71,16 @@ export async function updateUserAction(id: number, formData: FormData) {
 
 export async function updateProfileAction(id: number, formData: FormData) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return createErrorResponse("กรุณาเข้าสู่ระบบ", ErrorCodes.AUTH_LOGIN_REQUIRED);
+        }
+
+        const oldUser = await getUserById(id);
+        if (!oldUser) {
+            return createErrorResponse("ไม่พบโปรไฟล์", ErrorCodes.USER_NOT_FOUND);
+        }
+
         const emailRaw = formData.get("email") as string;
         // If email is empty string, convert to null to clear it in DB (and avoid unique constraint on empty string)
         // If email is provided, valid it.
@@ -66,14 +99,25 @@ export async function updateProfileAction(id: number, formData: FormData) {
         const validatedData = ProfileUpdateSchema.parse(rawData);
 
         // Zod might return "" if we allowed literal(""), but we want null for DB.
-        // If validatedData.email is "", force it to null?
+        // If validatedData.email is "" force it to null?
         // Actually unique constraint violation occurs on "", so strictly use null for empty.
         // Our schema allows literal(""), so let's remap "" -> null just in case Zod passed it.
         if (validatedData.email === "") {
             validatedData.email = null;
         }
 
-        await updateUser(id, validatedData);
+        const updatedUser = await updateUser(id, validatedData);
+
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "User",
+            entityId: id,
+            userId: currentUser.id,
+            diffBefore: oldUser,
+            diffAfter: updatedUser,
+            description: `Updated profile for ${updatedUser.name}`
+        });
 
         revalidatePath("/settings/profile");
         revalidatePath("/", "layout");
@@ -110,7 +154,24 @@ export async function createDepartmentAction(formData: FormData) {
 
 export async function toggleUserStatusAction(userId: number, currentStatus: boolean) {
     try {
-        await updateUserStatus(userId, !currentStatus);
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return { message: "Unauthorized" };
+        }
+
+        const updatedUser = await updateUserStatus(userId, !currentStatus);
+
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "User",
+            entityId: userId,
+            userId: currentUser.id,
+            diffBefore: { isActive: currentStatus },
+            diffAfter: { isActive: !currentStatus },
+            description: `${!currentStatus ? 'Activated' : 'Deactivated'} user account for ${updatedUser.name}`
+        });
+
         revalidatePath("/users");
         return { success: true };
     } catch (error) {
@@ -121,7 +182,25 @@ export async function toggleUserStatusAction(userId: number, currentStatus: bool
 
 export async function assignRoleAction(userId: number, roleId: number) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return { message: "Unauthorized" };
+        }
+
         await assignRole(userId, roleId);
+
+        // Audit Log
+        const targetUser = await getUserById(userId);
+        const role = await db.role.findUnique({ where: { id: roleId } });
+
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "UserRole",
+            entityId: userId,
+            userId: currentUser.id,
+            description: `Assigned role ${role?.name || roleId} to user ${targetUser?.name || userId}`
+        });
+
         revalidatePath("/users");
         revalidatePath(`/users/${userId}/edit`);
         return { success: true };
@@ -133,7 +212,25 @@ export async function assignRoleAction(userId: number, roleId: number) {
 
 export async function removeRoleAction(userId: number, roleId: number) {
     try {
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return { message: "Unauthorized" };
+        }
+
         await removeRole(userId, roleId);
+
+        // Audit Log
+        const targetUser = await getUserById(userId);
+        const role = await db.role.findUnique({ where: { id: roleId } });
+
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "UserRole",
+            entityId: userId,
+            userId: currentUser.id,
+            description: `Removed role ${role?.name || roleId} from user ${targetUser?.name || userId}`
+        });
+
         revalidatePath("/users");
         revalidatePath(`/users/${userId}/edit`);
         return { success: true };
@@ -145,7 +242,25 @@ export async function removeRoleAction(userId: number, roleId: number) {
 
 export async function updateDepartmentAction(userId: number, departmentId: number) {
     try {
-        await updateUserDepartment(userId, departmentId);
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+            return { message: "Unauthorized" };
+        }
+
+        const oldUser = await getUserById(userId);
+        const updatedUser = await updateUserDepartment(userId, departmentId);
+
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "User",
+            entityId: userId,
+            userId: currentUser.id,
+            diffBefore: { departmentId: oldUser?.departmentId },
+            diffAfter: { departmentId: departmentId },
+            description: `Updated department for user ${updatedUser.name}`
+        });
+
         revalidatePath("/users");
         revalidatePath(`/users/${userId}/edit`);
         return { success: true };

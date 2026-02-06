@@ -16,6 +16,7 @@ import {
 import { hasRole } from "@/services/userRoleService";
 import { Prisma } from "@prisma/client";
 import db from "@/lib/db";
+import { createAuditLog } from "@/lib/audit";
 import { z } from "zod";
 import { ErrorCodes, createErrorResponse, createSuccessResponse } from "@/lib/errorCodes";
 
@@ -128,6 +129,16 @@ export async function createIndicatorAction(data: any) {
 
         const indicator = await createIndicator(validatedData as Prisma.IndicatorUncheckedCreateInput);
 
+        // Audit Log
+        await createAuditLog({
+            action: "CREATE",
+            entityType: "Indicator",
+            entityId: indicator.id,
+            userId: user.id,
+            diffAfter: indicator,
+            description: `Created indicator ${indicator.name} for project ID ${validatedData.projectId}`
+        });
+
         revalidatePath("/indicators");
         revalidatePath(`/projects/${validatedData.projectId}`);
 
@@ -176,6 +187,17 @@ export async function updateIndicatorAction(id: number, data: any) {
 
         const indicator = await updateIndicator(id, validatedData);
 
+        // Audit Log
+        await createAuditLog({
+            action: "UPDATE",
+            entityType: "Indicator",
+            entityId: id,
+            userId: user.id,
+            diffBefore: existing,
+            diffAfter: indicator,
+            description: `Updated indicator ${indicator.name}`
+        });
+
         revalidatePath("/indicators");
         revalidatePath(`/indicators/${id}`);
         revalidatePath(`/projects/${existing.projectId}`);
@@ -221,6 +243,16 @@ export async function deleteIndicatorAction(id: number) {
         }
 
         await deleteIndicator(id);
+
+        // Audit Log
+        await createAuditLog({
+            action: "DELETE",
+            entityType: "Indicator",
+            entityId: id,
+            userId: user.id,
+            diffBefore: existing,
+            description: `Deleted indicator ${existing.name}`
+        });
 
         revalidatePath("/indicators");
         revalidatePath(`/projects/${existing.projectId}`);

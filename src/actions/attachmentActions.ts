@@ -145,6 +145,17 @@ export async function deleteAttachmentAction(id: number) {
         // Delete from Database
         await import("@/services/attachmentService").then(m => m.deleteAttachment(id));
 
+        // Audit Log
+        const { createAuditLog } = await import("@/lib/audit");
+        await createAuditLog({
+            action: "DELETE",
+            entityType: "Attachment",
+            entityId: id,
+            userId: user.id,
+            diffBefore: attachment,
+            description: `Deleted attachment ${attachment.fileName} from project ID ${attachment.projectId}`
+        });
+
         // Revalidate
         revalidatePath("/projects");
         revalidatePath("/reports");
