@@ -9,13 +9,15 @@ import {
     faUser,
     faBullhorn,
     faEnvelope,
+    faShieldAlt,
 } from "@fortawesome/free-solid-svg-icons";
 import { cn } from "@/lib/utils";
-import { isAdmin } from "@/lib/rbac";
+import { isAdmin, isSysAdmin } from "@/lib/rbac";
 import { SidebarWrapper } from "./SidebarWrapper";
 
 async function getMenuItems() {
     const admin = await isAdmin();
+    const sysAdmin = await isSysAdmin();
 
     const menuGroups = [
         {
@@ -68,6 +70,19 @@ async function getMenuItems() {
                     title: "จัดการข้อความ",
                     href: "/admin/conversations",
                     icon: faEnvelope,
+                },
+            ]
+        });
+    }
+
+    if (sysAdmin) {
+        menuGroups.push({
+            label: "ความปลอดภัย",
+            items: [
+                {
+                    title: "ประวัติการใช้งาน",
+                    href: "/admin/audit-logs",
+                    icon: faShieldAlt,
                 },
             ]
         });

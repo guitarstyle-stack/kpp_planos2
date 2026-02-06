@@ -29,6 +29,10 @@ export async function isAdmin() {
     return await hasRole("ADMIN");
 }
 
+export async function isSysAdmin() {
+    return await hasRole("SYSADMIN");
+}
+
 export async function requireAdmin() {
     const admin = await isAdmin();
     if (!admin) {
