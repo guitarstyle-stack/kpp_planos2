@@ -181,6 +181,11 @@ export function NewConversationModal({
                                                 className="checkbox checkbox-primary checkbox-sm rounded"
                                                 disabled={isSubmitting}
                                             />
+                                            <div className="avatar placeholder">
+                                                <div className="bg-neutral-focus text-neutral-content rounded-full w-8 h-8 flex items-center justify-center bg-base-300 text-base-content/50">
+                                                    <span className="text-xs font-bold">{user.name.charAt(0)}</span>
+                                                </div>
+                                            </div>
                                             <div className="min-w-0">
                                                 <div className="text-sm font-semibold truncate">
                                                     {user.name}
