@@ -89,6 +89,31 @@ export async function updateDepartmentAction(id: number, formData: FormData) {
 
 export async function deleteDepartmentAction(id: number) {
     try {
+        // Check for dependencies
+        const userCount = await db.user.count({
+            where: { departmentId: id }
+        });
+
+        if (userCount > 0) {
+            return { message: `ไม่สามารถลบได้ เนื่องจากมีผู้ใช้งาน ${userCount} คนในสังกัดนี้` };
+        }
+
+        const projectCount = await db.project.count({
+            where: { departmentId: id }
+        });
+
+        if (projectCount > 0) {
+            return { message: `ไม่สามารถลบได้ เนื่องจากมีโครงการ ${projectCount} โครงการในสังกัดนี้` };
+        }
+
+        const childDepartmentCount = await db.department.count({
+            where: { parentId: id }
+        });
+
+        if (childDepartmentCount > 0) {
+            return { message: `ไม่สามารถลบได้ เนื่องจากมีหน่วยงานย่อย ${childDepartmentCount} หน่วยงาน` };
+        }
+
         await db.department.delete({
             where: { id },
         });
@@ -96,7 +121,7 @@ export async function deleteDepartmentAction(id: number) {
         revalidatePath("/settings/departments");
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { message: "Failed to delete department" };
+        console.error("Error deleting department:", error);
+        return { message: "เกิดข้อผิดพลาดในการลบหน่วยงาน" };
     }
 }
