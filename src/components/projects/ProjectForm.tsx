@@ -1,14 +1,53 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSave, faTimes, faPlus, faTrash, faListCheck } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
+import { useForm, useFieldArray, Controller, SubmitHandler } from "react-hook-form";
+import { DatePickerTh } from "@/components/ui/DatePickerTh";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ProjectSchema, ProjectFormData, ProjectFormInput } from "@/schemas/projectSchema";
+
+interface Indicator {
+    id?: number;
+    name: string;
+    unit: string;
+    targetValue?: number | null;
+    baselineValue?: number | null;
+}
+
+interface DevelopmentGoal {
+    id: number;
+    code: string;
+    name: string;
+    indicators: Indicator[];
+    issue?: {
+        id: number;
+        annualPlan: {
+            id: number;
+        };
+    };
+}
+
+interface DevelopmentIssue {
+    id: number;
+    code: string;
+    name: string;
+    goals: DevelopmentGoal[];
+}
+
+interface AnnualPlan {
+    id: number;
+    name: string;
+    fiscalYear: number;
+    issues: DevelopmentIssue[];
+}
 
 interface MasterData {
     departments: any[];
-    annualPlans: any[];
+    annualPlans: AnnualPlan[];
 }
 
 interface ProjectFormProps {
@@ -17,105 +56,103 @@ interface ProjectFormProps {
     userId: number; // For ownership
 }
 
-interface IndicatorItem {
-    id?: number; // For existing indicators in edit mode (not fully implemented in this step, but good for type)
-    name: string;
-    unit: string;
-    targetValue: string; // Keep as string for input, convert later
-    baselineValue: string;
-}
-
-export function ProjectForm({ initialData, masterData, userId }: ProjectFormProps) {
+export function ProjectForm({ initialData, masterData, userId }: ProjectFormProps): React.JSX.Element {
     const router = useRouter();
-    const [isLoading, setIsLoading] = useState(false);
-    const isEdit = !!initialData?.id;
 
-    // --- State for Cascading Dropdowns ---
-    // Try to derive initial state from initialData (if editing)
-    // We need to Find the plan and issue from the goal ID if provided.
-    // However, initialData usually only has developmentGoalId.
-    // Ideally, initialData should include the full relation `developmentGoal.issue.annualPlanId`.
-    // For now, assuming initialData might have it or we default to empty.
-
-    // Helper to find initial IDs
-    const getInitialIds = () => {
-        if (!initialData?.developmentGoal) return { planId: null, issueId: null, goalId: null };
-        const goal = initialData.developmentGoal;
-        const issue = goal.issue;
-        const plan = issue?.annualPlan;
-
-        // If relations are missing in initialData, we might fail to pre-fill.
-        // But for "Create New", this is always null. 
-        // For "Edit", we need to make sure `getProjects` includes these.
-        // For this task (Create), we start fresh.
-        return {
-            planId: plan?.id || null,
-            issueId: issue?.id || null,
-            goalId: goal.id || null
+    // Default values for form - Use Input type (strings for dates)
+    // We need to transform initialData dates to strings YYYY-MM-DD
+    const defaultValues: Partial<ProjectFormData> = useMemo(() => {
+        if (!initialData) return {
+            indicators: [],
+            budgetTotal: 0,
+            targetGroup: "",
+            progressPercent: 0,
+            fiscalYear: new Date().getFullYear() + 543
         };
-    };
 
-    const initialIds = getInitialIds();
+        return {
+            ...initialData,
+            startDate: initialData.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : undefined,
+            endDate: initialData.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : undefined,
+            indicators: initialData.indicators || [],
+            budgetTotal: initialData.budgetTotal || 0,
+            targetGroup: initialData.targetGroup || "",
+            progressPercent: initialData.progressPercent || 0,
+        };
+    }, [initialData]);
 
-    const [selectedPlanId, setSelectedPlanId] = useState<number | null>(initialIds.planId);
-    const [selectedIssueId, setSelectedIssueId] = useState<number | null>(initialIds.issueId);
-    const [selectedGoalId, setSelectedGoalId] = useState<number | null>(initialIds.goalId);
+    const {
+        register,
+        control,
+        handleSubmit,
+        setValue,
+        watch,
+        formState: { errors, isSubmitting },
+        reset
+    } = useForm<ProjectFormData>({
+        resolver: zodResolver(ProjectSchema) as any,
+        defaultValues
+    });
 
-    // --- Data Derivation values ---
-    const issues = useMemo(() => {
-        if (!selectedPlanId) return [];
-        const plan = masterData.annualPlans.find(p => p.id === selectedPlanId);
+    const { fields, append, remove } = useFieldArray({
+        control,
+        name: "indicators"
+    });
+
+    // Filtering State
+    // We need to construct the filter state based on initialData (if editing)
+    // Find planId and issueId from the goalId (initialData.developmentGoalId)
+    const initialCascade = useMemo(() => {
+        if (!initialData?.developmentGoalId) return { planId: null, issueId: null };
+        const goalId = Number(initialData.developmentGoalId);
+
+        // Search through masterData
+        for (const plan of masterData.annualPlans) {
+            for (const issue of plan.issues) {
+                const foundGoal = issue.goals.find(g => g.id === goalId);
+                if (foundGoal) {
+                    return { planId: plan.id, issueId: issue.id };
+                }
+            }
+        }
+        return { planId: null, issueId: null };
+    }, [initialData, masterData.annualPlans]);
+
+    const [filterPlanId, setFilterPlanId] = useState<number | null>(initialCascade.planId);
+    const [filterIssueId, setFilterIssueId] = useState<number | null>(initialCascade.issueId);
+
+    // Update derived lists
+    const filteredIssues = useMemo<DevelopmentIssue[]>(() => {
+        if (!filterPlanId) return [];
+        const plan = masterData.annualPlans.find(p => p.id === filterPlanId);
         return plan?.issues || [];
-    }, [selectedPlanId, masterData.annualPlans]);
+    }, [filterPlanId, masterData.annualPlans]);
 
-    const goals = useMemo(() => {
-        if (!selectedIssueId) return [];
-        const issue = issues.find((i: any) => i.id === selectedIssueId);
+    const filteredGoals = useMemo<DevelopmentGoal[]>(() => {
+        if (!filterIssueId) return [];
+        const issue = filteredIssues.find((i) => i.id === filterIssueId);
         return issue?.goals || [];
-    }, [selectedIssueId, issues]);
+    }, [filterIssueId, filteredIssues]);
 
+    const selectedGoalId = watch("developmentGoalId");
 
-    // --- State for Indicators ---
-    const [indicators, setIndicators] = useState<IndicatorItem[]>(
-        // In Edit mode, map initialData.indicators if available
-        initialData?.indicators?.map((i: any) => ({
-            id: i.id,
-            name: i.name,
-            unit: i.unit,
-            targetValue: i.targetValue?.toString() || "",
-            baselineValue: i.baselineValue?.toString() || ""
-        })) || []
-    );
+    const onSubmit: SubmitHandler<ProjectFormData> = async (data) => {
+        const formData = new FormData();
 
-    const addIndicator = () => {
-        setIndicators([...indicators, { name: "", unit: "", targetValue: "", baselineValue: "" }]);
-    };
-
-    const removeIndicator = (index: number) => {
-        const newIndicators = [...indicators];
-        newIndicators.splice(index, 1);
-        setIndicators(newIndicators);
-    };
-
-    const updateIndicator = (index: number, field: keyof IndicatorItem, value: string) => {
-        const newIndicators = [...indicators];
-        newIndicators[index] = { ...newIndicators[index], [field]: value };
-        setIndicators(newIndicators);
-    };
-
-
-    async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-        event.preventDefault();
-        setIsLoading(true);
-
-        const formData = new FormData(event.currentTarget);
-
-        // Append indicators as JSON
-        formData.append("indicatorsJson", JSON.stringify(indicators));
+        // Append all simple fields
+        Object.entries(data).forEach(([key, value]) => {
+            if (key === 'indicators') {
+                formData.append('indicatorsJson', JSON.stringify(value));
+            } else if (value instanceof Date) {
+                formData.append(key, value.toISOString());
+            } else if (value !== undefined && value !== null) {
+                formData.append(key, value.toString());
+            }
+        });
 
         try {
             let res;
-            if (isEdit) {
+            if (initialData?.id) {
                 const { updateProjectAction } = await import("@/actions/projectActions");
                 res = await updateProjectAction(initialData.id, formData);
             } else {
@@ -124,21 +161,34 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
             }
 
             if (res?.success) {
-                toast.success(isEdit ? "อัปเดตโครงการสำเร็จ" : "สร้างโครงการสำเร็จ");
+                toast.success(initialData?.id ? "อัปเดตโครงการสำเร็จ" : "สร้างโครงการสำเร็จ");
                 router.push("/projects");
                 router.refresh();
             } else {
                 toast.error(res?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-                setIsLoading(false);
             }
         } catch (error) {
             toast.error("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
-            setIsLoading(false);
+            console.error(error);
         }
-    }
+    };
+
+    // Helper to add standard indicators
+    const addStandardIndicator = (std: any) => {
+        const currentInds = watch("indicators") || [];
+        const exists = currentInds.some((ind) => ind?.name === std.name);
+        if (!exists) {
+            append({
+                name: std.name,
+                unit: std.unit,
+                targetValue: std.targetValue || 0,
+                baselineValue: std.baselineValue || 0
+            });
+        }
+    };
 
     return (
-        <form onSubmit={handleSubmit} className="card bg-base-100 shadow-sm border border-base-300 max-w-5xl mx-auto">
+        <form onSubmit={handleSubmit(onSubmit)} className="card bg-base-100 shadow-sm border border-base-300 max-w-5xl mx-auto">
             <div className="card-body p-6 md:p-8">
                 <h2 className="card-title text-lg border-b border-base-200 pb-4 mb-6">
                     ข้อมูลทั่วไปของโครงการ
@@ -149,19 +199,17 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                     <div className="form-control col-span-1">
                         <label htmlFor="code" className="label">
                             <span className="label-text">
-                                รหัสโครงการ {isEdit && <span className="text-error">*</span>}
+                                รหัสโครงการ <span className="text-error">*</span>
                             </span>
                         </label>
                         <input
-                            type="text"
-                            name="code"
+                            {...register("code")}
                             id="code"
-                            required={isEdit}
-                            disabled={!isEdit}
-                            defaultValue={initialData?.code}
-                            placeholder={isEdit ? "เช่น 67-001" : "รหัสจะถูกสร้างอัตโนมัติ (Auto-generated)"}
-                            className="input input-bordered w-full disabled:bg-base-200 disabled:text-base-content/50"
+                            disabled={!initialData?.id}
+                            placeholder={initialData?.id ? "เช่น 67-001" : "รหัสจะถูกสร้างอัตโนมัติ (Auto-generated)"}
+                            className={`input input-bordered w-full ${errors.code ? "input-error" : ""}`}
                         />
+                        {errors.code && <span className="text-error text-xs mt-1">{errors.code.message}</span>}
                     </div>
 
                     {/* Fiscal Year */}
@@ -173,14 +221,10 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                         </label>
                         <input
                             type="number"
-                            name="fiscalYear"
-                            id="fiscalYear"
-                            required
-                            // If user selects an Annual Plan, we could verify/sync this, but typically Project Budget Year might differ slightly? 
-                            // Or usually it matches. Let's keep it editable but maybe default to current year.
-                            defaultValue={initialData?.fiscalYear || new Date().getFullYear() + 543}
-                            className="input input-bordered w-full"
+                            {...register("fiscalYear")}
+                            className={`input input-bordered w-full ${errors.fiscalYear ? "input-error" : ""}`}
                         />
+                        {errors.fiscalYear && <span className="text-error text-xs mt-1">{errors.fiscalYear.message}</span>}
                     </div>
 
                     {/* Project Name */}
@@ -191,13 +235,10 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             </span>
                         </label>
                         <input
-                            type="text"
-                            name="name"
-                            id="name"
-                            required
-                            defaultValue={initialData?.name}
-                            className="input input-bordered w-full"
+                            {...register("name")}
+                            className={`input input-bordered w-full ${errors.name ? "input-error" : ""}`}
                         />
+                        {errors.name && <span className="text-error text-xs mt-1">{errors.name.message}</span>}
                     </div>
 
                     {/* Description */}
@@ -206,9 +247,7 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             <span className="label-text">รายละเอียดโครงการ</span>
                         </label>
                         <textarea
-                            name="description"
-                            id="description"
-                            defaultValue={initialData?.description}
+                            {...register("description")}
                             className="textarea textarea-bordered w-full h-24"
                             placeholder="กรุณาระบุรายละเอียด เช่น หลักการและเหตุผล วัตถุประสงค์โครงการ รายละเอียดสำคัญอื่นๆ"
                         ></textarea>
@@ -222,44 +261,38 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             </span>
                         </label>
                         <select
-                            name="departmentId"
-                            id="departmentId"
-                            required
-                            defaultValue={initialData?.departmentId}
-                            className="select select-bordered w-full"
+                            {...register("departmentId")}
+                            className={`select select-bordered w-full ${errors.departmentId ? "select-error" : ""}`}
                         >
                             <option value="">-- เลือกหน่วยงาน --</option>
                             {masterData.departments.map((dept) => (
                                 <option key={dept.id} value={dept.id}>{dept.name}</option>
                             ))}
                         </select>
+                        {errors.departmentId && <span className="text-error text-xs mt-1">{errors.departmentId.message}</span>}
                     </div>
-
-
 
                     {/* --- ความเชื่อมโยงแผนพัฒนา --- */}
                     <div className="col-span-1 md:col-span-2 divider text-sm text-base-content/50 uppercase tracking-widest font-bold mt-4">
                         ความเชื่อมโยงแผนพัฒนา
                     </div>
 
-                    {/* Annual Plan (New) */}
+                    {/* Annual Plan (Filter) */}
                     <div className="form-control col-span-1">
-                        <label htmlFor="annualPlanId" className="label">
+                        <label className="label">
                             <span className="label-text">แผนพัฒนาคุณภาพชีวิต</span>
                         </label>
                         <select
-                            name="annualPlanId" // Not used directly in project schema, but helps filtering
-                            id="annualPlanId"
-                            value={selectedPlanId || ""}
+                            value={filterPlanId || ""}
                             onChange={(e) => {
-                                setSelectedPlanId(e.target.value ? Number(e.target.value) : null);
-                                setSelectedIssueId(null);
-                                setSelectedGoalId(null);
+                                setFilterPlanId(e.target.value ? Number(e.target.value) : null);
+                                setFilterIssueId(null);
+                                setValue("developmentGoalId", undefined as any);
                             }}
                             className="select select-bordered w-full"
                         >
                             <option value="">-- เลือกแผนพัฒนา --</option>
-                            {masterData.annualPlans.map((plan: any) => (
+                            {masterData.annualPlans.map((plan: AnnualPlan) => (
                                 <option key={plan.id} value={plan.id}>
                                     {plan.name} (งบ {plan.fiscalYear})
                                 </option>
@@ -267,24 +300,22 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                         </select>
                     </div>
 
-                    {/* ประเด็นการพัฒนา */}
+                    {/* Issue (Filter) */}
                     <div className="form-control col-span-1">
-                        <label htmlFor="issueId" className="label">
+                        <label className="label">
                             <span className="label-text">ประเด็นการพัฒนา</span>
                         </label>
                         <select
-                            name="issueId"
-                            id="issueId"
-                            value={selectedIssueId || ""}
+                            value={filterIssueId || ""}
                             onChange={(e) => {
-                                setSelectedIssueId(e.target.value ? Number(e.target.value) : null);
-                                setSelectedGoalId(null);
+                                setFilterIssueId(e.target.value ? Number(e.target.value) : null);
+                                setValue("developmentGoalId", undefined as any);
                             }}
-                            disabled={!selectedPlanId}
+                            disabled={!filterPlanId}
                             className="select select-bordered w-full"
                         >
                             <option value="">-- เลือกประเด็น --</option>
-                            {issues.map((issue: any) => (
+                            {filteredIssues.map((issue) => (
                                 <option key={issue.id} value={issue.id}>
                                     [{issue.code}] {issue.name}
                                 </option>
@@ -292,29 +323,26 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                         </select>
                     </div>
 
-                    {/* เป้าหมาย/เป้าประสงค์ (cascading) */}
+                    {/* Goal (Real Field) */}
                     <div className="form-control col-span-2">
                         <label htmlFor="developmentGoalId" className="label">
                             <span className="label-text">เป้าหมาย/เป้าประสงค์ <span className="text-error">*</span></span>
                         </label>
                         <select
-                            name="developmentGoalId"
                             id="developmentGoalId"
-                            value={selectedGoalId || ""}
-                            onChange={(e) => setSelectedGoalId(e.target.value ? Number(e.target.value) : null)}
-                            required
-                            disabled={!selectedIssueId}
-                            className="select select-bordered w-full"
+                            {...register("developmentGoalId")}
+                            disabled={!filterIssueId}
+                            className={`select select-bordered w-full ${errors.developmentGoalId ? "select-error" : ""}`}
                         >
                             <option value="">-- เลือกเป้าหมาย --</option>
-                            {goals.map((goal: any) => (
+                            {filteredGoals.map((goal) => (
                                 <option key={goal.id} value={goal.id}>
                                     {goal.code} - {goal.name}
                                 </option>
                             ))}
                         </select>
+                        {errors.developmentGoalId && <span className="text-error text-xs mt-1">{errors.developmentGoalId.message}</span>}
                     </div>
-
 
                     {/* --- New Section: Financial & Target --- */}
                     <div className="col-span-1 md:col-span-2 divider text-sm text-base-content/50 uppercase tracking-widest font-bold mt-4">
@@ -330,47 +358,27 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                         </label>
                         <input
                             type="number"
-                            name="budgetTotal"
-                            id="budgetTotal"
+                            {...register("budgetTotal")}
                             step="0.01"
-                            required
-                            defaultValue={initialData?.budgetTotal}
-                            placeholder="0.00"
-                            className="input input-bordered w-full"
+                            className={`input input-bordered w-full ${errors.budgetTotal ? "input-error" : ""}`}
                         />
+                        {errors.budgetTotal && <span className="text-error text-xs mt-1">{errors.budgetTotal.message}</span>}
                     </div>
 
                     {/* Target Group */}
                     <div className="form-control col-span-1">
                         <label htmlFor="targetGroup" className="label">
-                            <span className="label-text">กลุ่มเป้าหมาย</span>
+                            <span className="label-text">
+                                กลุ่มเป้าหมาย
+                            </span>
                         </label>
                         <input
                             type="text"
-                            name="targetGroup"
-                            id="targetGroup"
-                            defaultValue={initialData?.targetGroup}
-                            placeholder="กลุ่มเป้าหมาย เช่น เด็ก, คนพิการ, ผู้สูงอายุ, สตรี เป็นต้น"
-                            className="input input-bordered w-full"
+                            {...register("targetGroup")}
+                            className={`input input-bordered w-full ${errors.targetGroup ? "input-error" : ""}`}
+                            placeholder="กลุ่มเป้าหมาย เช่น เด็ก, เยาวชน"
                         />
-                    </div>
-
-                    {/* Progress Percent */}
-                    <div className="form-control col-span-1">
-                        <label htmlFor="progressPercent" className="label">
-                            <span className="label-text">ความคืบหน้า (%)</span>
-                        </label>
-                        <input
-                            type="number"
-                            name="progressPercent"
-                            id="progressPercent"
-                            step="1"
-                            min="0"
-                            max="100"
-                            defaultValue={initialData?.progressPercent}
-                            placeholder="0"
-                            className="input input-bordered w-full"
-                        />
+                        {errors.targetGroup && <span className="text-error text-xs mt-1">{errors.targetGroup.message}</span>}
                     </div>
 
                     {/* --- New Section: Timeline & Status --- */}
@@ -380,29 +388,39 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
 
                     {/* Start Date */}
                     <div className="form-control col-span-1">
-                        <label htmlFor="startDate" className="label">
-                            <span className="label-text">วันที่เริ่มต้น</span>
-                        </label>
-                        <input
-                            type="date"
+                        <Controller
+                            control={control}
                             name="startDate"
-                            id="startDate"
-                            defaultValue={initialData?.startDate ? new Date(initialData.startDate).toISOString().split('T')[0] : ''}
-                            className="input input-bordered w-full"
+                            render={({ field: { onChange, value } }) => (
+                                <DatePickerTh
+                                    label="วันที่เริ่มต้น (Start Date)"
+                                    selected={value ? new Date(value) : null}
+                                    onChange={(date) => {
+                                        // Store as YYYY-MM-DD string or undefined
+                                        onChange(date ? date.toISOString().split('T')[0] : "");
+                                    }}
+                                    error={errors.startDate?.message}
+                                />
+                            )}
                         />
                     </div>
 
                     {/* End Date */}
                     <div className="form-control col-span-1">
-                        <label htmlFor="endDate" className="label">
-                            <span className="label-text">วันที่สิ้นสุด</span>
-                        </label>
-                        <input
-                            type="date"
+                        <Controller
+                            control={control}
                             name="endDate"
-                            id="endDate"
-                            defaultValue={initialData?.endDate ? new Date(initialData.endDate).toISOString().split('T')[0] : ''}
-                            className="input input-bordered w-full"
+                            render={({ field: { onChange, value } }) => (
+                                <DatePickerTh
+                                    label="วันที่สิ้นสุด (End Date)"
+                                    selected={value ? new Date(value) : null}
+                                    onChange={(date) => {
+                                        // Store as YYYY-MM-DD string or undefined
+                                        onChange(date ? date.toISOString().split('T')[0] : "");
+                                    }}
+                                    error={errors.endDate?.message}
+                                />
+                            )}
                         />
                     </div>
 
@@ -412,9 +430,7 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                             <span className="label-text">สถานะโครงการ</span>
                         </label>
                         <select
-                            name="status"
-                            id="status"
-                            defaultValue={initialData?.status || "NOT_STARTED"}
+                            {...register("status")}
                             className="select select-bordered w-full"
                         >
                             <option value="NOT_STARTED">ยังไม่เริ่ม</option>
@@ -424,143 +440,170 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
                         </select>
                     </div>
 
-                    {/* --- New Section: Project Indicators --- */}
-                    {/* Standard Indicators Selection */}
-                    {selectedGoalId && (
-                        <div className="col-span-1 md:col-span-2 mb-4">
-                            <div className="alert alert-info bg-info/10 border-info/20 text-sm py-2">
-                                <div className="flex flex-col w-full">
-                                    <div className="font-bold flex items-center gap-2">
-                                        <FontAwesomeIcon icon={faListCheck} /> ตัวชี้วัดมาตรฐานจากแผน (Standard Indicators)
-                                    </div>
-                                    <div className="mt-2 space-y-1">
-                                        {(() => {
-                                            // Find the selected goal object from masterData
-                                            const issue = issues.find((i: any) => i.id === selectedIssueId);
-                                            const goal = issue?.goals.find((g: any) => g.id === selectedGoalId);
-                                            const standardIndicators = goal?.indicators || [];
+                    {/* --- INDICATORS --- */}
+                    <div className="col-span-1 md:col-span-2 mt-6">
+                        <div className="flex justify-between items-center mb-4 pb-2 border-b border-base-200">
+                            <h3 className="font-bold text-lg flex items-center gap-2">
+                                <FontAwesomeIcon icon={faListCheck} className="text-primary" />
+                                ตัวชี้วัดโครงการ (Indicators)
+                            </h3>
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline btn-primary"
+                                onClick={() => append({ name: "", unit: "", targetValue: 0, baselineValue: 0 })}
+                            >
+                                <FontAwesomeIcon icon={faPlus} /> เพิ่มตัวชี้วัด
+                            </button>
+                        </div>
 
-                                            if (standardIndicators.length === 0) return <span className="opacity-60">ไม่มีตัวชี้วัดมาตรฐานในเป้าหมายนี้</span>;
-
-                                            return standardIndicators.map((std: any) => {
-                                                const isAdded = indicators.some((ind) => ind.name === std.name); // Simple check by name
-                                                return (
-                                                    <div key={std.id} className="flex justify-between items-center bg-base-100 p-2 rounded border border-base-200">
-                                                        <span>{std.name} <span className="text-xs opacity-50">({std.unit}) - เป้า: {std.targetValue ?? '-'}</span></span>
-                                                        <button
-                                                            type="button"
-                                                            disabled={isAdded}
-                                                            onClick={() => {
-                                                                setIndicators([...indicators, {
-                                                                    name: std.name,
-                                                                    unit: std.unit,
-                                                                    targetValue: std.targetValue?.toString() || "",
-                                                                    baselineValue: std.baselineValue?.toString() || ""
-                                                                }]);
-                                                            }}
-                                                            className="btn btn-xs btn-primary btn-outline"
-                                                        >
-                                                            {isAdded ? "เพิ่มแล้ว" : "เลือกใช้"}
-                                                        </button>
-                                                    </div>
-                                                );
-                                            });
-                                        })()}
-                                    </div>
+                        {/* Standard Indicators Suggestion */}
+                        <div className="mb-4">
+                            <div className="dropdown dropdown-hover">
+                                <div tabIndex={0} role="button" className="btn btn-xs btn-ghost text-base-content/60">
+                                    + เลือกตัวชี้วัดมาตรฐาน
                                 </div>
+                                <ul tabIndex={0} className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52">
+                                    <li><a onClick={() => addStandardIndicator({ name: "ร้อยละความพึงพอใจ", unit: "ร้อยละ", targetValue: 80 })}>ร้อยละความพึงพอใจ</a></li>
+                                    <li><a onClick={() => addStandardIndicator({ name: "จำนวนผู้เข้าร่วมโครงการ", unit: "คน", targetValue: 0 })}>จำนวนผู้เข้าร่วมโครงการ</a></li>
+                                </ul>
                             </div>
                         </div>
-                    )}
 
-                    <div className="col-span-1 md:col-span-2 divider text-sm text-base-content/50 uppercase tracking-widest font-bold mt-4 text-green-700">
-                        ตัวชี้วัดโครงการ (Project Indicators)
-                    </div>
+                        {selectedGoalId && (
+                            <div className="col-span-1 md:col-span-2 mb-4">
+                                <div className="alert alert-info bg-info/10 border-info/20 text-sm py-2">
+                                    <div className="flex flex-col w-full">
+                                        <div className="font-bold flex items-center gap-2">
+                                            <FontAwesomeIcon icon={faListCheck} /> ตัวชี้วัดมาตรฐานจากแผน (Standard Indicators)
+                                        </div>
+                                        <div className="mt-2 space-y-1">
+                                            {(() => {
+                                                const issue = filteredIssues.find((i) => i.id === filterIssueId);
+                                                const goal = filteredGoals.find((g) => g.id === Number(selectedGoalId));
+                                                const standardIndicators = goal?.indicators || [];
 
-                    <div className="col-span-1 md:col-span-2 space-y-4 rounded-lg border border-base-200 p-4 bg-base-50">
-                        {indicators.map((indicator, index) => (
-                            <div key={index} className="grid grid-cols-1 md:grid-cols-10 gap-2 items-end border-b border-base-200 pb-2 last:border-0">
-                                <div className="md:col-span-3 form-control">
-                                    <label className="label label-text text-xs p-1">ชื่อตัวชี้วัด</label>
-                                    <input
-                                        type="text"
-                                        value={indicator.name}
-                                        onChange={(e) => updateIndicator(index, 'name', e.target.value)}
-                                        placeholder="ชื่อตัวชี้วัด"
-                                        className="input input-sm input-bordered"
-                                        required
-                                    />
-                                </div>
-                                <div className="md:col-span-2 form-control">
-                                    <label className="label label-text text-xs p-1">หน่วยนับ</label>
-                                    <input
-                                        type="text"
-                                        value={indicator.unit}
-                                        onChange={(e) => updateIndicator(index, 'unit', e.target.value)}
-                                        placeholder="เช่น ร้อยละ, คน"
-                                        className="input input-sm input-bordered"
-                                        required
-                                    />
-                                </div>
-                                <div className="md:col-span-2 form-control">
-                                    <label className="label label-text text-xs p-1">ค่าเป้าหมาย</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={indicator.targetValue}
-                                        onChange={(e) => updateIndicator(index, 'targetValue', e.target.value)}
-                                        placeholder="0"
-                                        className="input input-sm input-bordered"
-                                    />
-                                </div>
-                                <div className="md:col-span-2 form-control">
-                                    <label className="label label-text text-xs p-1">ค่าฐาน (Baseline)</label>
-                                    <input
-                                        type="number"
-                                        step="0.01"
-                                        value={indicator.baselineValue}
-                                        onChange={(e) => updateIndicator(index, 'baselineValue', e.target.value)}
-                                        placeholder="0"
-                                        className="input input-sm input-bordered"
-                                    />
-                                </div>
-                                <div className="md:col-span-1 flex justify-center pb-1">
-                                    <button
-                                        type="button"
-                                        onClick={() => removeIndicator(index)}
-                                        className="btn btn-ghost btn-xs text-error"
-                                        title="ลบตัวชี้วัด"
-                                    >
-                                        <FontAwesomeIcon icon={faTrash} />
-                                    </button>
+                                                if (standardIndicators.length === 0) return <span className="opacity-60">ไม่มีตัวชี้วัดมาตรฐานในเป้าหมายนี้</span>;
+
+                                                return standardIndicators.map((std: any) => {
+                                                    const currentInds = watch("indicators") || [];
+                                                    const isAdded = currentInds.some((ind) => ind?.name === std.name);
+                                                    return (
+                                                        <div key={std.id} className="flex justify-between items-center bg-base-100 p-2 rounded border border-base-200">
+                                                            <span>{std.name} <span className="text-xs opacity-50">({std.unit}) - เป้า: {std.targetValue ?? '-'}</span></span>
+                                                            <button
+                                                                type="button"
+                                                                disabled={isAdded}
+                                                                onClick={() => addStandardIndicator(std)}
+                                                                className="btn btn-xs btn-primary btn-outline"
+                                                            >
+                                                                {isAdded ? "เพิ่มแล้ว" : "เลือกใช้"}
+                                                            </button>
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        ))}
+                        )}
 
-                        <button type="button" onClick={addIndicator} className="btn btn-sm btn-outline btn-success w-full gap-2 border-dashed">
-                            <FontAwesomeIcon icon={faPlus} /> เพิ่มตัวชี้วัดใหม่
-                        </button>
+                        {fields.length === 0 && (
+                            <div className="text-center py-8 bg-base-100 rounded-lg border-2 border-dashed border-base-200 text-base-content/40">
+                                ยังไม่มีตัวชี้วัด กดปุ่ม "เพิ่มตัวชี้วัด" เพื่อเริ่มกำหนด
+                            </div>
+                        )}
+
+                        <div className="space-y-4">
+                            {fields.map((field, index) => (
+                                <div key={field.id} className="collapse collapse-arrow bg-base-50 border border-base-200">
+                                    <input type="checkbox" defaultChecked />
+                                    <div className="collapse-title font-medium flex items-center gap-2 pr-4">
+                                        <div className="badge badge-sm badge-ghost">{index + 1}</div>
+                                        <span className="truncate flex-1 font-bold text-sm">
+                                            {watch(`indicators.${index}.name`) || "ตัวชี้วัดใหม่"}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.preventDefault(); remove(index); }}
+                                            className="btn btn-xs btn-circle btn-ghost text-error z-10 hover:bg-error/10"
+                                            title="ลบตัวชี้วัด"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                    <div className="collapse-content">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                            <div className="form-control col-span-2">
+                                                <label className="label label-text-alt">ชื่อตัวชี้วัด</label>
+                                                <input
+                                                    {...register(`indicators.${index}.name` as const)}
+                                                    className={`input input-sm input-bordered ${errors.indicators?.[index]?.name ? "input-error" : ""}`}
+                                                    placeholder="เช่น ร้อยละของผู้เข้าร่วม..."
+                                                />
+                                                {errors.indicators?.[index]?.name && <span className="text-error text-[10px]">{errors.indicators[index]?.name?.message}</span>}
+                                            </div>
+                                            <div className="form-control">
+                                                <label className="label label-text-alt">หน่วยนับ</label>
+                                                <input
+                                                    {...register(`indicators.${index}.unit` as const)}
+                                                    className={`input input-sm input-bordered ${errors.indicators?.[index]?.unit ? "input-error" : ""}`}
+                                                    placeholder="เช่น คน, แห่ง, ร้อยละ"
+                                                />
+                                                {errors.indicators?.[index]?.unit && <span className="text-error text-[10px]">{errors.indicators[index]?.unit?.message}</span>}
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div className="form-control">
+                                                    <label className="label label-text-alt">ค่าเป้าหมาย (Target)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        {...register(`indicators.${index}.targetValue` as const)}
+                                                        className="input input-sm input-bordered"
+                                                    />
+                                                </div>
+                                                <div className="form-control">
+                                                    <label className="label label-text-alt">ค่าฐาน (Baseline)</label>
+                                                    <input
+                                                        type="number"
+                                                        step="0.01"
+                                                        {...register(`indicators.${index}.baselineValue` as const)}
+                                                        className="input input-sm input-bordered"
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {errors.indicators && typeof errors.indicators.message === 'string' && (
+                            <div className="text-error text-xs mt-2 text-center">{errors.indicators.message}</div>
+                        )}
                     </div>
-
                 </div>
 
-                {/* Action Buttons */}
-                <div className="card-actions justify-end mt-6">
+                <div className="card-actions justify-end mt-8 pt-6 border-t border-base-200">
                     <button
                         type="button"
-                        onClick={() => router.back()}
                         className="btn btn-ghost"
+                        onClick={() => router.back()}
                     >
-                        <FontAwesomeIcon icon={faTimes} />
-                        ยกเลิก
+                        <FontAwesomeIcon icon={faTimes} /> ยกเลิก
                     </button>
                     <button
                         type="submit"
-                        disabled={isLoading}
                         className="btn btn-primary"
+                        disabled={isSubmitting}
                     >
-                        {isLoading ? <span className="loading loading-spinner"></span> : <FontAwesomeIcon icon={faSave} />}
-                        {isLoading ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
+                        <FontAwesomeIcon icon={faSave} />
+                        {initialData?.id ? "บันทึกการแก้ไข" : "บันทึกโครงการ"}
                     </button>
+                    {Object.keys(errors).length > 0 && (
+                        <div className="text-error text-xs">
+                            Please check fields {Object.keys(errors).join(", ")}
+                        </div>
+                    )}
                 </div>
             </div>
         </form>

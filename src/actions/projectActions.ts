@@ -5,40 +5,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import { ErrorCodes, createErrorResponse, createSuccessResponse } from "@/lib/errorCodes";
+import { createAuditLog } from "@/lib/audit";
 
 import { z } from "zod";
 
-const IndicatorSchema = z.object({
-    id: z.coerce.number().optional(),
-    name: z.string().min(1, "กรุณาระบุชื่อตัวชี้วัด"),
-    unit: z.string().min(1, "กรุณาระบุหน่วยนับ"),
-    baselineValue: z.coerce.number().optional(),
-    targetValue: z.coerce.number().optional()
-});
+import { ProjectSchema, IndicatorSchema } from "@/schemas/projectSchema";
 
+// Removed local schema definitions
 
-
-const ProjectSchema = z.object({
-    code: z.string().min(1, "กรุณาระบุรหัสโครงการ"),
-    name: z.string().min(1, "กรุณาระบุชื่อโครงการ"),
-    description: z.string().optional(),
-    fiscalYear: z.coerce.number(),
-    departmentId: z.coerce.number(),
-
-    developmentGoalId: z.coerce.number().optional(),
-    // New fields
-    budgetTotal: z.coerce.number().optional(),
-    budgetSpent: z.coerce.number().optional(),
-    progressPercent: z.coerce.number().optional(),
-    status: z.string().default("NOT_STARTED"),
-    targetGroup: z.string().optional(),
-    startDate: z.string().transform((v) => (v === "" ? undefined : new Date(v))).optional(),
-    endDate: z.string().transform((v) => (v === "" ? undefined : new Date(v))).optional(),
-
-    indicators: z.array(IndicatorSchema).optional(),
-
-
-});
 
 export async function createProjectAction(prevState: any, formData: FormData) {
     try {
@@ -112,7 +86,7 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         // Separate indicators from project data
         const { indicators: indicatorsData, ...projectData } = validatedData;
 
-        await db.project.create({
+        const newProject = await db.project.create({
             data: {
                 ...projectData,
                 ownerUserId: user.id,
@@ -120,6 +94,15 @@ export async function createProjectAction(prevState: any, formData: FormData) {
                     create: indicatorsData
                 }
             },
+        });
+
+        await createAuditLog({
+            action: "CREATE",
+            entityType: "Project",
+            entityId: newProject.id,
+            description: `Created new project: ${newProject.name} (${newProject.code})`,
+            diffAfter: newProject,
+            userId: user.id,
         });
 
         revalidatePath("/projects");
@@ -145,7 +128,6 @@ export async function updateProjectAction(id: number, formData: FormData) {
 
         const project = await db.project.findUnique({
             where: { id },
-            select: { ownerUserId: true }
         });
 
         if (!project) {
@@ -243,6 +225,17 @@ export async function updateProjectAction(id: number, formData: FormData) {
                     }
                 }
             }
+
+            // Audit Log
+            await createAuditLog({
+                action: "UPDATE",
+                entityType: "Project",
+                entityId: id,
+                description: `Updated project: ${project.name}`,
+                diffBefore: project,
+                diffAfter: projectData,
+                userId: user.id,
+            });
         });
 
         revalidatePath("/projects");
@@ -262,7 +255,6 @@ export async function deleteProjectAction(id: number) {
 
         const project = await db.project.findUnique({
             where: { id },
-            select: { ownerUserId: true }
         });
 
         if (!project) {
@@ -293,6 +285,14 @@ export async function deleteProjectAction(id: number) {
         // Now delete the project
         await db.project.delete({
             where: { id },
+        });
+
+        await createAuditLog({
+            action: "DELETE",
+            entityType: "Project",
+            entityId: id,
+            description: `Deleted project: ${project.name} (${project.code})`,
+            userId: user.id,
         });
 
         revalidatePath("/projects");
