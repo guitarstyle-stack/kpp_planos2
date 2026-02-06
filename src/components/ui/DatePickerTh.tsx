@@ -99,7 +99,7 @@ export function DatePickerTh({
                     <span className="label-text">{label}</span>
                 </label>
             )}
-            <div className="relative">
+            <div className="relative w-full">
                 <DatePicker
                     selected={selected}
                     onChange={onChange as any}
@@ -107,9 +107,11 @@ export function DatePickerTh({
                     // Override the display value to show B.E.
                     value={formatThaiDate(selected)}
                     // Prevent typing to avoid parsing issues
-                    readOnly={true} // or use strict parsing logic later if requested
+                    onKeyDown={(e) => e.preventDefault()}
                     renderCustomHeader={renderCustomHeader}
                     className={`input input-bordered w-full ${error ? "input-error" : ""} ${className}`}
+                    wrapperClassName="w-full"
+                    portalId="root" // Help with z-index if inside a modal or overflow:hidden
                     {...(props as any)}
                 />
             </div>

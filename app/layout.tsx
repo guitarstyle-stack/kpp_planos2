@@ -33,6 +33,7 @@ export default function RootLayout({
   return (
     <html lang="en" data-theme="corporate">
       <body
+        id="root"
         className={`${fontHeader.variable} ${fontBody.variable} font-sans antialiased`}
       >
         {children}

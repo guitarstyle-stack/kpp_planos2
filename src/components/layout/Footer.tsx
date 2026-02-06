@@ -24,7 +24,7 @@ export function Footer() {
                     </div>
                     <div className="h-4 w-[1px] bg-base-300 hidden md:block"></div>
                     <p className="text-[11px] opacity-40 font-medium">
-                        © {new Date().getFullYear()} PlanOS • v1.0
+                        © {new Date().getFullYear()} PlanOS • v{process.env.NEXT_PUBLIC_APP_VERSION} (build {process.env.NEXT_PUBLIC_BUILD_ID?.slice(0, 7)})
                     </p>
                 </div>
             </div>
