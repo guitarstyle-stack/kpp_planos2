@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { updateStatusAction, deleteConversationAction, updateConversationAction } from "@/actions/conversationActions";
 import { ConversationStatus, ConversationPriority } from "@/services/conversationService";
 
@@ -24,6 +25,11 @@ export function AdminConversationControls({
     const [isChangingStatus, setIsChangingStatus] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Edit modal state
     const [showEditModal, setShowEditModal] = useState(false);
@@ -188,103 +194,109 @@ export function AdminConversationControls({
                 </div>
             </div>
 
-            {/* Edit Modal */}
-            {showEditModal && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">แก้ไขการสนทนา</h3>
+            {/* Portal for Modals */}
+            {mounted && createPortal(
+                <>
+                    {/* Edit Modal */}
+                    {showEditModal && (
+                        <div className="modal modal-open z-[1000]">
+                            <div className="modal-box">
+                                <h3 className="font-bold text-lg mb-4">แก้ไขการสนทนา</h3>
 
-                        <div className="form-control mb-4">
-                            <label className="label">
-                                <span className="label-text">หัวข้อการสนทนา</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={editTitle}
-                                onChange={(e) => setEditTitle(e.target.value)}
-                                className="input input-bordered"
-                            />
+                                <div className="form-control mb-4">
+                                    <label className="label">
+                                        <span className="label-text">หัวข้อการสนทนา</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) => setEditTitle(e.target.value)}
+                                        className="input input-bordered"
+                                    />
+                                </div>
+
+                                <div className="form-control mb-4">
+                                    <label className="label">
+                                        <span className="label-text">ระดับความสำคัญ</span>
+                                    </label>
+                                    <select
+                                        value={editPriority}
+                                        onChange={(e) => setEditPriority(e.target.value as ConversationPriority)}
+                                        className="select select-bordered"
+                                    >
+                                        <option value="LOW">ต่ำ</option>
+                                        <option value="NORMAL">ปกติ</option>
+                                        <option value="HIGH">สูง</option>
+                                        <option value="URGENT">ด่วน</option>
+                                    </select>
+                                </div>
+
+                                <div className="modal-action">
+                                    <button
+                                        onClick={() => setShowEditModal(false)}
+                                        className="btn btn-ghost"
+                                        disabled={isUpdating}
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        onClick={handleUpdate}
+                                        className="btn btn-primary"
+                                        disabled={isUpdating}
+                                    >
+                                        {isUpdating ? (
+                                            <>
+                                                <span className="loading loading-spinner loading-sm"></span>
+                                                กำลังบันทึก...
+                                            </>
+                                        ) : (
+                                            "บันทึก"
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="modal-backdrop bg-black/40" onClick={() => setShowEditModal(false)}></div>
                         </div>
+                    )}
 
-                        <div className="form-control mb-4">
-                            <label className="label">
-                                <span className="label-text">ระดับความสำคัญ</span>
-                            </label>
-                            <select
-                                value={editPriority}
-                                onChange={(e) => setEditPriority(e.target.value as ConversationPriority)}
-                                className="select select-bordered"
-                            >
-                                <option value="LOW">ต่ำ</option>
-                                <option value="NORMAL">ปกติ</option>
-                                <option value="HIGH">สูง</option>
-                                <option value="URGENT">ด่วน</option>
-                            </select>
+                    {/* Delete Confirmation Modal */}
+                    {showDeleteConfirm && (
+                        <div className="modal modal-open z-[1000]">
+                            <div className="modal-box">
+                                <h3 className="font-bold text-lg mb-4">ยืนยันการลบการสนทนา</h3>
+                                <p className="mb-4">
+                                    คุณแน่ใจหรือไม่ที่จะลบการสนทนานี้? การกระทำนี้ไม่สามารถย้อนกลับได้
+                                </p>
+
+                                <div className="modal-action">
+                                    <button
+                                        onClick={() => setShowDeleteConfirm(false)}
+                                        className="btn btn-ghost"
+                                        disabled={isDeleting}
+                                    >
+                                        ยกเลิก
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        className="btn btn-error"
+                                        disabled={isDeleting}
+                                    >
+                                        {isDeleting ? (
+                                            <>
+                                                <span className="loading loading-spinner loading-sm"></span>
+                                                กำลังลบ...
+                                            </>
+                                        ) : (
+                                            "ลบการสนทนา"
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="modal-backdrop bg-black/40" onClick={() => setShowDeleteConfirm(false)}></div>
                         </div>
-
-                        <div className="modal-action">
-                            <button
-                                onClick={() => setShowEditModal(false)}
-                                className="btn btn-ghost"
-                                disabled={isUpdating}
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleUpdate}
-                                className="btn btn-primary"
-                                disabled={isUpdating}
-                            >
-                                {isUpdating ? (
-                                    <>
-                                        <span className="loading loading-spinner loading-sm"></span>
-                                        กำลังบันทึก...
-                                    </>
-                                ) : (
-                                    "บันทึก"
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                    <div className="modal-backdrop" onClick={() => setShowEditModal(false)}></div>
-                </div>
-            )}
-
-            {/* Delete Confirmation Modal */}
-            {showDeleteConfirm && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg mb-4">ยืนยันการลบการสนทนา</h3>
-                        <p className="mb-4">
-                            คุณแน่ใจหรือไม่ที่จะลบการสนทนานี้? การกระทำนี้ไม่สามารถย้อนกลับได้
-                        </p>
-
-                        <div className="modal-action">
-                            <button
-                                onClick={() => setShowDeleteConfirm(false)}
-                                className="btn btn-ghost"
-                                disabled={isDeleting}
-                            >
-                                ยกเลิก
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="btn btn-error"
-                                disabled={isDeleting}
-                            >
-                                {isDeleting ? (
-                                    <>
-                                        <span className="loading loading-spinner loading-sm"></span>
-                                        กำลังลบ...
-                                    </>
-                                ) : (
-                                    "ลบการสนทนา"
-                                )}
-                            </button>
-                        </div>
-                    </div>
-                    <div className="modal-backdrop" onClick={() => setShowDeleteConfirm(false)}></div>
-                </div>
+                    )}
+                </>,
+                document.body
             )}
         </>
     );
