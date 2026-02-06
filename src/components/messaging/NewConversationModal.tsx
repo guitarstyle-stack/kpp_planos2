@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createConversationAction } from "@/actions/conversationActions";
 import { useRouter } from "next/navigation";
 import { ConversationPriority } from "@/services/conversationService";
+import { cn } from "@/lib/utils";
 
 interface NewConversationModalProps {
     isOpen: boolean;
