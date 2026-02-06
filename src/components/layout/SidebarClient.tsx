@@ -25,7 +25,7 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
 
     return (
         <aside className={cn(
-            "bg-base-200 text-base-content min-h-screen p-4 font-header flex flex-col transition-all duration-300",
+            "bg-base-200 text-base-content min-h-screen p-4 font-header flex flex-col transition-all duration-300 relative",
             isCollapsed ? "w-20" : "w-80"
         )}>
             {/* Logo */}
@@ -96,27 +96,21 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
                 ))}
             </div>
 
-            {/* Toggle Button - Desktop only */}
+            {/* Toggle Button - Desktop only (Centered Edge Position) */}
             {onToggle && (
-                <div className={cn(
-                    "pt-4 border-t border-base-300 mt-4 hidden lg:block",
-                    isCollapsed ? "px-0" : "px-2"
-                )}>
-                    <button
-                        onClick={onToggle}
-                        className={cn(
-                            "btn btn-ghost btn-sm w-full transition-all duration-300 group",
-                            isCollapsed ? "btn-square" : "gap-2"
-                        )}
-                        aria-label={isCollapsed ? "ขยาย sidebar" : "ย่อ sidebar"}
-                    >
-                        <FontAwesomeIcon
-                            icon={isCollapsed ? faChevronRight : faChevronLeft}
-                            className="w-4 h-4 group-hover:scale-110 transition-transform"
-                        />
-                        {!isCollapsed && <span className="text-xs">ย่อเมนู</span>}
-                    </button>
-                </div>
+                <button
+                    onClick={onToggle}
+                    className={cn(
+                        "absolute -right-3.5 top-1/2 -translate-y-1/2 z-50 hidden lg:flex",
+                        "btn btn-circle btn-xs bg-base-100 border-base-300 hover:bg-primary hover:text-white shadow-lg transition-all duration-300 group"
+                    )}
+                    aria-label={isCollapsed ? "ขยาย sidebar" : "ย่อ sidebar"}
+                >
+                    <FontAwesomeIcon
+                        icon={isCollapsed ? faChevronRight : faChevronLeft}
+                        className="w-2.5 h-2.5 transition-transform group-hover:scale-125"
+                    />
+                </button>
             )}
         </aside>
     );
