@@ -1,76 +1,76 @@
-# PlanOS - ระบบติดตามและรายงานโครงการ (Project Tracking System)
+# PlanOS - ระบบติดตามและรายงานโครงการ (Project Planning & Monitoring System)
 
-PlanOS คือแพลตฟอร์มสำหรับบริหารจัดการและติดตามความคืบหน้าโครงการตามแผนปฏิบัติการ ออกแบบมาเพื่อช่วยให้หน่วยงานสามารถติดตามงบประมาณและตัวชี้วัด (KPI) ได้อย่างมีประสิทธิภาพ
+PlanOS คือแพลตฟอร์มสำหรับบริหารจัดการและติดตามความคืบหน้าโครงการตามแผนปฏิบัติการ ออกแบบมาเพื่อช่วยให้หน่วยงานสามารถติดตามงบประมาณและตัวชี้วัด (KPI) ได้อย่างมีประสิทธิภาพ พร้อมระบบบันทึกประวัติการเปลี่ยนแปลงที่โปร่งใส
 
 ## 🌟 คุณสมบัติเด่น (Core Features)
 
-*   **ระบบล็อกอินผ่าน LINE (LINE Login):** เข้าใช้งานได้ง่ายและปลอดภัยผ่านบัญชี LINE
-*   **การจัดการโครงการ (Project Management):** มอบหมายโครงการ แยกตามปีงบประมาณและหน่วยงาน
-*   **ระบบรายงานความคืบหน้า (Enhanced Reporting):**
-    *   คำนวณงบประมาณเบิกจ่ายสะสมและร้อยละความคืบหน้าให้อัตโนมัติ
-    *   ติดตามตัวชี้วัด (KPI) รายตัว พร้อมรายงานผลการบรรลุเป้าหมาย
-    *   รองรับการแนบไฟล์เอกสารและรูปภาพประกอบรายงาย
-*   **แดชบอร์ดผู้ดูแลระบบ (Admin Dashboard):**
-    *   สรุปภาพรวมโครงการและงบประมาณสะสม
-    *   จัดการข้อมูลมาสเตอร์ดาต้า (ปีงบประมาณ, แผนยุทธศาสตร์, หน่วยงาน)
-    *   จัดการสิทธิ์ผู้ใช้งาน (RBAC) และข้อมูลสังกัด
-*   **ระบบวิเคราะห์ข้อมูล (Analytics):** รองรับ Vercel Web Analytics และ Speed Insights
+*   **🔐 ระบบความปลอดภัยและสิทธิ์การใช้งาน (Security & RBAC):**
+    *   **LINE Login:** เข้าใช้งานได้ง่ายผ่านบัญชี LINE
+    *   **Role-Based Access Control:** แบ่งสิทธิ์ตามบทบาท (SYSADMIN, ADMIN, DEPT_MANAGER, EDITOR, VIEWER)
+    *   **Department Isolation:** แยกข้อมูลตามหน่วยงานต้นสังกัด
+*   **📊 การจัดการโครงการ (Project Management):**
+    *   จัดการโครงการแยกตามปีงบประมาณและแผนยุทธศาสตร์
+    *   กำหนดตัวชี้วัด (KPI) ประจำโครงการพร้อมค่าเป้าหมาย
+*   **📝 ระบบรายงานความคืบหน้า (Enhanced Reporting):**
+    *   คำนวณงบประมาณเบิกจ่ายสะสมและร้อยละความสำเร็จอัตโนมัติ
+    *   ระบบคำนวณ Cumulative Results จากทุกรายงานในโครงการ
+    *   รองรับการแนบหลักฐานเอกสารและรูปภาพผ่าน Supabase Storage
+*   **💬 ระบบสื่อสารภายใน (Messaging System):**
+    *   Interactive Chat สำหรับปรึกษาหารือรายโครงการหรือรายรายงาน
+    *   ระบบสถานะการอ่านข้อความ (Read Receipts)
+*   **🛡️ ระบบตรวจสอบความโปร่งใส (Audit Logs):**
+    *   บันทึกทุกการแก้ไขข้อมูลพร้อมแสดง Diff ก่อนและหลังเปลี่ยน
+    *   ประวัติการเข้าสู่ระบบ (Login Auditing)
+*   **🔔 ระบบแจ้งเตือน (Notifications):**
+    *   แจ้งเตือนกิจกรรมสำคัญในระบบ
+    *   Smart Alert สำหรับผู้ใช้ที่ยังไม่ได้ระบุหน่วยงานสังกัด
 
 ## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
 
-*   **Framework:** [Next.js 16.1.4](https://nextjs.org/) (App Router, Turbopack)
-*   **Frontend Library:** [React 19.2.3](https://react.dev/)
-*   **Language:** Typescript
-*   **Database:** PostgreSQL (via [Supabase](https://supabase.com/))
-*   **ORM:** [Prisma 6.19.2](https://www.prisma.io/)
-*   **Authentication:** Custom JWT (Jose 6.1.3) with LINE Login API
-*   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/) & [DaisyUI 5.5.14](https://daisyui.com/)
-*   **Icons:** [FontAwesome 7.1.0](https://fontawesome.com/)
-*   **Monitoring:** [Vercel Analytics 1.6.1](https://vercel.com/analytics) & [Vercel Speed Insights 1.3.1](https://vercel.com/speed-insights)
-*   **UI Components:** [Sonner 2.0.7](https://lgp-sonner.vercel.app/) (Toast Notifications)
-*   **Deployment:** [Vercel](https://vercel.com/)
+*   **Frontend/Backend:** Next.js (App Router), React 19, TypeScript
+*   **Database:** PostgreSQL (Supabase)
+*   **ORM:** Prisma
+*   **Authentication:** Custom JWT with LINE Login API
+*   **Storage:** Supabase Storage
+*   **Styling:** Tailwind CSS 4, DaisyUI
+*   **Icons:** FontAwesome 7
+*   **Monitoring:** Vercel Analytics & Speed Insights
+
+## 📚 เอกสารวิเคราะห์ระบบ (System Analysis)
+คุณสามารถอ่านบทวิเคราะห์ระบบฉบับสมบูรณ์ได้ที่: [system_analysis.md](./system_analysis.md)
 
 ## 🛠 การติดตั้ง (Installation)
 
-### 1. ลอกเลียนโครงการ (Clone Repository)
-```bash
-git clone https://github.com/guitarstyle-stack/kpp_planos2.git
-cd kpp_planos2
-```
+1. **Clone Repository:**
+   ```bash
+   git clone https://github.com/guitarstyle-stack/kpp_planos2.git
+   cd kpp_planos2/planos
+   ```
 
-### 2. ติดตั้ง Dependencies
-```bash
-npm install
-```
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
 
-### 3. ตั้งค่าสภาพแวดล้อม (Environment Variables)
-สร้างไฟล์ `.env.local` และคัดลอกข้อมูลจาก `.env.example` มาวาง พร้อมระบุค่าต่างๆ ให้ครบถ้วน:
-*   `DATABASE_URL`: URL สำหรับเชื่อมต่อฐานข้อมูล Postgres
-*   `LINE_CHANNEL_ID` & `LINE_CHANNEL_SECRET`: ได้จาก LINE Developers Console
-*   `NEXTAUTH_SECRET`: รหัสลับสำหรับ Token
+3. **Environment Setup:**
+   สร้างไฟล์ `.env.local` ตามตัวอย่างใน `.env.example`:
+   * `DATABASE_URL`: Postgres Connection String
+   * `LINE_CHANNEL_ID` & `LINE_CHANNEL_SECRET`: จาก LINE Developers
+   * `NEXT_PUBLIC_SUPABASE_URL` & `SUPABASE_SERVICE_ROLE_KEY`: สำหรับระบบจัดเก็บไฟล์
 
-### 4. เตรียมฐานข้อมูล (Database Setup)
-```bash
-npx prisma generate
-npx prisma db push
-```
+4. **Initialize Database:**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
 
-### 5. เริ่มต้นใช้งาน (Start Development Server)
-```bash
-npm run dev
-```
-เปิดบราวเซอร์ไปที่ `http://localhost:3000`
+5. **Run Application:**
+   ```bash
+   npm run dev
+   ```
 
-## 📦 การ Deploy บน Vercel
-
-1.  Push โค้ดขึ้น GitHub
-2.  เชื่อมต่อ Repository บน Vercel Dashboard
-3.  ตั้งค่า Environment Variables ใน Vercel ให้ตรงกับ `.env.local`
-4.  ระบบจะทำการ Build และ Deploy ให้อัตโนมัติ (พร้อมรัน `prisma generate` ผ่าน `postinstall` script)
-
-## 📄 ใบอนุญาต (License)
-
-โปรเจ็คนี้พัฒนาเพื่อใช้งานภายในองค์กร
+## 📦 การ Deploy
+ระบบรองรับการ Deploy บน **Vercel** โดยอัตโนมัติเมื่อมีการ Push โค้ดไปยังสาขาหลัก (main)
 
 ---
-พัฒนาโดยทีมงาน **PlanOS Team**
+Developed with ❤️ by **PlanOS Team**
