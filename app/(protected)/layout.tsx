@@ -3,6 +3,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PullToRefreshWrapper } from "@/components/layout/PullToRefreshWrapper";
+import { DepartmentAlert } from "@/components/layout/DepartmentAlert";
 import { getSession } from "@/lib/auth";
 
 export default async function ProtectedLayout({
@@ -11,6 +12,7 @@ export default async function ProtectedLayout({
     children: React.ReactNode;
 }) {
     const session = await getSession();
+    const isTempDepartment = session?.user?.department?.code === "TEMP";
 
     return (
         <div className="drawer lg:drawer-open">
@@ -24,6 +26,10 @@ export default async function ProtectedLayout({
                     userName={session?.user?.name}
                     userImage={session?.user?.image}
                 />
+
+                {isTempDepartment && (
+                    <DepartmentAlert userName={session?.user?.name || "สมาชิก"} />
+                )}
 
                 {/* Main Content */}
                 <main className="flex-1 p-4 md:p-6 lg:p-10 bg-base-200/50 pb-24 lg:pb-6">
