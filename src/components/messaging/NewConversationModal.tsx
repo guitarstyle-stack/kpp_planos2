@@ -75,8 +75,8 @@ export function NewConversationModal({
     if (!isOpen) return null;
 
     return (
-        <div className="modal modal-open">
-            <div className="modal-box max-w-2xl max-h-[90vh] p-0 flex flex-col overflow-hidden">
+        <div className={cn("modal", isOpen && "modal-open", "z-[1000]")}>
+            <div className="modal-box max-w-2xl lg:max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden shadow-2xl">
                 {/* Header - Fixed */}
                 <div className="px-6 py-4 border-b border-base-200 bg-base-100 flex-none">
                     <h3 className="font-bold text-xl">
