@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { createConversationAction } from "@/actions/conversationActions";
 import { useRouter } from "next/navigation";
 import { ConversationPriority } from "@/services/conversationService";
@@ -24,6 +25,12 @@ export function NewConversationModal({
     const [selectedParticipants, setSelectedParticipants] = useState<number[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -73,9 +80,11 @@ export function NewConversationModal({
         );
     };
 
-    if (!isOpen) return null;
+    if (!isOpen || !mounted) return null;
 
-    return (
+    // Use createPortal to render the modal at the document body level
+    // This prevents it from being clipped by overflow:hidden in parent containers
+    return createPortal(
         <div className={cn("modal", isOpen && "modal-open", "z-[1000]")}>
             <div className="modal-box max-w-2xl lg:max-w-4xl max-h-[90vh] p-0 flex flex-col overflow-hidden shadow-2xl">
                 {/* Header - Fixed */}
@@ -222,6 +231,7 @@ export function NewConversationModal({
                 </form>
             </div>
             <div className="modal-backdrop bg-black/40 backdrop-blur-sm" onClick={onClose}></div>
-        </div>
+        </div>,
+        document.body
     );
 }
