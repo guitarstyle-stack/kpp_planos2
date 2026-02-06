@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFolder, faBullseye, faListCheck, faPlus, faTrash, faEdit, faSave, faTimes, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
+import { faFolder, faBullseye, faListCheck, faPlus, faEdit, faSave, faTimes, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 import {
     createAnnualPlanAction, updateAnnualPlanAction, deleteAnnualPlanAction,
     createIssueAction, updateIssueAction, deleteIssueAction,
@@ -10,6 +10,7 @@ import {
     createIndicatorAction, deleteIndicatorAction
 } from "@/actions/developmentPlanActions";
 import { toast } from "sonner";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 
 interface StrategicPlanTreeProps {
     initialPlans: any[];
@@ -120,20 +121,6 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
         else toast.error(res.message);
     }
 
-    // --- Deletes ---
-    async function handleDelete(type: string, id: number) {
-        if (!confirm(`ยืนยันการลบ ${type}? ข้อมูลที่เกี่ยวข้องอาจถูกลบหรือเกิดข้อผิดพลาดหากมีการใช้งานอยู่`)) return;
-        let res;
-        if (type === 'plan') res = await deleteAnnualPlanAction(id);
-        else if (type === 'issue') res = await deleteIssueAction(id);
-        else if (type === 'goal') res = await deleteGoalAction(id);
-        else if (type === 'indicator') res = await deleteIndicatorAction(id);
-
-        if (res?.success) toast.success("ลบสำเร็จ");
-        else toast.error(res?.message || "เกิดข้อผิดพลาด");
-    }
-
-
     return (
         <div>
             {/* Add Annual Plan Button (Top Level) */}
@@ -181,9 +168,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                 <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'plan', id: plan.id }); setFormData({ name: plan.name, fiscalYear: plan.fiscalYear }); }}>
                                     <FontAwesomeIcon icon={faEdit} />
                                 </button>
-                                <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete('plan', plan.id)}>
-                                    <FontAwesomeIcon icon={faTrash} />
-                                </button>
+                                <DeleteButton id={plan.id} itemName={plan.name} deleteAction={deleteAnnualPlanAction} />
                             </div>
                         </div>
 
@@ -209,9 +194,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                         <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'issue', id: issue.id, parentId: plan.id }); setFormData({ code: issue.code, name: issue.name, description: issue.description }); }}>
                                                             <FontAwesomeIcon icon={faEdit} />
                                                         </button>
-                                                        <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete('issue', issue.id)}>
-                                                            <FontAwesomeIcon icon={faTrash} />
-                                                        </button>
+                                                        <DeleteButton id={issue.id} itemName={issue.name} deleteAction={deleteIssueAction} />
                                                     </div>
                                                 </>
                                             )}
@@ -246,9 +229,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                                         <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'goal', id: goal.id, parentId: issue.id }); setFormData({ code: goal.code, name: goal.name, description: goal.description }); }}>
                                                                             <FontAwesomeIcon icon={faEdit} />
                                                                         </button>
-                                                                        <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDelete('goal', goal.id)}>
-                                                                            <FontAwesomeIcon icon={faTrash} />
-                                                                        </button>
+                                                                        <DeleteButton id={goal.id} itemName={goal.name} deleteAction={deleteGoalAction} />
                                                                     </div>
                                                                 </div>
                                                                 {goal.description && <p className="text-xs text-base-content/70 ml-6 mb-3">{goal.description}</p>}
@@ -263,7 +244,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                                             <div key={ind.id} className="flex justify-between items-center text-xs bg-base-100 p-1.5 rounded border border-base-100 hover:border-base-300">
                                                                                 <span className="flex-1 truncate">{ind.name} <span className="opacity-50">({ind.unit})</span></span>
                                                                                 <span className="opacity-50 mr-2">เป้า: {ind.targetValue ?? '-'}</span>
-                                                                                <button className="text-error hover:bg-error/10 p-1 rounded" onClick={() => handleDelete('indicator', ind.id)}><FontAwesomeIcon icon={faTrash} /></button>
+                                                                                <DeleteButton id={ind.id} itemName={ind.name} deleteAction={deleteIndicatorAction} />
                                                                             </div>
                                                                         ))}
                                                                     </div>
