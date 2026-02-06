@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { getDepartments } from "@/services/departmentService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faEdit, faTrash, faBuilding } from "@fortawesome/free-solid-svg-icons";
+import { faPlus, faEdit, faBuilding } from "@fortawesome/free-solid-svg-icons";
+import { DeleteButton } from "@/components/ui/DeleteButton";
+import { deleteDepartmentAction } from "@/actions/departmentActions";
 
 export default async function DepartmentsPage() {
     const departments = await getDepartments();
 
     return (
-
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
@@ -64,9 +65,11 @@ export default async function DepartmentsPage() {
                                             >
                                                 <FontAwesomeIcon icon={faEdit} />
                                             </Link>
-                                            <button className="btn btn-ghost btn-xs text-error" title="ลบ">
-                                                <FontAwesomeIcon icon={faTrash} />
-                                            </button>
+                                            <DeleteButton
+                                                id={dept.id}
+                                                itemName={dept.name}
+                                                deleteAction={deleteDepartmentAction}
+                                            />
                                         </div>
                                     </td>
                                 </tr>
