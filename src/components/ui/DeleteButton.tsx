@@ -28,8 +28,15 @@ export function DeleteButton({ id, itemName, deleteAction, planId }: DeleteButto
                 ? await deleteAction(id, planId)
                 : await deleteAction(id);
 
+            console.log("Delete action result:", result);
+
             if (result?.message) {
-                toast.error(result.message);
+                // Determine if it's a warning (dependency) or error (system)
+                if (result.message.includes("ไม่สามารถลบได้")) {
+                    toast.warning(result.message, { duration: 5000 });
+                } else {
+                    toast.error(result.message);
+                }
             } else {
                 toast.success("ลบข้อมูลสำเร็จ");
                 router.refresh();

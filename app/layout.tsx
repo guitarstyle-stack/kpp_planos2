@@ -36,7 +36,7 @@ export default function RootLayout({
         className={`${fontHeader.variable} ${fontBody.variable} font-sans antialiased`}
       >
         {children}
-        <Toaster position="top-right" />
+        <Toaster position="top-right" richColors closeButton />
         <Analytics />
         <SpeedInsights />
       </body>
