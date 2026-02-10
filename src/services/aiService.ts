@@ -51,23 +51,16 @@ export const aiService = {
         }
 
         const prompt = `
-            ในฐานะที่ปรึกษาด้านการบริหารโครงการมืออาชีพ ช่วยวิเคราะห์และสรุปผลโครงการดังนี้:
-            โครงการ: "${projectName}"
-            รอบรายงานปี: ${fiscalYear}
-            ประเภท: ${periodType}
+            Analyze this project and return a JSON summary.
+            Project: "${projectName}"
+            Year: ${fiscalYear} (${periodType})
+            Indicators:
+            ${indicatorsText || "No data"}
             
-            ข้อมูลตัวชี้วัด (Indicator Results):
-            ${indicatorsText || "ยังไม่มีข้อมูลตัวชี้วัด"}
-            
-            คำแนะนำ:
-            1. สรุปภาพรวมความคืบหน้าโครงการเป็นภาษาไทยที่กระชับและเป็นทางการ
-            2. ระบุจุดเด่นหรือปัญหาที่พบจากตัวชี้วัด
-            3. คืนค่าเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอกเหนือจาก JSON
-            
-            Structure:
+            Return JSON in Thai language:
             {
-              "summary": "สรุปภาพรวมความคืบหน้า...",
-              "points": ["ประเด็นวิเคราะห์ 1", "ประเด็นวิเคราะห์ 2"]
+              "summary": "Formal Thai summary of progress...",
+              "points": ["Key point 1", "Key point 2"]
             }
         `;
 
@@ -102,20 +95,15 @@ export const aiService = {
         }
 
         const prompt = `
-            ในฐานะที่ปรึกษาด้านความเสี่ยงโครงการ ช่วยวิเคราะห์โครงการดังนี้:
-            โครงการ: ${projectName}
-            ความคืบหน้าล่าสุด: ${progress}%
-            ปัญหา/อุปสรรค: ${issues || "ไม่ได้ระบุปัญหา"}
+            Analyze project risks and return JSON.
+            Project: ${projectName}
+            Progress: ${progress}%
+            Issues: ${issues || "None"}
             
-            คำแนะนำ:
-            1. วิเคราะห์ความเสี่ยงที่แท้จริงจากปัญหาที่ระบุ
-            2. เสนอแนวทางแก้ไขที่เป็นรูปธรรมและปฏิบัติได้จริง
-            3. คืนค่าเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอกเหนือจาก JSON
-            
-            Structure:
+            Return JSON in Thai language:
             {
-              "analysis": "บทวิเคราะห์ความเสี่ยงเชิงลึก...",
-              "recommendations": ["แนวทางแก้ไข 1", "แนวทางแก้ไข 2"]
+              "analysis": "Risk analysis...",
+              "recommendations": ["Recommendation 1", "Recommendation 2"]
             }
         `;
 
@@ -128,13 +116,15 @@ export const aiService = {
 
     /**
      * ฟังก์ชันภายในสำหรับเรียก AI API (Gemini)
+     * ปรับปรุง: ใช้ Native JSON Mode และเพิ่ม Retry Logic
      */
-    async callAIProvider(prompt: string): Promise<any> {
+    async callAIProvider(prompt: string, retryCount = 0): Promise<any> {
         const apiKey = process.env.GEMINI_API_KEY;
+        const MAX_RETRIES = 2; // จำนวนครั้งที่จะลองใหม่หากล้มเหลว
 
         // เช็คว่าเป็น Mock หรือไม่ (ใช้ค่า default หรือ YOUR_API_KEY)
         if (!apiKey || apiKey === "YOUR_API_KEY") {
-            console.warn("GEMINI_API_KEY ไม่ได้ตั้งค่าไว้ (หรือยังเป็นค่าเริ่มต้น) จะใช้ข้อมูลจำลอง (Mock Data)");
+            console.warn("GEMINI_API_KEY Missing/Default. Using Mock Data.");
             return {
                 summary: "บทสรุปโครงการของคุณมีความก้าวหน้าตามแผนงาน (ข้อมูลจำลองเนื่องจากยังไม่ได้ตั้งค่า API Key)",
                 points: ["ตัวชี้วัดส่วนใหญ่เป็นไปตามเป้าหมาย", "งบประมาณมีการเบิกจ่ายต่อเนื่อง"],
@@ -148,16 +138,24 @@ export const aiService = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `${prompt}\nRespond strictly with JSON format.` }] }],
+                    contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: {
-                        temperature: 0.2, // ลดความเพ้อเจ้อเพื่อให้ได้ JSON ที่แม่นยำขึ้น
+                        temperature: 0.2,
                         topP: 0.8,
-                        topK: 40
+                        topK: 40,
+                        responseMimeType: "application/json" // บังคับให้ตอบเป็น JSON แท้ๆ
                     }
                 })
             });
 
             if (!response.ok) {
+                // Retry Logic: หากเป็น Error ชั่วคราว (เช่น 503 หรือ 429) ให้ลองใหม่
+                if ((response.status === 503 || response.status === 429) && retryCount < MAX_RETRIES) {
+                    console.warn(`AI API Busy (Status ${response.status}), retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+                    await new Promise(resolve => setTimeout(resolve, 1500 * (retryCount + 1))); // Exponential Backoff
+                    return this.callAIProvider(prompt, retryCount + 1);
+                }
+
                 const errorData = await response.json();
                 console.error("Gemini API Error details:", JSON.stringify(errorData));
                 throw new Error(`AI API Error: ${response.status}`);
@@ -166,14 +164,20 @@ export const aiService = {
             const data = await response.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
-            // ใช้ Regex ในการค้นหา JSON ที่อยู่ภายใต้ Code Block หรืออยู่โดดๆ
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            const jsonStr = jsonMatch ? jsonMatch[0] : "{}";
+            // Native JSON Mode จะส่งกลับมาเป็น JSON string ที่สะอาดอยู่แล้ว parse ได้เลย
+            return JSON.parse(text);
 
-            return JSON.parse(jsonStr);
         } catch (error) {
             console.error("AI Service Error:", error);
-            // คืนค่าโครงสร้างที่ปลอดภัยแทนการ throw error เพื่อไม่ให้ UI ค้าง
+
+            // หากเกิด Network Error ทั่วไป ให้ลอง Retry ด้วยเช่นกัน
+            if (retryCount < MAX_RETRIES) {
+                console.warn(`Network Error, retrying... (${retryCount + 1}/${MAX_RETRIES})`);
+                await new Promise(resolve => setTimeout(resolve, 1500 * (retryCount + 1)));
+                return this.callAIProvider(prompt, retryCount + 1);
+            }
+
+            // ถ้าลองครบแล้วยังไม่ได้ ให้คืนค่าโครงสร้างที่ปลอดภัย
             return {
                 summary: "ระบบ AI ขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง หรือตรวจสอบ API Key",
                 points: [],
