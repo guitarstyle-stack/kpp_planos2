@@ -28,9 +28,9 @@ export function AIProjectInsights({ project }: AIProjectInsightsProps) {
             // ใช้ action เดียวกับรายงานแต่ส่งข้อมูลภาพรวมโครงการไปแทน
             const indicatorsData = project.indicators?.map(ind => ({
                 name: ind.name,
-                targetValue: ind.targetValue,
+                targetValue: Number(ind.targetValue || 0),
                 unit: ind.unit,
-                actualValue: (ind.reportResults || []).reduce((sum: number, r: any) => sum + (r.actualValue || 0), 0)
+                actualValue: Number((ind.reportResults || []).reduce((sum: number, r: any) => sum + Number(r.actualValue || 0), 0))
             })) || [];
 
             const result = await generateReportSummaryAction(undefined, {

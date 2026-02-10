@@ -204,9 +204,9 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
         try {
             const indicatorsData = selectedProject.indicators?.map(ind => ({
                 name: ind.name,
-                targetValue: ind.targetValue,
+                targetValue: Number(ind.targetValue || 0),
                 unit: ind.unit,
-                actualValue: indicatorValues[ind.id]?.actualValue || 0
+                actualValue: Number(indicatorValues[ind.id]?.actualValue || 0)
             })) || [];
 
             const result = await generateReportSummaryAction(initialData?.id, {

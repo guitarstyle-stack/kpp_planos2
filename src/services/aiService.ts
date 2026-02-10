@@ -59,7 +59,11 @@ export const aiService = {
             คืนค่าผลลัพธ์เป็น JSON format: { "summary": "ข้อความสรุปยาว", "points": ["หัวข้อสรุป 1", "หัวข้อสรุป 2"] }
         `;
 
-        return await this.callAIProvider(prompt);
+        const response = await this.callAIProvider(prompt);
+        return {
+            summary: response?.summary || "ไม่มีบทสรุปจาก AI",
+            points: Array.isArray(response?.points) ? response.points : []
+        };
     },
 
     /**
@@ -94,7 +98,11 @@ export const aiService = {
             คืนค่าผลลัพธ์เป็น JSON format: { "analysis": "บทวิเคราะห์ความเสี่ยง", "recommendations": ["ข้อเสนอแนะ 1", "ข้อเสนอแนะ 2"] }
         `;
 
-        return await this.callAIProvider(prompt);
+        const response = await this.callAIProvider(prompt);
+        return {
+            analysis: response?.analysis || "ไม่มีบทวิเคราะห์จาก AI",
+            recommendations: Array.isArray(response?.recommendations) ? response.recommendations : []
+        };
     },
 
     /**
