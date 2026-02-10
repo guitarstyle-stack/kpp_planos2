@@ -51,17 +51,29 @@ export const aiService = {
         }
 
         const prompt = `
-            ในฐานะผู้เชี่ยวชาญด้านการบริหารโครงการ ช่วยสรุปผลการดำเนินงานของโครงการ "${projectName}" 
-            รอบรายงานปี ${fiscalYear} (${periodType}) โดยใช้ข้อมูลตัวชี้วัดดังนี้:
-            ${indicatorsText}
+            ในฐานะที่ปรึกษาด้านการบริหารโครงการมืออาชีพ ช่วยวิเคราะห์และสรุปผลโครงการดังนี้:
+            โครงการ: "${projectName}"
+            รอบรายงานปี: ${fiscalYear}
+            ประเภท: ${periodType}
             
-            ให้สรุปเป็นภาษาไทยที่กระชับ เป็นทางการ และเน้นความสำเร็จหรือจุดที่ต้องปรับปรุง
-            คืนค่าผลลัพธ์เป็น JSON format: { "summary": "ข้อความสรุปยาว", "points": ["หัวข้อสรุป 1", "หัวข้อสรุป 2"] }
+            ข้อมูลตัวชี้วัด (Indicator Results):
+            ${indicatorsText || "ยังไม่มีข้อมูลตัวชี้วัด"}
+            
+            คำแนะนำ:
+            1. สรุปภาพรวมความคืบหน้าโครงการเป็นภาษาไทยที่กระชับและเป็นทางการ
+            2. ระบุจุดเด่นหรือปัญหาที่พบจากตัวชี้วัด
+            3. คืนค่าเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอกเหนือจาก JSON
+            
+            Structure:
+            {
+              "summary": "สรุปภาพรวมความคืบหน้า...",
+              "points": ["ประเด็นวิเคราะห์ 1", "ประเด็นวิเคราะห์ 2"]
+            }
         `;
 
         const response = await this.callAIProvider(prompt);
         return {
-            summary: response?.summary || "ไม่มีบทสรุปจาก AI",
+            summary: response?.summary || "ไม่สามารถสร้างบทสรุปได้ในขณะนี้",
             points: Array.isArray(response?.points) ? response.points : []
         };
     },
@@ -90,17 +102,26 @@ export const aiService = {
         }
 
         const prompt = `
+            ในฐานะที่ปรึกษาด้านความเสี่ยงโครงการ ช่วยวิเคราะห์โครงการดังนี้:
             โครงการ: ${projectName}
-            ปัญหาที่พบ: ${issues || "ไม่ได้ระบุปัญหา"}
-            ความคืบหน้า: ${progress}%
+            ความคืบหน้าล่าสุด: ${progress}%
+            ปัญหา/อุปสรรค: ${issues || "ไม่ได้ระบุปัญหา"}
             
-            ช่วยวิเคราะห์ความเสี่ยงและเสนอแนวทางแก้ไขปัญหาดังกล่าวโดยละเอียดในฐานะที่ปรึกษาโครงการ
-            คืนค่าผลลัพธ์เป็น JSON format: { "analysis": "บทวิเคราะห์ความเสี่ยง", "recommendations": ["ข้อเสนอแนะ 1", "ข้อเสนอแนะ 2"] }
+            คำแนะนำ:
+            1. วิเคราะห์ความเสี่ยงที่แท้จริงจากปัญหาที่ระบุ
+            2. เสนอแนวทางแก้ไขที่เป็นรูปธรรมและปฏิบัติได้จริง
+            3. คืนค่าเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอกเหนือจาก JSON
+            
+            Structure:
+            {
+              "analysis": "บทวิเคราะห์ความเสี่ยงเชิงลึก...",
+              "recommendations": ["แนวทางแก้ไข 1", "แนวทางแก้ไข 2"]
+            }
         `;
 
         const response = await this.callAIProvider(prompt);
         return {
-            analysis: response?.analysis || "ไม่มีบทวิเคราะห์จาก AI",
+            analysis: response?.analysis || "ไม่สามารถวิเคราะห์ความเสี่ยงได้ในขณะนี้",
             recommendations: Array.isArray(response?.recommendations) ? response.recommendations : []
         };
     },
@@ -111,13 +132,14 @@ export const aiService = {
     async callAIProvider(prompt: string): Promise<any> {
         const apiKey = process.env.GEMINI_API_KEY;
 
-        if (!apiKey) {
-            console.warn("GEMINI_API_KEY ไม่ได้ตั้งค่าไว้ จะใช้ข้อมูลจำลอง (Mock Data)");
+        // เช็คว่าเป็น Mock หรือไม่ (ใช้ค่า default หรือ YOUR_API_KEY)
+        if (!apiKey || apiKey === "YOUR_API_KEY") {
+            console.warn("GEMINI_API_KEY ไม่ได้ตั้งค่าไว้ (หรือยังเป็นค่าเริ่มต้น) จะใช้ข้อมูลจำลอง (Mock Data)");
             return {
-                summary: "นี่คือสรุปจำลองเนื่องจากยังไม่ได้ตั้งค่า API Key ของ AI",
-                points: ["ตัวอย่างจุดที่ 1", "ตัวอย่างจุดที่ 2"],
-                analysis: "บทวิเคราะห์จำลอง",
-                recommendations: ["ข้อแนะนำจำลอง 1"]
+                summary: "บทสรุปโครงการของคุณมีความก้าวหน้าตามแผนงาน (ข้อมูลจำลองเนื่องจากยังไม่ได้ตั้งค่า API Key)",
+                points: ["ตัวชี้วัดส่วนใหญ่เป็นไปตามเป้าหมาย", "งบประมาณมีการเบิกจ่ายต่อเนื่อง"],
+                analysis: "ความเสี่ยงอยู่ในระดับต่ำ (ข้อมูลจำลอง)",
+                recommendations: ["ดำเนินการตามแผนงานที่วางไว้", "ติดตามผลตัวชี้วัดทุกระยะ"]
             };
         }
 
@@ -126,19 +148,38 @@ export const aiService = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: `${prompt}\nRespond only with valid JSON.` }] }]
+                    contents: [{ parts: [{ text: `${prompt}\nRespond strictly with JSON format.` }] }],
+                    generationConfig: {
+                        temperature: 0.2, // ลดความเพ้อเจ้อเพื่อให้ได้ JSON ที่แม่นยำขึ้น
+                        topP: 0.8,
+                        topK: 40
+                    }
                 })
             });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                console.error("Gemini API Error details:", JSON.stringify(errorData));
+                throw new Error(`AI API Error: ${response.status}`);
+            }
 
             const data = await response.json();
             const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
-            // ลบ markdown formatting ถ้า AI คืนค่ามาใน ```json ... ```
-            const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+            // ใช้ Regex ในการค้นหา JSON ที่อยู่ภายใต้ Code Block หรืออยู่โดดๆ
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            const jsonStr = jsonMatch ? jsonMatch[0] : "{}";
+
             return JSON.parse(jsonStr);
         } catch (error) {
             console.error("AI Service Error:", error);
-            throw new Error("เกิดข้อผิดพลาดในการเรียกใช้ AI");
+            // คืนค่าโครงสร้างที่ปลอดภัยแทนการ throw error เพื่อไม่ให้ UI ค้าง
+            return {
+                summary: "ระบบ AI ขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง หรือตรวจสอบ API Key",
+                points: [],
+                analysis: "ไม่สามารถส่งข้อมูลได้",
+                recommendations: []
+            };
         }
     }
 };
