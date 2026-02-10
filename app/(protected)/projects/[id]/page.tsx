@@ -19,6 +19,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { hasRole } from "@/services/userRoleService";
 import { AttachmentManager } from "@/components/attachments/AttachmentManager";
 import { cssVars } from "@/lib/utils";
+import { AIProjectInsights } from "@/components/projects/AIProjectInsights";
 
 // Map status to Thai label and color
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
@@ -130,6 +131,9 @@ export default async function ProjectDetailPage(props: { params: Promise<{ id: s
                     <div className="stat-desc">{statusLabel}</div>
                 </div>
             </div>
+
+            {/* AI Insights Section */}
+            <AIProjectInsights project={project as any} />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Left Column: Details */}

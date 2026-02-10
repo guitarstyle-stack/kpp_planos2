@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faSave, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faSave, faTimes, faTrash, faMagic, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "sonner";
 import { FileUpload } from "@/components/attachments/FileUpload";
 import { AttachmentManager } from "@/components/attachments/AttachmentManager";
+import { generateReportSummaryAction, analyzeRiskAction } from "@/actions/aiActions";
 
 
 interface Project {
@@ -66,6 +67,11 @@ const periodOptions = [
 export function ReportForm({ initialData, projects }: ReportFormProps) {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
+    const [isAnalyzingSummary, setIsAnalyzingSummary] = useState(false);
+    const [isAnalyzingRisk, setIsAnalyzingRisk] = useState(false);
+    const [summary, setSummary] = useState(initialData?.summary || "");
+    const [issues, setIssues] = useState(initialData?.issues || "");
+    const [resolutionPlan, setResolutionPlan] = useState(initialData?.resolutionPlan || "");
 
     // Current Buddhist year
     const currentYear = new Date().getFullYear() + 543;
@@ -187,6 +193,68 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
     const kpiAverageAchievement = kpiTotal > 0
         ? Math.round(Object.values(indicatorValues).reduce((sum, v) => sum + v.achievementPercent, 0) / kpiTotal)
         : 0;
+
+    async function handleAISummary() {
+        if (!selectedProject) {
+            toast.error("กรุณาเลือกโครงการก่อนใช้ AI สรุปผล");
+            return;
+        }
+
+        setIsAnalyzingSummary(true);
+        try {
+            const indicatorsData = selectedProject.indicators?.map(ind => ({
+                name: ind.name,
+                targetValue: ind.targetValue,
+                unit: ind.unit,
+                actualValue: indicatorValues[ind.id]?.actualValue || 0
+            })) || [];
+
+            const result = await generateReportSummaryAction(initialData?.id, {
+                projectName: selectedProject.name,
+                fiscalYear: fiscalYearFilter,
+                periodType: (document.getElementsByName("periodType")[0] as HTMLSelectElement)?.value || "",
+                indicators: indicatorsData
+            });
+
+            if (result.success && result.data) {
+                setSummary(result.data.summary);
+                toast.success("AI สรุปผลเรียบร้อยแล้ว");
+            } else {
+                toast.error(result.error || "ไม่สามารถเรียกใช้ AI ได้");
+            }
+        } catch (error) {
+            toast.error("เกิดข้อผิดพลาดในการสรุปผล");
+        } finally {
+            setIsAnalyzingSummary(false);
+        }
+    }
+
+    async function handleAIRiskAnalysis() {
+        if (!selectedProject) {
+            toast.error("กรุณาเลือกโครงการก่อนใช้ AI วิเคราะห์");
+            return;
+        }
+
+        setIsAnalyzingRisk(true);
+        try {
+            const result = await analyzeRiskAction(initialData?.id, {
+                projectName: selectedProject.name,
+                issues: issues,
+                progress: typeof overallProgressPercent === 'number' ? overallProgressPercent : 0
+            });
+
+            if (result.success && result.data) {
+                setResolutionPlan(result.data.recommendations.join("\n"));
+                toast.success("AI วิเคราะห์แนวทางแก้ไขเรียบร้อยแล้ว");
+            } else {
+                toast.error(result.error || "ไม่สามารถเรียกใช้ AI ได้");
+            }
+        } catch (error) {
+            toast.error("เกิดข้อผิดพลาดในการวิเคราะห์");
+        } finally {
+            setIsAnalyzingRisk(false);
+        }
+    }
 
     async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -495,13 +563,23 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
 
                     {/* Summary */}
                     <div className="form-control mt-4">
-                        <label className="label">
+                        <label className="label flex justify-between">
                             <span className="label-text">สรุปผลการดำเนินงาน</span>
+                            <button
+                                type="button"
+                                onClick={handleAISummary}
+                                disabled={isAnalyzingSummary || !selectedProject}
+                                className="btn btn-xs btn-outline btn-secondary gap-2"
+                            >
+                                {isAnalyzingSummary ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faMagic} />}
+                                สรุปด้วย AI
+                            </button>
                         </label>
                         <textarea
                             name="summary"
                             rows={4}
-                            defaultValue={initialData?.summary || ""}
+                            value={summary}
+                            onChange={(e) => setSummary(e.target.value)}
                             placeholder="สรุปกิจกรรมและผลลัพธ์ที่ดำเนินการในรอบนี้..."
                             className="textarea textarea-bordered w-full"
                         />
@@ -515,7 +593,8 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
                         <textarea
                             name="issues"
                             rows={3}
-                            defaultValue={initialData?.issues || ""}
+                            value={issues}
+                            onChange={(e) => setIssues(e.target.value)}
                             placeholder="ปัญหาหรืออุปสรรคที่พบระหว่างดำเนินงาน..."
                             className="textarea textarea-bordered w-full"
                         />
@@ -523,13 +602,23 @@ export function ReportForm({ initialData, projects }: ReportFormProps) {
 
                     {/* Resolution Plan */}
                     <div className="form-control">
-                        <label className="label">
+                        <label className="label flex justify-between">
                             <span className="label-text">แนวทางแก้ไข</span>
+                            <button
+                                type="button"
+                                onClick={handleAIRiskAnalysis}
+                                disabled={isAnalyzingRisk || !selectedProject || !issues}
+                                className="btn btn-xs btn-outline btn-secondary gap-2"
+                            >
+                                {isAnalyzingRisk ? <FontAwesomeIcon icon={faSpinner} spin /> : <FontAwesomeIcon icon={faMagic} />}
+                                แนะนำแนวทางแก้ไขด้วย AI
+                            </button>
                         </label>
                         <textarea
                             name="resolutionPlan"
                             rows={3}
-                            defaultValue={initialData?.resolutionPlan || ""}
+                            value={resolutionPlan}
+                            onChange={(e) => setResolutionPlan(e.target.value)}
                             placeholder="แนวทางการแก้ไขปัญหาหรือปรับปรุงการดำเนินงาน..."
                             className="textarea textarea-bordered w-full"
                         />
