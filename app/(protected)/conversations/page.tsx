@@ -10,11 +10,12 @@ export const dynamic = "force-dynamic";
 export default async function ConversationsPage({
     searchParams,
 }: {
-    searchParams: { page?: string; status?: string; priority?: string };
+    searchParams: Promise<{ page?: string; status?: string; priority?: string }>;
 }) {
-    const page = Number(searchParams.page) || 1;
-    const status = searchParams.status as any;
-    const priority = searchParams.priority as any;
+    const params = await searchParams;
+    const page = Number(params.page) || 1;
+    const status = params.status as any;
+    const priority = params.priority as any;
 
     // Fetch conversations
     const { success, data } = await getConversationsAction({

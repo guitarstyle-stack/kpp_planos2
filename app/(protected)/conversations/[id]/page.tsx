@@ -13,14 +13,15 @@ export const dynamic = "force-dynamic";
 export default async function ConversationDetailPage({
     params,
 }: {
-    params: { id: string };
+    params: Promise<{ id: string }>;
 }) {
+    const { id } = await params;
     const session = await getSession();
     if (!session?.user) {
         redirect("/login");
     }
 
-    const conversationId = parseInt(params.id);
+    const conversationId = parseInt(id);
     if (isNaN(conversationId)) {
         redirect("/conversations");
     }
