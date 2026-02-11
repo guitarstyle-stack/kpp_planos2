@@ -2,7 +2,8 @@
 
 import { useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCloudUpload, faSpinner, faCheckCircle, faTimesCircle } from "@fortawesome/free-solid-svg-icons";
+import { faCloudUpload, faSpinner, faCheckCircle, faTimesCircle, faFileZipper } from "@fortawesome/free-solid-svg-icons";
+import { compressImage } from "@/lib/imageUtils";
 
 interface FileUploadProps {
     projectId?: number;
@@ -13,6 +14,7 @@ interface FileUploadProps {
 
 export function FileUpload({ projectId, reportId, onUploadSuccess, onUploadError }: FileUploadProps) {
     const [uploading, setUploading] = useState(false);
+    const [compressing, setCompressing] = useState(false);
     const [dragActive, setDragActive] = useState(false);
     const [uploadStatus, setUploadStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -52,9 +54,24 @@ export function FileUpload({ projectId, reportId, onUploadSuccess, onUploadError
         setUploading(true);
         setUploadStatus(null);
 
+        let finalFile = file;
+
+        // Image compression if image > 1MB
+        if (file.type.startsWith("image/") && file.size > 1024 * 1024) {
+            setCompressing(true);
+            try {
+                finalFile = await compressImage(file, 1);
+                console.log(`Original: ${(file.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(finalFile.size / 1024 / 1024).toFixed(2)}MB`);
+            } catch (err) {
+                console.error("Compression failed, using original file", err);
+            } finally {
+                setCompressing(false);
+            }
+        }
+
         try {
             const formData = new FormData();
-            formData.append("file", file);
+            formData.append("file", finalFile);
 
             if (projectId) {
                 formData.append("projectId", projectId.toString());
@@ -139,7 +156,7 @@ export function FileUpload({ projectId, reportId, onUploadSuccess, onUploadError
                         <>
                             <FontAwesomeIcon icon={faSpinner} className="h-12 w-12 text-info animate-spin" />
                             <div>
-                                <p className="text-lg font-medium">กำลังอัปโหลด...</p>
+                                <p className="text-lg font-medium">{compressing ? "กำลังย่อขนาดภาพ..." : "กำลังอัปโหลด..."}</p>
                                 <p className="text-sm opacity-70">กรุณารอสักครู่</p>
                             </div>
                         </>
