@@ -161,6 +161,102 @@ export async function pushFlexMessage(
     }
 }
 
+// --- Multicast Support (Max 500 recipients per request) ---
+export async function multicastFlexMessage(
+    userIds: (string | null | undefined)[],
+    title: string,
+    message: string,
+    link: string | undefined | null,
+    type: string | undefined | null = "INFO",
+    imageUrl?: string | null
+) {
+    if (!LINE_CHANNEL_ACCESS_TOKEN) return;
+    const lineUsers = userIds.filter((id): id is string => !!id);
+    if (lineUsers.length === 0) return;
+
+    const colorMap: Record<string, string> = {
+        "INFO": "#3b82f6",
+        "WARNING": "#eab308",
+        "SUCCESS": "#22c55e",
+        "ERROR": "#ef4444",
+    };
+    const headerColor = colorMap[type || "INFO"] || "#3b82f6";
+    const safeTitle = title.substring(0, 100);
+    const safeMessage = message.substring(0, 200);
+
+    const bubbleContents: any = {
+        type: "bubble",
+        header: {
+            type: "box",
+            layout: "vertical",
+            contents: [{ type: "text", text: type || "INFO", color: "#ffffff", weight: "bold", size: "xs", align: "center" }],
+            backgroundColor: headerColor,
+            paddingAll: "4px"
+        },
+        body: {
+            type: "box",
+            layout: "vertical",
+            contents: [
+                { type: "text", text: safeTitle, weight: "bold", size: "sm", wrap: true },
+                { type: "text", text: safeMessage, size: "xs", color: "#666666", wrap: true, margin: "md" }
+            ]
+        },
+        footer: link ? {
+            type: "box",
+            layout: "vertical",
+            contents: [{
+                type: "button",
+                style: "primary",
+                height: "sm",
+                action: { type: "uri", label: "ดูรายละเอียด", uri: `${process.env.NEXT_PUBLIC_APP_URL || ""}${link}` },
+                color: headerColor
+            }]
+        } : undefined
+    };
+
+    if (imageUrl) {
+        bubbleContents.hero = {
+            type: "image",
+            url: imageUrl,
+            size: "full",
+            aspectRatio: "20:13",
+            aspectMode: "cover",
+            action: link ? { type: "uri", uri: `${process.env.NEXT_PUBLIC_APP_URL || ""}${link}` } : undefined
+        };
+    }
+
+    const CHUNK_SIZE = 500;
+    for (let i = 0; i < lineUsers.length; i += CHUNK_SIZE) {
+        const chunk = lineUsers.slice(i, i + CHUNK_SIZE);
+        const payload = {
+            to: chunk,
+            messages: [{
+                type: "flex",
+                altText: `${safeTitle}: ${safeMessage}`,
+                contents: bubbleContents
+            }]
+        };
+
+        try {
+            const response = await fetch("https://api.line.me/v2/bot/message/multicast", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${LINE_CHANNEL_ACCESS_TOKEN}`,
+                },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const error = await response.text();
+                console.error("LINE Multicast Error:", error);
+            }
+        } catch (error) {
+            console.error("LINE Multicast Exception:", error);
+        }
+    }
+}
+
 // --- Quota APIs ---
 
 export async function getLineQuota() {

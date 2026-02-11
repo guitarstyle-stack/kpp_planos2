@@ -1,5 +1,5 @@
 import db from "@/lib/db";
-import { pushMessage, pushFlexMessage } from "./lineService";
+import { pushMessage, pushFlexMessage, multicastFlexMessage } from "./lineService";
 
 export async function getNotifications(userId: number, limit: number = 10) {
     return await db.notification.findMany({
@@ -113,12 +113,11 @@ export async function broadcastNotification(data: {
         });
     }
 
-    // 3. LINE Channel: Send LINE messages (Async)
+    // 3. LINE Channel: Send LINE messages (Multicast)
     if (channels.includes("LINE")) {
-        const lineUsers = users.filter(u => u.lineUserId);
-        Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
-            .then(() => console.log(`Broadcasted to ${lineUsers.length} LINE users`))
-            .catch(err => console.error("Broadcast LINE failed", err));
+        const lineUserIds = users.map(u => u.lineUserId);
+        await multicastFlexMessage(lineUserIds, data.title, data.message, data.link, data.type, data.imageUrl);
+        console.log(`Broadcasted to ${lineUserIds.filter(id => !!id).length} LINE users`);
     }
 
     return { count: users.length };
@@ -158,9 +157,9 @@ export async function sendNotificationToDepartment(departmentId: number, data: {
 
     // 3. LINE Channel
     if (channels.includes("LINE")) {
-        const lineUsers = users.filter(u => u.lineUserId);
-        Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
-            .then(() => console.log(`Department broadcast to ${lineUsers.length} LINE users`));
+        const lineUserIds = users.filter(u => u.lineUserId).map(u => u.lineUserId);
+        await multicastFlexMessage(lineUserIds, data.title, data.message, data.link, data.type, data.imageUrl);
+        console.log(`Department broadcast to ${lineUserIds.length} LINE users`);
     }
 
     return { count: users.length };
@@ -207,9 +206,9 @@ export async function sendNotificationToRoles(roleIds: number[], data: {
 
     // 3. LINE Channel
     if (channels.includes("LINE")) {
-        const lineUsers = users.filter(u => u.lineUserId);
-        Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
-            .then(() => console.log(`Role broadcast to ${lineUsers.length} LINE users`));
+        const lineUserIds = users.filter(u => u.lineUserId).map(u => u.lineUserId);
+        await multicastFlexMessage(lineUserIds, data.title, data.message, data.link, data.type, data.imageUrl);
+        console.log(`Role broadcast to ${lineUserIds.length} LINE users`);
     }
 
     return { count: users.length };
@@ -251,9 +250,9 @@ export async function sendNotificationToMultipleUsers(userIds: number[], data: {
 
     // 3. LINE Channel
     if (channels.includes("LINE")) {
-        const lineUsers = users.filter(u => u.lineUserId);
-        Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
-            .then(() => console.log(`Multi-user broadcast to ${lineUsers.length} LINE users`));
+        const lineUserIds = users.filter(u => u.lineUserId).map(u => u.lineUserId);
+        await multicastFlexMessage(lineUserIds, data.title, data.message, data.link, data.type, data.imageUrl);
+        console.log(`Multi-user broadcast to ${lineUserIds.length} LINE users`);
     }
 
     return { count: users.length };
@@ -295,9 +294,9 @@ export async function sendNotificationToMultipleDepartments(departmentIds: numbe
 
     // 3. LINE Channel
     if (channels.includes("LINE")) {
-        const lineUsers = users.filter(u => u.lineUserId);
-        Promise.allSettled(lineUsers.map(u => pushFlexMessage(u.lineUserId, data.title, data.message, data.link, data.type, data.imageUrl)))
-            .then(() => console.log(`Multi-department broadcast to ${lineUsers.length} LINE users`));
+        const lineUserIds = users.filter(u => u.lineUserId).map(u => u.lineUserId);
+        await multicastFlexMessage(lineUserIds, data.title, data.message, data.link, data.type, data.imageUrl);
+        console.log(`Multi-department broadcast to ${lineUserIds.length} LINE users`);
     }
 
     return { count: users.length };
