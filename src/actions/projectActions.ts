@@ -113,6 +113,112 @@ export async function createProjectAction(prevState: any, formData: FormData) {
     }
 }
 
+// Admin Create Project Action - สามารถกำหนดผู้รับผิดชอบได้
+export async function createProjectAsAdmin(prevState: any, formData: FormData) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            return createErrorResponse("กรุณาเข้าสู่ระบบเพื่อสร้างโครงการ", ErrorCodes.AUTH_LOGIN_REQUIRED);
+        }
+
+        // ตรวจสอบสิทธิ์ Admin
+        const isAdmin = await hasRole(user.id, "ADMIN");
+        if (!isAdmin) {
+            return createErrorResponse("คุณไม่มีสิทธิ์ในการดำเนินการนี้", ErrorCodes.PROJECT_UNAUTHORIZED);
+        }
+
+        const indicatorsJson = formData.get("indicatorsJson") as string;
+        let indicators: any[] = [];
+        if (indicatorsJson) {
+            try {
+                indicators = JSON.parse(indicatorsJson);
+            } catch (e) {
+                console.error("Failed to parse indicators JSON", e);
+            }
+        }
+
+        const fiscalYear = Number(formData.get("fiscalYear"));
+        const developmentGoalIdParam = formData.get("developmentGoalId");
+        const developmentGoalId = developmentGoalIdParam ? Number(developmentGoalIdParam) : undefined;
+
+        let code = "";
+
+        // Generate Hierarchical Code: [GoalCode]-[001]
+        if (developmentGoalId) {
+            const goal = await db.developmentGoal.findUnique({
+                where: { id: developmentGoalId },
+                select: { code: true }
+            });
+
+            if (goal) {
+                const count = await db.project.count({
+                    where: { developmentGoalId }
+                });
+                code = `${goal.code}-${(count + 1).toString().padStart(3, '0')}`;
+            }
+        }
+
+        // Fallback Code: FY-[001]
+        if (!code) {
+            const count = await db.project.count({
+                where: { fiscalYear }
+            });
+            code = `${fiscalYear}-${(count + 1).toString().padStart(3, '0')}`;
+        }
+
+        const rawData = {
+            code: code,
+            fiscalYear: fiscalYear,
+            name: formData.get("name"),
+            description: formData.get("description"),
+            departmentId: formData.get("departmentId"),
+            developmentGoalId: formData.get("developmentGoalId"),
+            budgetTotal: formData.get("budgetTotal"),
+            budgetSpent: formData.get("budgetSpent"),
+            progressPercent: formData.get("progressPercent"),
+            status: formData.get("status"),
+            targetGroup: formData.get("targetGroup"),
+            startDate: formData.get("startDate"),
+            endDate: formData.get("endDate"),
+            ownerId: formData.get("ownerId"), // เพิ่มฟิลด์ ownerId
+            indicators: indicators
+        };
+
+        const { AdminProjectSchema } = await import("@/schemas/projectSchema");
+        const validatedData = AdminProjectSchema.parse(rawData);
+
+        // Separate indicators and ownerId from project data
+        const { indicators: indicatorsData, ownerId, ...projectData } = validatedData;
+
+        const newProject = await db.project.create({
+            data: {
+                ...projectData,
+                ownerUserId: ownerId, // ใช้ ownerId ที่เลือกจากฟอร์ม
+                indicators: {
+                    create: indicatorsData
+                }
+            },
+        });
+
+        await createAuditLog({
+            action: "CREATE",
+            entityType: "Project",
+            entityId: newProject.id,
+            description: `Admin created new project: ${newProject.name} (${newProject.code})`,
+            diffAfter: newProject,
+            userId: user.id,
+        });
+
+        revalidatePath("/admin/projects");
+        revalidatePath("/projects");
+        return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
+    } catch (error) {
+        console.error(error);
+        return createErrorResponse("ไม่สามารถสร้างโครงการได้", ErrorCodes.PROJECT_CREATE_FAILED, error);
+    }
+}
+
+
 import { hasRole } from "@/services/userRoleService";
 
 // ... [existing imports]

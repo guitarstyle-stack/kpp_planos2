@@ -81,7 +81,7 @@ export default async function AdminProjectsPage({ searchParams }: AdminProjectsP
                 </div>
                 <div className="flex gap-3">
                     <Link
-                        href="/projects/new"
+                        href="/admin/projects/new"
                         className="btn btn-primary gap-2 shadow-lg shadow-primary/20"
                     >
                         <FontAwesomeIcon icon={faPlus} className="h-4 w-4" />

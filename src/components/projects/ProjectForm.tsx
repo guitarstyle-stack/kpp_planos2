@@ -54,9 +54,10 @@ interface ProjectFormProps {
     initialData?: any;
     masterData: MasterData;
     userId: number; // For ownership
+    adminOwnerId?: number; // Optional: For admin mode to specify project owner
 }
 
-export function ProjectForm({ initialData, masterData, userId }: ProjectFormProps): React.JSX.Element {
+export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: ProjectFormProps): React.JSX.Element {
     const router = useRouter();
 
     // Default values for form - Use Input type (strings for dates)
@@ -150,19 +151,35 @@ export function ProjectForm({ initialData, masterData, userId }: ProjectFormProp
             }
         });
 
+        // เพิ่ม ownerId สำหรับ Admin mode
+        if (adminOwnerId) {
+            formData.append('ownerId', adminOwnerId.toString());
+        }
+
         try {
             let res;
             if (initialData?.id) {
                 const { updateProjectAction } = await import("@/actions/projectActions");
                 res = await updateProjectAction(initialData.id, formData);
             } else {
-                const { createProjectAction } = await import("@/actions/projectActions");
-                res = await createProjectAction(null, formData);
+                // ใช้ createProjectAsAdmin ถ้าอยู่ใน Admin mode
+                if (adminOwnerId) {
+                    const { createProjectAsAdmin } = await import("@/actions/projectActions");
+                    res = await createProjectAsAdmin(null, formData);
+                } else {
+                    const { createProjectAction } = await import("@/actions/projectActions");
+                    res = await createProjectAction(null, formData);
+                }
             }
 
             if (res?.success) {
                 toast.success(initialData?.id ? "อัปเดตโครงการสำเร็จ" : "สร้างโครงการสำเร็จ");
-                router.push("/projects");
+                // Redirect ไปที่หน้าที่เหมาะสม
+                if (adminOwnerId) {
+                    router.push("/admin/projects");
+                } else {
+                    router.push("/projects");
+                }
                 router.refresh();
             } else {
                 toast.error(res?.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");

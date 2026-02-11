@@ -31,3 +31,10 @@ export const ProjectSchema = z.object({
 export type ProjectFormData = z.infer<typeof ProjectSchema>;
 export type ProjectFormInput = z.input<typeof ProjectSchema>;
 export type IndicatorFormData = z.infer<typeof IndicatorSchema>;
+
+// Admin Project Schema - เพิ่มฟิลด์ ownerId สำหรับ Admin
+export const AdminProjectSchema = ProjectSchema.extend({
+    ownerId: z.coerce.number().min(1, "กรุณาเลือกผู้รับผิดชอบโครงการ"),
+});
+
+export type AdminProjectFormData = z.infer<typeof AdminProjectSchema>;
