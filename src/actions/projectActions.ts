@@ -10,6 +10,7 @@ import { createAuditLog } from "@/lib/audit";
 import { z } from "zod";
 
 import { ProjectSchema, IndicatorSchema } from "@/schemas/projectSchema";
+import { hasRole } from "@/services/userRoleService";
 
 // Removed local schema definitions
 
@@ -110,7 +111,13 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
-        return createErrorResponse("ไม่สามารถสร้างโครงการได้", ErrorCodes.PROJECT_CREATE_FAILED, error);
+        return createErrorResponse(
+            error instanceof z.ZodError
+                ? `ข้อมูลไม่ถูกต้อง: ${error.issues.map(e => e.message).join(", ")}`
+                : (error instanceof Error ? error.message : "ไม่สามารถสร้างโครงการได้"),
+            ErrorCodes.PROJECT_CREATE_FAILED,
+            error
+        );
     }
 }
 
@@ -194,7 +201,7 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
         const newProject = await db.project.create({
             data: {
                 ...projectData,
-                code: projectData.code as string,
+                code: projectData.code || code,
                 ownerUserId: ownerId, // ใช้ ownerId ที่เลือกจากฟอร์ม
                 indicators: {
                     create: indicatorsData
@@ -216,12 +223,17 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
         return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
-        return createErrorResponse("ไม่สามารถสร้างโครงการได้", ErrorCodes.PROJECT_CREATE_FAILED, error);
+        return createErrorResponse(
+            error instanceof z.ZodError
+                ? `ข้อมูลไม่ถูกต้อง: ${error.issues.map(e => e.message).join(", ")}`
+                : (error instanceof Error ? error.message : "ไม่สามารถสร้างโครงการได้"),
+            ErrorCodes.PROJECT_CREATE_FAILED,
+            error
+        );
     }
 }
 
 
-import { hasRole } from "@/services/userRoleService";
 
 // ... [existing imports]
 
