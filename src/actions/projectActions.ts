@@ -92,6 +92,8 @@ export async function createProjectAction(prevState: any, formData: FormData) {
                 ...projectData,
                 code: projectData.code as string,
                 ownerUserId: user.id,
+                startDate: projectData.startDate ? new Date(projectData.startDate) : null,
+                endDate: projectData.endDate ? new Date(projectData.endDate) : null,
                 indicators: {
                     create: indicatorsData
                 }
@@ -203,6 +205,8 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
                 ...projectData,
                 code: projectData.code || code,
                 ownerUserId: ownerId, // ใช้ ownerId ที่เลือกจากฟอร์ม
+                startDate: projectData.startDate ? new Date(projectData.startDate) : null,
+                endDate: projectData.endDate ? new Date(projectData.endDate) : null,
                 indicators: {
                     create: indicatorsData
                 }
@@ -300,6 +304,8 @@ export async function updateProjectAction(id: number, formData: FormData) {
                 data: {
                     ...projectData,
                     code: projectData.code || project.code,
+                    startDate: projectData.startDate ? new Date(projectData.startDate) : null,
+                    endDate: projectData.endDate ? new Date(projectData.endDate) : null,
                 },
             });
 
