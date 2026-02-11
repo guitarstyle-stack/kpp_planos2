@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import db from '@/lib/db'
 import crypto from 'crypto'
@@ -53,7 +54,7 @@ export async function createSession(userId: number) {
 }
 
 // 2. Get current session
-export async function getSession() {
+export const getSession = cache(async function getSession() {
     const cookieStore = await cookies()
     const sessionCookie = cookieStore.get('session')?.value
 
@@ -93,7 +94,7 @@ export async function getSession() {
         console.error('Session verification failed:', error)
         return null
     }
-}
+})
 
 // 3. Logout
 export async function logout() {
@@ -119,7 +120,7 @@ export async function logout() {
 }
 
 // Helper to get current user directly
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async function getCurrentUser() {
     const session = await getSession()
     return session?.user || null
-}
+})
