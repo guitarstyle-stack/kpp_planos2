@@ -10,7 +10,7 @@ interface Conversation {
     title: string;
     status: ConversationStatus;
     priority: ConversationPriority;
-    lastMessageAt: Date;
+    lastMessageAt: Date | string;
     initiator: {
         id: number;
         name: string;
@@ -23,7 +23,7 @@ interface Conversation {
     }>;
     messages: Array<{
         content: string;
-        createdAt: Date;
+        createdAt: Date | string;
         sender: {
             name: string;
         };
@@ -51,7 +51,7 @@ export function ConversationList({
     const [statusFilter, setStatusFilter] = useState<ConversationStatus | "">("");
     const [priorityFilter, setPriorityFilter] = useState<ConversationPriority | "">("");
 
-    const formatDate = (date: Date) => {
+    const formatDate = (date: Date | string) => {
         const d = new Date(date);
         const now = new Date();
         const diffInHours = (now.getTime() - d.getTime()) / (1000 * 60 * 60);

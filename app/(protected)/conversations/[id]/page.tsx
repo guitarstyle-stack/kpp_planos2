@@ -68,7 +68,7 @@ export default async function ConversationDetailPage({
             </div>
 
             <ConversationDetail
-                conversation={conversation}
+                conversation={JSON.parse(JSON.stringify(conversation))}
                 currentUserId={session.user.id}
                 isAdmin={adminStatus}
             />

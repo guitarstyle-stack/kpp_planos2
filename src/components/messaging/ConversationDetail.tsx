@@ -10,7 +10,7 @@ interface Message {
     id: number;
     content: string;
     messageType: string;
-    createdAt: Date;
+    createdAt: Date | string;
     sender: {
         id: number;
         name: string;
@@ -43,8 +43,8 @@ interface ConversationDetailProps {
         priority: string;
         relatedType: string | null;
         relatedId: number | null;
-        lastMessageAt: Date;
-        createdAt: Date;
+        lastMessageAt: Date | string;
+        createdAt: Date | string;
         initiator: {
             id: number;
             name: string;
@@ -82,7 +82,7 @@ export function ConversationDetail({ conversation, currentUserId, isAdmin = fals
         }
     }, [conversation.messages, conversation.id, currentUserId]);
 
-    const formatMessageDate = (date: Date) => {
+    const formatMessageDate = (date: Date | string) => {
         return new Date(date).toLocaleString("th-TH", {
             day: "2-digit",
             month: "short",

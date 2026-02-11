@@ -48,11 +48,11 @@ export default async function ConversationsPage({
 
     return (
         <div className="space-y-6">
-            <ConversationsPageHeader adminUsers={availableUsers} />
+            <ConversationsPageHeader adminUsers={JSON.parse(JSON.stringify(availableUsers))} />
 
             <Suspense fallback={<div className="text-center py-10">กำลังโหลด...</div>}>
                 <ConversationList
-                    initialConversations={data.conversations}
+                    initialConversations={JSON.parse(JSON.stringify(data.conversations))}
                     total={data.total}
                     page={data.page}
                     totalPages={data.totalPages}
