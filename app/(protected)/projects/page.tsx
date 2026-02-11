@@ -82,7 +82,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-primary">
-                        โครงการ {userDepartmentName}
+                        โครงการของ {userDepartmentName}
                     </h1>
                     <p className="text-sm opacity-70">
                         บริหารจัดการโครงการและติดตามความคืบหน้า
@@ -175,7 +175,7 @@ export default async function ProjectsPage({ searchParams }: ProjectsPageProps) 
             <div className="card bg-base-100 shadow-sm border border-base-200">
                 <div className="border-b border-base-200 bg-base-200/30 px-4 md:px-6 py-4 flex flex-col sm:flex-row gap-2 md:gap-4 justify-between items-start sm:items-center">
                     <h3 className="font-bold text-base md:text-lg">
-                        รายการโครงการ
+                        รายการโครงการของสำนักงาน
                         {query && <span className="text-primary text-sm md:text-base ml-2">({searchResult.total} ผลลัพธ์)</span>}
                         {searchFiscalYear && !query && <span className="text-primary text-sm md:text-base ml-2">(ปี {searchFiscalYear})</span>}
                     </h3>
