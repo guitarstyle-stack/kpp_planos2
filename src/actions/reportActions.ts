@@ -43,12 +43,24 @@ async function syncProjectWithLatestReport(tx: any, projectId: number) {
         where: { projectId },
         orderBy: [
             { fiscalYear: 'desc' },
-            // We can't directly order by our custom period order in Prisma easily without raw SQL,
-            // so we'll fetch and sort in memory if multiple exist for same year.
         ],
     });
 
-    if (reports.length === 0) return;
+    console.log(`[Sync] Project: ${projectId}, Reports remaining: ${reports.length}`);
+
+    if (reports.length === 0) {
+        console.log(`[Sync] No reports left for project ${projectId}. Resetting to NOT_STARTED.`);
+        await tx.project.update({
+            where: { id: projectId },
+            data: {
+                status: "NOT_STARTED",
+                progressPercent: 0,
+                budgetSpent: 0,
+                lastReportedAt: null
+            }
+        });
+        return;
+    }
 
     // Sort by fiscalYear desc, then periodType priority desc
     const sortedReports = reports.sort((a: any, b: any) => {
@@ -75,13 +87,15 @@ async function syncProjectWithLatestReport(tx: any, projectId: number) {
         newStatus = "COMPLETED";
     }
 
+    console.log(`[Sync] Project ${projectId} updated. Status: ${newStatus}, Progress: ${Math.round(calculatedProgress)}%`);
+
     await tx.project.update({
         where: { id: projectId },
         data: {
             budgetSpent: latest.budgetSpentCumulative || 0,
             progressPercent: Math.round(calculatedProgress),
             status: newStatus,
-            lastReportedAt: latest.createdAt, // Or now, but latest report's creation is more accurate for data state
+            lastReportedAt: latest.createdAt,
         },
     });
 }
@@ -195,6 +209,7 @@ export async function createReportAction(prevState: any, formData: FormData) {
         revalidatePath("/projects");
         revalidatePath(`/projects/${validatedData.projectId}`);
         revalidatePath("/dashboard");
+        revalidatePath("/", "layout");
         return { success: true };
     } catch (error) {
         console.error(error);
@@ -341,12 +356,32 @@ export async function deleteReportAction(id: number) {
             }
         }
 
-        await db.report.delete({
-            where: { id },
-        });
+        await db.$transaction(async (tx) => {
+            // 1. Delete the report
+            await tx.report.delete({
+                where: { id },
+            });
 
-        // Audit Log
-        if (report) {
+            // 2. Recalculate project status after deletion
+            const remainingReportsCount = await tx.report.count({
+                where: { projectId: report.projectId }
+            });
+
+            if (remainingReportsCount === 0) {
+                await tx.project.update({
+                    where: { id: report.projectId },
+                    data: {
+                        status: "NOT_STARTED",
+                        progressPercent: 0,
+                        budgetSpent: 0,
+                        lastReportedAt: null
+                    }
+                });
+            } else {
+                await syncProjectWithLatestReport(tx, report.projectId);
+            }
+
+            // 3. Audit Log
             await createAuditLog({
                 action: "DELETE",
                 entityType: "Report",
@@ -355,25 +390,7 @@ export async function deleteReportAction(id: number) {
                 diffBefore: report,
                 description: `Deleted report for project ${report.project.name} (Period: ${report.periodType})`
             });
-        }
-
-        // Recalculate project status after deletion
-        const remainingReportsCount = await db.report.count({ where: { projectId: report.projectId } });
-        if (remainingReportsCount === 0) {
-            await db.project.update({
-                where: { id: report.projectId },
-                data: {
-                    status: "NOT_STARTED",
-                    progressPercent: 0,
-                    budgetSpent: 0,
-                    lastReportedAt: null
-                }
-            });
-        } else {
-            await db.$transaction(async (tx) => {
-                await syncProjectWithLatestReport(tx, report.projectId);
-            });
-        }
+        });
 
         revalidatePath("/reports");
         revalidatePath("/projects");
