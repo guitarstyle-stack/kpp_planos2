@@ -9,7 +9,7 @@ export const IndicatorSchema = z.object({
 });
 
 export const ProjectSchema = z.object({
-    code: z.string().min(1, "กรุณาระบุรหัสโครงการ"),
+    code: z.string().min(1, "กรุณาระบุรหัสโครงการ").optional().or(z.literal("")),
     name: z.string().min(1, "กรุณาระบุชื่อโครงการ"),
     description: z.string().optional(),
     fiscalYear: z.coerce.number(),

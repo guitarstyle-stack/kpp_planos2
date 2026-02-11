@@ -89,6 +89,7 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         const newProject = await db.project.create({
             data: {
                 ...projectData,
+                code: projectData.code as string,
                 ownerUserId: user.id,
                 indicators: {
                     create: indicatorsData
@@ -193,6 +194,7 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
         const newProject = await db.project.create({
             data: {
                 ...projectData,
+                code: projectData.code as string,
                 ownerUserId: ownerId, // ใช้ ownerId ที่เลือกจากฟอร์ม
                 indicators: {
                     create: indicatorsData
@@ -283,7 +285,10 @@ export async function updateProjectAction(id: number, formData: FormData) {
             // Update project fields
             await tx.project.update({
                 where: { id },
-                data: projectData,
+                data: {
+                    ...projectData,
+                    code: projectData.code || project.code,
+                },
             });
 
             // Handle indicators if provided
