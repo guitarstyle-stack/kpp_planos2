@@ -30,7 +30,7 @@ export function ProjectSearch({ departments = [], years = [], developmentGoals =
     // Debounced search
     const updateURL = useCallback(
         (newQuery: string, filters: Record<string, string>) => {
-            const params = new URLSearchParams(searchParams);
+            const params = new URLSearchParams(searchParams.toString());
 
             if (newQuery.trim()) {
                 params.set("q", newQuery.trim());
@@ -47,7 +47,13 @@ export function ProjectSearch({ departments = [], years = [], developmentGoals =
                 }
             });
 
-            router.replace(`${pathname}?${params.toString()}`);
+            const newSearch = params.toString();
+            const currentSearch = searchParams.toString();
+
+            // ONLY replace if the URL actually changed to prevent infinite loops
+            if (newSearch !== currentSearch) {
+                router.replace(`${pathname}?${newSearch}`);
+            }
         },
         [pathname, router, searchParams]
     );
