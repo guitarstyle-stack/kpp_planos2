@@ -1,7 +1,8 @@
 import { getNotifications, markAsRead } from "@/services/notificationService";
+import { getPublicAnnouncements } from "@/services/conversationService";
 import { getSession } from "@/lib/auth";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBullhorn, faClock, faLink, faInfoCircle, faExclamationTriangle, faCheckCircle, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
+import { faBullhorn, faClock, faLink, faInfoCircle, faExclamationTriangle, faCheckCircle, faExclamationCircle, faComments } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 import { format } from "date-fns";
 import { th } from "date-fns/locale";
@@ -12,22 +13,45 @@ export default async function AnnouncementsPage() {
     const session = await getSession();
     if (!session?.user) return null;
 
-    // Fetch all notifications (limit 50 per page for now)
-    const notifications = await getNotifications(session.user.id, 50);
+    // Fetch personal notifications and public announcements
+    const [notifications, publicThreads] = await Promise.all([
+        getNotifications(session.user.id, 50),
+        getPublicAnnouncements(20)
+    ]);
 
-    // Group by date (Today, Yesterday, Older)
+    // Map threads to a common "announcement" format
+    const interactiveAnnouncements = publicThreads.map(t => ({
+        id: `thread-${t.id}`,
+        title: t.title,
+        message: t.messages[0]?.content || "",
+        type: "INTERACTIVE",
+        link: `/conversations/${t.id}`,
+        createdAt: t.createdAt,
+        isRead: true, // Announcements are always "read" in terms of bolding
+        interactive: true,
+        replies: t._count.messages - 1,
+        author: t.initiator.name,
+        imageUrl: null // Threads don't have hero images yet from standard create, but we can extend this
+    }));
+
+    // Combine and sort
+    const allItems = [...notifications, ...interactiveAnnouncements].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    // Group by date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
     const groups = {
-        today: notifications.filter(n => new Date(n.createdAt) >= today),
-        yesterday: notifications.filter(n => {
+        today: allItems.filter(n => new Date(n.createdAt) >= today),
+        yesterday: allItems.filter(n => {
             const d = new Date(n.createdAt);
             return d >= yesterday && d < today;
         }),
-        older: notifications.filter(n => new Date(n.createdAt) < yesterday),
+        older: allItems.filter(n => new Date(n.createdAt) < yesterday),
     };
 
     const getIcon = (type: string) => {
@@ -35,6 +59,7 @@ export default async function AnnouncementsPage() {
             case "WARNING": return <FontAwesomeIcon icon={faExclamationTriangle} className="text-warning h-5 w-5" />;
             case "SUCCESS": return <FontAwesomeIcon icon={faCheckCircle} className="text-success h-5 w-5" />;
             case "ERROR": return <FontAwesomeIcon icon={faExclamationCircle} className="text-error h-5 w-5" />;
+            case "INTERACTIVE": return <FontAwesomeIcon icon={faComments} className="text-primary h-5 w-5" />;
             default: return <FontAwesomeIcon icon={faInfoCircle} className="text-info h-5 w-5" />;
         }
     };
@@ -101,18 +126,24 @@ export default async function AnnouncementsPage() {
 
 function AnnouncementCard({ notification, icon }: { notification: any, icon: React.ReactNode }) {
     const isLink = !!notification.link;
+    const isInteractive = !!notification.interactive;
 
     const Content = () => (
-        <div className={`card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-200 ${!notification.isRead ? 'border-l-4 border-l-primary' : ''}`}>
+        <div className={`card bg-base-100 shadow-sm border border-base-200 hover:shadow-md transition-all duration-200 ${!notification.isRead ? 'border-l-4 border-l-primary' : ''} ${isInteractive ? 'bg-primary/5 border-primary/20' : ''}`}>
             <div className="card-body p-5">
                 <div className="flex gap-4 items-start">
                     <div className="mt-1 flex-shrink-0">
                         {icon}
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
-                        <h3 className="font-bold text-lg leading-tight">
-                            {notification.title}
-                        </h3>
+                        <div className="flex justify-between items-start gap-2">
+                            <h3 className="font-bold text-lg leading-tight">
+                                {notification.title}
+                            </h3>
+                            {isInteractive && (
+                                <span className="badge badge-primary badge-sm whitespace-nowrap">ถาม-ตอบได้</span>
+                            )}
+                        </div>
 
                         {notification.imageUrl && (
                             <div className="my-3 rounded-lg overflow-hidden bg-base-200">
@@ -126,19 +157,33 @@ function AnnouncementCard({ notification, icon }: { notification: any, icon: Rea
 
                         <p className="text-base-content/80 whitespace-pre-wrap leading-relaxed">
                             {notification.message}
+                            {isInteractive && <span className="text-primary italic ml-1">...คลิกเพื่ออ่านต่อและร่วมแสดงความคิดเห็น</span>}
                         </p>
 
                         {/* Meta */}
-                        <div className="flex items-center gap-4 text-xs text-base-content/50 pt-2">
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-base-content/50 pt-2">
                             <span className="flex items-center gap-1">
                                 <FontAwesomeIcon icon={faClock} />
                                 {format(new Date(notification.createdAt), "d MMM yyyy HH:mm", { locale: th })}
                             </span>
-                            {notification.link && (
-                                <span className="flex items-center gap-1 text-primary">
-                                    <FontAwesomeIcon icon={faLink} />
-                                    เปิดลิงก์แนบ
-                                </span>
+
+                            {isInteractive ? (
+                                <>
+                                    <span className="flex items-center gap-1 font-medium text-primary">
+                                        <FontAwesomeIcon icon={faComments} />
+                                        {notification.replies} ความคิดเห็น
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        โดย {notification.author}
+                                    </span>
+                                </>
+                            ) : (
+                                notification.link && (
+                                    <span className="flex items-center gap-1 text-primary">
+                                        <FontAwesomeIcon icon={faLink} />
+                                        เปิดลิงก์แนบ
+                                    </span>
+                                )
                             )}
                         </div>
                     </div>

@@ -35,11 +35,40 @@ export async function sendAdvancedNotificationAction(formData: FormData) {
     const targetIdsRaw = formData.get("targetIds") as string;
     const targetIds = targetIdsRaw ? targetIdsRaw.split(",").map(Number).filter(n => !isNaN(n)) : [];
 
+    const isInteractive = formData.get("isInteractive") === "true";
+
     if (!title || !message) {
         throw new Error("Title and message are required");
     }
 
     const payload = { title, message, link, type, imageUrl, channels };
+
+    if (isInteractive) {
+        const { getSession } = await import("@/lib/auth");
+        const { createConversation } = await import("@/services/conversationService");
+        const session = await getSession();
+        if (!session?.user?.id) throw new Error("Unauthorized");
+
+        // Create the public announcement thread
+        await createConversation({
+            initiatorId: session.user.id,
+            title: title,
+            content: message,
+            isPublic: true,
+            type: "ANNOUNCEMENT"
+        });
+
+        // If "WebApp" channel is NOT selected, we still want to broadcast as a system notification?
+        // Actually, if it's interactive, the announcement board will pull from Conversations.
+        // But we might still want a LINE notification.
+        if (channels.includes("LINE")) {
+            await broadcastNotification({ ...payload, channels: ["LINE"] });
+        }
+
+        revalidatePath("/admin/notifications");
+        revalidatePath("/announcements");
+        return { success: true, count: 1, interactive: true };
+    }
 
     if (scheduledFor) {
         await createSchedule({
@@ -72,6 +101,7 @@ export async function sendAdvancedNotificationAction(formData: FormData) {
     }
 
     revalidatePath("/admin/notifications");
+    revalidatePath("/announcements");
     return { success: true, count: result.count };
 }
 

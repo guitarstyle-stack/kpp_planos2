@@ -538,6 +538,10 @@ model Conversation {
   status   String @default("OPEN") // "OPEN" | "IN_PROGRESS" | "RESOLVED" | "CLOSED"
   priority String @default("NORMAL") // "LOW" | "NORMAL" | "HIGH" | "URGENT"
 
+  // Visibility & Type
+  isPublic Boolean @default(false)
+  type     String  @default("DIRECT") // "DIRECT" | "ANNOUNCEMENT"
+
   // Context (Optional - link to related entities)
   relatedType String? // "PROJECT" | "REPORT" | "GENERAL"
   relatedId   Int? // ID ของ Project หรือ Report

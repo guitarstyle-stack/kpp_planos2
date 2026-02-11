@@ -74,6 +74,7 @@ export function NotificationManager({ users, departments, roles, history, templa
 
     // Advanced Features
     const [isScheduled, setIsScheduled] = useState(false);
+    const [isInteractive, setIsInteractive] = useState(false);
     const [scheduledFor, setScheduledFor] = useState("");
     const [templateName, setTemplateName] = useState("");
     const [showTemplateSave, setShowTemplateSave] = useState(false);
@@ -146,6 +147,7 @@ export function NotificationManager({ users, departments, roles, history, templa
         formData.append("type", type);
         formData.append("targetType", targetType);
         formData.append("channels", channels.join(","));
+        formData.append("isInteractive", isInteractive.toString());
 
         if (targetId) formData.append("targetId", targetId.toString());
         if (targetIds.length > 0) formData.append("targetIds", targetIds.join(","));
@@ -159,7 +161,7 @@ export function NotificationManager({ users, departments, roles, history, templa
                 const result = await sendAdvancedNotificationAction(formData);
 
                 if (result?.success) {
-                    toast.success(result.scheduled ? "ตั้งเวลาส่งสำเร็จ" : `ส่งข้อความสำเร็จ (${result.count} คน)`);
+                    toast.success(result.scheduled ? "ตั้งเวลาส่งสำเร็จ" : result.interactive ? "สร้างประกาศแบบโต้ตอบสำเร็จ" : `ส่งข้อความสำเร็จ (${result.count} คน)`);
                     if (!result.scheduled) {
                         setTitle("");
                         setMessage("");
@@ -338,6 +340,31 @@ export function NotificationManager({ users, departments, roles, history, templa
                                             <option value="ERROR">Error (Red)</option>
                                         </select>
                                     </div>
+                                </div>
+
+                                {/* Announcement Type: Interactive vs One-way */}
+                                <div className="form-control bg-primary/5 p-4 rounded-lg border border-primary/20">
+                                    <label className="label cursor-pointer justify-start gap-4">
+                                        <input
+                                            type="checkbox"
+                                            className="toggle toggle-primary toggle-sm"
+                                            checked={isInteractive}
+                                            onChange={(e) => {
+                                                setIsInteractive(e.target.checked);
+                                                if (e.target.checked) {
+                                                    setTargetType("all");
+                                                    setChannels(["WEB", "LINE"]);
+                                                }
+                                            }}
+                                        />
+                                        <span className="label-text font-bold flex items-center gap-2 text-primary">
+                                            <FontAwesomeIcon icon={faBullhorn} />
+                                            เปิดให้ถาม-ตอบ (Interactive Announcement)
+                                        </span>
+                                    </label>
+                                    <p className="text-[11px] mt-1 opacity-70 ml-12">
+                                        * หากเปิดใช้งาน จะเป็นการสร้างหัวข้อสนทนาที่ทุกคนสามารถเข้ามาคอมเมนต์และพูดคุยได้
+                                    </p>
                                 </div>
 
                                 {/* Scheduling */}

@@ -16,6 +16,8 @@ interface CreateConversationParams {
     relatedId?: number;
     priority?: ConversationPriority;
     participantIds?: number[]; // Auto-add participants
+    isPublic?: boolean;
+    type?: "DIRECT" | "ANNOUNCEMENT";
 }
 
 interface SendMessageParams {
@@ -52,6 +54,8 @@ export async function createConversation(params: CreateConversationParams) {
             relatedType,
             relatedId,
             priority,
+            isPublic: params.isPublic || false,
+            type: params.type || "DIRECT",
             status: "OPEN",
             messages: {
                 create: {
@@ -189,9 +193,10 @@ export async function getConversation(conversationId: number, userId: number) {
     const conversation = await db.conversation.findFirst({
         where: {
             id: conversationId,
-            participants: {
-                some: { userId, leftAt: null }
-            }
+            OR: [
+                { participants: { some: { userId, leftAt: null } } },
+                { isPublic: true }
+            ]
         },
         include: {
             initiator: {
@@ -235,14 +240,32 @@ export async function getConversation(conversationId: number, userId: number) {
 export async function sendMessage(params: SendMessageParams) {
     const { conversationId, senderId, content, messageType = "TEXT", attachments } = params;
 
-    // Verify sender is a participant
-    const participant = await db.conversationParticipant.findFirst({
+    // Verify sender is a participant OR conversation is public
+    let participant = await db.conversationParticipant.findFirst({
         where: {
             conversationId,
             userId: senderId,
             leftAt: null
         }
     });
+
+    // If not a participant but conversation is public, auto-join
+    if (!participant) {
+        const conversation = await db.conversation.findUnique({
+            where: { id: conversationId },
+            select: { isPublic: true }
+        });
+
+        if (conversation?.isPublic) {
+            participant = await db.conversationParticipant.create({
+                data: {
+                    conversationId,
+                    userId: senderId,
+                    role: "MEMBER"
+                }
+            });
+        }
+    }
 
     if (!participant) {
         throw new Error("You are not a participant of this conversation");
@@ -439,6 +462,36 @@ export async function addParticipant(conversationId: number, userIdToAdd: number
     // });
 
     return participant;
+}
+
+/**
+ * Get public announcements for the announcements board
+ */
+export async function getPublicAnnouncements(limit = 10) {
+    return await db.conversation.findMany({
+        where: {
+            isPublic: true,
+            type: "ANNOUNCEMENT",
+            status: { not: "CLOSED" }
+        },
+        orderBy: { lastMessageAt: "desc" },
+        take: limit,
+        include: {
+            initiator: {
+                select: { id: true, name: true, image: true }
+            },
+            messages: {
+                orderBy: { createdAt: "desc" },
+                take: 1,
+                include: {
+                    sender: { select: { name: true } }
+                }
+            },
+            _count: {
+                select: { messages: true, participants: true }
+            }
+        }
+    });
 }
 
 // ============================================
