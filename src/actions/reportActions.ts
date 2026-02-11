@@ -30,6 +30,62 @@ const ReportSchema = z.object({
     newAttachmentIds: z.string().optional(), // JSON string of IDs
 });
 
+// Helper to determine report priority
+const PERIOD_ORDER: Record<string, number> = {
+    "MID_6M": 1,
+    "MID_9M": 2,
+    "FULL_12M": 3,
+};
+
+async function syncProjectWithLatestReport(tx: any, projectId: number) {
+    // Find ALL reports for this project to determine the "True Latest" by calendar
+    const reports = await tx.report.findMany({
+        where: { projectId },
+        orderBy: [
+            { fiscalYear: 'desc' },
+            // We can't directly order by our custom period order in Prisma easily without raw SQL,
+            // so we'll fetch and sort in memory if multiple exist for same year.
+        ],
+    });
+
+    if (reports.length === 0) return;
+
+    // Sort by fiscalYear desc, then periodType priority desc
+    const sortedReports = reports.sort((a: any, b: any) => {
+        if (a.fiscalYear !== b.fiscalYear) return b.fiscalYear - a.fiscalYear;
+        const orderA = PERIOD_ORDER[a.periodType] || 0;
+        const orderB = PERIOD_ORDER[b.periodType] || 0;
+        return orderB - orderA;
+    });
+
+    const latest = sortedReports[0];
+
+    // Calculate status
+    let calculatedProgress = latest.overallProgressPercent || 0;
+    if (!calculatedProgress && latest.budgetProgressPercent) {
+        calculatedProgress = latest.budgetProgressPercent;
+    } else if (!calculatedProgress && latest.kpiAchievementPercent) {
+        calculatedProgress = latest.kpiAchievementPercent;
+    }
+
+    let newStatus = "NOT_STARTED";
+    if (calculatedProgress > 0 && calculatedProgress < 100) {
+        newStatus = "IN_PROGRESS";
+    } else if (calculatedProgress >= 100) {
+        newStatus = "COMPLETED";
+    }
+
+    await tx.project.update({
+        where: { id: projectId },
+        data: {
+            budgetSpent: latest.budgetSpentCumulative || 0,
+            progressPercent: Math.round(calculatedProgress),
+            status: newStatus,
+            lastReportedAt: latest.createdAt, // Or now, but latest report's creation is more accurate for data state
+        },
+    });
+}
+
 export async function createReportAction(prevState: any, formData: FormData) {
     try {
         const user = await getCurrentUser();
@@ -115,55 +171,30 @@ export async function createReportAction(prevState: any, formData: FormData) {
             }
 
             // Update project with latest report data
-
-            const project = await tx.project.findUnique({
-                where: { id: validatedData.projectId },
-                select: { id: true, name: true, budgetTotal: true },
-            });
-
-            if (project) {
-                // Calculate progress from budget or KPI
-                let calculatedProgress = validatedData.overallProgressPercent || 0;
-
-                // If no overall progress specified, calculate from budget
-                if (!calculatedProgress && validatedData.budgetProgressPercent) {
-                    calculatedProgress = validatedData.budgetProgressPercent;
-                } else if (!calculatedProgress && validatedData.kpiAchievementPercent) {
-                    calculatedProgress = validatedData.kpiAchievementPercent;
-                }
-
-                // Determine status based on progress
-                let newStatus = "NOT_STARTED";
-                if (calculatedProgress > 0 && calculatedProgress < 100) {
-                    newStatus = "IN_PROGRESS";
-                } else if (calculatedProgress >= 100) {
-                    newStatus = "COMPLETED";
-                }
-
-                // Update project
-                await tx.project.update({
-                    where: { id: validatedData.projectId },
-                    data: {
-                        budgetSpent: validatedData.budgetSpentCumulative || 0,
-                        progressPercent: Math.round(calculatedProgress),
-                        status: newStatus,
-                        lastReportedAt: new Date(),
-                    },
-                });
-            }
+            await syncProjectWithLatestReport(tx, validatedData.projectId);
 
             // Audit Log
+
+            // Audit Log
+            const targetProject = await tx.project.findUnique({
+                where: { id: validatedData.projectId },
+                select: { name: true }
+            });
+
             await createAuditLog({
                 action: "CREATE",
                 entityType: "Report",
                 entityId: report.id,
                 userId: user.id,
                 diffAfter: report,
-                description: `Created report for project ${project?.name || validatedData.projectId} (Period: ${validatedData.periodType})`
+                description: `Created report for project ${targetProject?.name || validatedData.projectId} (Period: ${validatedData.periodType})`
             });
         });
 
         revalidatePath("/reports");
+        revalidatePath("/projects");
+        revalidatePath(`/projects/${validatedData.projectId}`);
+        revalidatePath("/dashboard");
         return { success: true };
     } catch (error) {
         console.error(error);
@@ -256,54 +287,10 @@ export async function updateReportAction(id: number, formData: FormData) {
                 }
             }
 
-            // 4. Sync Project Status (Only if this is the latest report)
-            // Find the latest report for this project
+            // 4. Sync Project Status (Always recalculate to find the true latest)
+            await syncProjectWithLatestReport(tx, Number(validatedData.projectId));
 
-            const latestReport = await tx.report.findFirst({
-                where: { projectId: Number(validatedData.projectId) },
-                orderBy: { createdAt: 'desc' },
-                select: { id: true, createdAt: true } // We only need date to check
-            });
-
-            // If the report we just updated determines the project's current state (it's the latest one)
-            // Note: If we just updated its date, it might now BE the latest, or still be the latest.
-            // Simple check: If this report's ID matches the latest ID found, OR if there's no other later report.
-
-            // Actually, we should just always recalculate from the "True Latest" after update.
-            if (latestReport && latestReport.id === id) {
-                const project = await tx.project.findUnique({
-                    where: { id: Number(validatedData.projectId) },
-                    select: { budgetTotal: true },
-                });
-
-                if (project) {
-                    // Logic similar to createReportAction
-                    let calculatedProgress = validatedData.overallProgressPercent || 0;
-
-                    if (!calculatedProgress && validatedData.budgetProgressPercent) {
-                        calculatedProgress = validatedData.budgetProgressPercent;
-                    } else if (!calculatedProgress && validatedData.kpiAchievementPercent) {
-                        calculatedProgress = validatedData.kpiAchievementPercent;
-                    }
-
-                    let newStatus = "NOT_STARTED";
-                    if (calculatedProgress > 0 && calculatedProgress < 100) {
-                        newStatus = "IN_PROGRESS";
-                    } else if (calculatedProgress >= 100) {
-                        newStatus = "COMPLETED";
-                    }
-
-                    await tx.project.update({
-                        where: { id: Number(validatedData.projectId) },
-                        data: {
-                            budgetSpent: validatedData.budgetSpentCumulative || 0,
-                            progressPercent: Math.round(calculatedProgress),
-                            status: newStatus,
-                            lastReportedAt: new Date(),
-                        },
-                    });
-                }
-            }
+            // Audit Log
 
             // Audit Log
             await createAuditLog({
@@ -318,6 +305,9 @@ export async function updateReportAction(id: number, formData: FormData) {
         });
 
         revalidatePath("/reports");
+        revalidatePath("/projects");
+        revalidatePath(`/projects/${report.projectId}`);
+        revalidatePath("/dashboard");
         return { success: true };
     } catch (error) {
         console.error(error);
@@ -367,7 +357,28 @@ export async function deleteReportAction(id: number) {
             });
         }
 
+        // Recalculate project status after deletion
+        const remainingReportsCount = await db.report.count({ where: { projectId: report.projectId } });
+        if (remainingReportsCount === 0) {
+            await db.project.update({
+                where: { id: report.projectId },
+                data: {
+                    status: "NOT_STARTED",
+                    progressPercent: 0,
+                    budgetSpent: 0,
+                    lastReportedAt: null
+                }
+            });
+        } else {
+            await db.$transaction(async (tx) => {
+                await syncProjectWithLatestReport(tx, report.projectId);
+            });
+        }
+
         revalidatePath("/reports");
+        revalidatePath("/projects");
+        revalidatePath(`/projects/${report.projectId}`);
+        revalidatePath("/dashboard");
         return { success: true };
     } catch (error) {
         console.error(error);
