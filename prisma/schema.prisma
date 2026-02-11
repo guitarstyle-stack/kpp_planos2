@@ -468,10 +468,11 @@ model Notification {
   userId Int
   user   User @relation(fields: [userId], references: [id])
 
-  title   String
-  message String
-  type    String  @default("INFO") // "INFO" | "WARNING" | "SUCCESS" | "ERROR"
-  link    String? // Optional link to navigate to
+  title    String
+  message  String
+  type     String  @default("INFO") // "INFO" | "WARNING" | "SUCCESS" | "ERROR"
+  link     String? // Optional link to navigate to
+  imageUrl String? // Hero image for announcement board
 
   isRead Boolean   @default(false)
   readAt DateTime?
@@ -493,23 +494,23 @@ model NotificationTemplate {
   message String
   type    String  @default("INFO")
   link    String?
+  imageUrl String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model NotificationSchedule {
-  id      Int     @id @default(autoincrement())
-  title   String
-  message String
-  type    String  @default("INFO")
-  link    String?
-  imageUrl String?
-
+  id        Int      @id @default(autoincrement())
+  title     String
+  message   String
+  type      String   @default("INFO")
+  link      String?
+  imageUrl  String?
   targetType String // "BROADCAST", "DEPARTMENT", "USER", "ROLES", "MULTI_USERS", "MULTI_DEPARTMENTS"
   targetId   Int? // Single ID (for legacy/simple targets)
   targetIds  Int[] // Array of IDs (for multi-targeting)
-  channels   String[] // ["LINE", "WEB"]
+  channels   String[] @default(["LINE", "WEB"])
 
   scheduledFor DateTime
   status       String    @default("PENDING") // "PENDING", "SENT", "FAILED"

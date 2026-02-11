@@ -50,6 +50,7 @@ export async function createNotification(data: {
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             },
         });
     }
@@ -107,6 +108,7 @@ export async function broadcastNotification(data: {
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             })),
         });
     }
@@ -149,6 +151,7 @@ export async function sendNotificationToDepartment(departmentId: number, data: {
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             })),
         });
     }
@@ -197,6 +200,7 @@ export async function sendNotificationToRoles(roleIds: number[], data: {
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             })),
         });
     }
@@ -240,6 +244,7 @@ export async function sendNotificationToMultipleUsers(userIds: number[], data: {
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             })),
         });
     }
@@ -283,6 +288,7 @@ export async function sendNotificationToMultipleDepartments(departmentIds: numbe
                 message: data.message,
                 type: data.type || "INFO",
                 link: data.link,
+                imageUrl: data.imageUrl,
             })),
         });
     }

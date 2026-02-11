@@ -113,6 +113,17 @@ function AnnouncementCard({ notification, icon }: { notification: any, icon: Rea
                         <h3 className="font-bold text-lg leading-tight">
                             {notification.title}
                         </h3>
+
+                        {notification.imageUrl && (
+                            <div className="my-3 rounded-lg overflow-hidden bg-base-200">
+                                <img
+                                    src={notification.imageUrl}
+                                    alt={notification.title}
+                                    className="w-full h-auto max-h-[300px] object-cover"
+                                />
+                            </div>
+                        )}
+
                         <p className="text-base-content/80 whitespace-pre-wrap leading-relaxed">
                             {notification.message}
                         </p>
