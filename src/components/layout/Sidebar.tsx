@@ -73,6 +73,11 @@ async function getMenuItems() {
                     icon: faCog,
                 },
                 {
+                    title: "จัดการโครงการ",
+                    href: "/admin/projects",
+                    icon: faFolderOpen,
+                },
+                {
                     title: "จัดการแจ้งเตือน",
                     href: "/admin/notifications",
                     icon: faBullhorn,
