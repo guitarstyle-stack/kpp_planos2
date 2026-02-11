@@ -6,7 +6,7 @@ import { faPlus, faEnvelope } from "@fortawesome/free-solid-svg-icons";
 import { NewConversationModal } from "./NewConversationModal";
 
 interface ConversationsPageHeaderProps {
-    adminUsers: Array<{ id: number; name: string; department: { name: string } }>;
+    adminUsers: Array<{ id: number; name: string; department: { name: string; type?: { name: string } } }>;
 }
 
 export function ConversationsPageHeader({ adminUsers }: ConversationsPageHeaderProps) {

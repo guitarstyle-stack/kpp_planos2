@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 interface NewConversationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    availableUsers?: Array<{ id: number; name: string; department: { name: string } }>;
+    availableUsers?: Array<{ id: number; name: string; department: { name: string; type?: { name: string } } }>;
 }
 
 export function NewConversationModal({
@@ -165,45 +165,93 @@ export function NewConversationModal({
                         {/* Participants (Admin selection) */}
                         {availableUsers.length > 0 && (
                             <div className="form-control w-full">
-                                <label className="label py-1">
+                                <label className="label py-1 flex justify-between items-center">
                                     <span className="label-text font-medium">
                                         เพิ่มผู้เข้าร่วม (ไม่บังคับ)
                                     </span>
-                                </label>
-                                <div className="border border-base-300 rounded-lg max-h-48 overflow-y-auto bg-base-50/50">
-                                    {availableUsers.map((user) => (
-                                        <label
-                                            key={user.id}
-                                            className="flex items-center gap-3 px-4 py-2.5 hover:bg-base-200 cursor-pointer border-b border-base-200 last:border-0 transition-colors"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedParticipants.includes(user.id)}
-                                                onChange={() => toggleParticipant(user.id)}
-                                                className="checkbox checkbox-primary checkbox-sm rounded"
-                                                disabled={isSubmitting}
-                                            />
-                                            <div className="w-8 h-8 flex items-center justify-center text-base-content/50">
-                                                <FontAwesomeIcon icon={faUserCircle} className="w-7 h-7" />
-                                            </div>
-                                            <div className="min-w-0">
-                                                <div className="text-sm font-semibold truncate">
-                                                    {user.name}
-                                                </div>
-                                                <div className="text-xs opacity-70 truncate">
-                                                    {user.department.name}
-                                                </div>
-                                            </div>
-                                        </label>
-                                    ))}
-                                </div>
-                                {selectedParticipants.length > 0 && (
-                                    <label className="label py-1">
+                                    {selectedParticipants.length > 0 && (
                                         <span className="label-text-alt font-medium text-primary">
                                             เลือกแล้ว {selectedParticipants.length} คน
                                         </span>
-                                    </label>
-                                )}
+                                    )}
+                                </label>
+                                <div className="border border-base-300 rounded-lg max-h-64 overflow-y-auto bg-base-50/50">
+                                    {Object.entries(
+                                        availableUsers.reduce((groups, user) => {
+                                            const typeName = user.department?.type?.name || "อื่น ๆ";
+                                            if (!groups[typeName]) groups[typeName] = [];
+                                            groups[typeName].push(user);
+                                            return groups;
+                                        }, {} as Record<string, typeof availableUsers>)
+                                    ).map(([groupName, users]) => {
+                                        const isAllSelected = users.every((u) => selectedParticipants.includes(u.id));
+                                        const isSomeSelected = users.some((u) => selectedParticipants.includes(u.id));
+
+                                        const toggleGroup = () => {
+                                            if (isAllSelected) {
+                                                // Deselect all in group
+                                                setSelectedParticipants((prev) =>
+                                                    prev.filter((id) => !users.find((u) => u.id === id))
+                                                );
+                                            } else {
+                                                // Select all in group
+                                                const newIds = users.map((u) => u.id);
+                                                setSelectedParticipants((prev) => [
+                                                    ...Array.from(new Set([...prev, ...newIds])),
+                                                ]);
+                                            }
+                                        };
+
+                                        return (
+                                            <div key={groupName} className="border-b border-base-200 last:border-0">
+                                                {/* Group Header */}
+                                                <div className="bg-base-200/50 px-4 py-2 flex items-center gap-3 sticky top-0 backdrop-blur-sm z-10">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isAllSelected}
+                                                        ref={(el) => {
+                                                            if (el) el.indeterminate = isSomeSelected && !isAllSelected;
+                                                        }}
+                                                        onChange={toggleGroup}
+                                                        className="checkbox checkbox-xs checkbox-primary rounded-sm"
+                                                    />
+                                                    <span className="text-xs font-bold uppercase tracking-wider opacity-70">
+                                                        {groupName} ({users.length})
+                                                    </span>
+                                                </div>
+
+                                                {/* Users in Group */}
+                                                <div>
+                                                    {users.map((user) => (
+                                                        <label
+                                                            key={user.id}
+                                                            className="flex items-center gap-3 px-4 py-2 hover:bg-base-100 cursor-pointer pl-8 border-b border-base-100 last:border-0 transition-colors"
+                                                        >
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={selectedParticipants.includes(user.id)}
+                                                                onChange={() => toggleParticipant(user.id)}
+                                                                className="checkbox checkbox-primary checkbox-sm rounded"
+                                                                disabled={isSubmitting}
+                                                            />
+                                                            <div className="w-8 h-8 flex items-center justify-center text-base-content/50">
+                                                                <FontAwesomeIcon icon={faUserCircle} className="w-6 h-6" />
+                                                            </div>
+                                                            <div className="min-w-0">
+                                                                <div className="text-sm font-semibold truncate">
+                                                                    {user.name}
+                                                                </div>
+                                                                <div className="text-xs opacity-70 truncate">
+                                                                    {user.department.name}
+                                                                </div>
+                                                            </div>
+                                                        </label>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         )}
                     </div>

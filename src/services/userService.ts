@@ -8,6 +8,12 @@ export async function getUsers() {
                 select: {
                     id: true,
                     name: true,
+                    type: {
+                        select: {
+                            id: true,
+                            name: true,
+                        },
+                    },
                 },
             },
             roles: {
