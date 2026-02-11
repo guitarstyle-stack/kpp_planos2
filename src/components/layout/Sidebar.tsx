@@ -30,6 +30,11 @@ async function getMenuItems() {
                     icon: faChartPie,
                 },
                 {
+                    title: "ข่าวประชาสัมพันธ์",
+                    href: "/announcements",
+                    icon: faBullhorn,
+                },
+                {
                     title: "โครงการ",
                     href: "/projects",
                     icon: faFolderOpen,
