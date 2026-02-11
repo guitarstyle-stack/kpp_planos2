@@ -100,6 +100,16 @@ export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: P
         name: "indicators"
     });
 
+    // Auto-select department if only one exists (common in Admin/Filtered views)
+    React.useEffect(() => {
+        if (masterData.departments.length === 1) {
+            const deptId = masterData.departments[0].id;
+            if (watch("departmentId") !== deptId) {
+                setValue("departmentId", deptId);
+            }
+        }
+    }, [masterData.departments, setValue, watch]);
+
     // Filtering State
     // We need to construct the filter state based on initialData (if editing)
     // Find planId and issueId from the goalId (initialData.developmentGoalId)

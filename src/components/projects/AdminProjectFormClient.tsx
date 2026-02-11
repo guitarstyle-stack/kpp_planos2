@@ -27,7 +27,11 @@ interface AdminProjectFormClientProps {
 
 export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormClientProps) {
     const router = useRouter();
-    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(null);
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState<number | null>(() => {
+        if (masterData.departments.length === 1) return masterData.departments[0].id;
+        return null;
+    });
+
     const [selectedOwnerId, setSelectedOwnerId] = useState<number | null>(null);
 
     // กรองผู้ใช้ตามหน่วยงานที่เลือก
@@ -115,6 +119,9 @@ export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormC
                     masterData={{
                         departments: masterData.departments.filter(d => d.id === selectedDepartmentId),
                         annualPlans: masterData.annualPlans,
+                    }}
+                    initialData={{
+                        departmentId: selectedDepartmentId
                     }}
                     userId={userId}
                     adminOwnerId={selectedOwnerId}
