@@ -509,6 +509,7 @@ model NotificationSchedule {
   targetType String // "BROADCAST", "DEPARTMENT", "USER", "ROLES", "MULTI_USERS", "MULTI_DEPARTMENTS"
   targetId   Int? // Single ID (for legacy/simple targets)
   targetIds  Int[] // Array of IDs (for multi-targeting)
+  channels   String[] // ["LINE", "WEB"]
 
   scheduledFor DateTime
   status       String    @default("PENDING") // "PENDING", "SENT", "FAILED"

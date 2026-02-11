@@ -27,6 +27,10 @@ export async function sendAdvancedNotificationAction(formData: FormData) {
     const targetType = formData.get("targetType") as string; // "all", "department", "user", "role", "multi_user", "multi_dept"
     const targetId = formData.get("targetId") ? Number(formData.get("targetId")) : undefined;
 
+    // Channels selection
+    const rawChannels = formData.get("channels") as string;
+    const channels = rawChannels ? rawChannels.split(",") : ["LINE", "WEB"];
+
     // Parse targetIds (comma separated or multiple entries)
     const targetIdsRaw = formData.get("targetIds") as string;
     const targetIds = targetIdsRaw ? targetIdsRaw.split(",").map(Number).filter(n => !isNaN(n)) : [];
@@ -35,7 +39,7 @@ export async function sendAdvancedNotificationAction(formData: FormData) {
         throw new Error("Title and message are required");
     }
 
-    const payload = { title, message, link, type, imageUrl };
+    const payload = { title, message, link, type, imageUrl, channels };
 
     if (scheduledFor) {
         await createSchedule({

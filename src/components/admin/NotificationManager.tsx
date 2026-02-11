@@ -70,12 +70,21 @@ export function NotificationManager({ users, departments, roles, history, templa
     const [link, setLink] = useState("");
     const [imageUrl, setImageUrl] = useState("");
     const [type, setType] = useState<"INFO" | "WARNING" | "SUCCESS" | "ERROR">("INFO");
+    const [channels, setChannels] = useState<string[]>(["LINE", "WEB"]);
 
     // Advanced Features
     const [isScheduled, setIsScheduled] = useState(false);
     const [scheduledFor, setScheduledFor] = useState("");
     const [templateName, setTemplateName] = useState("");
     const [showTemplateSave, setShowTemplateSave] = useState(false);
+
+    const toggleChannel = (channel: string) => {
+        setChannels(prev =>
+            prev.includes(channel)
+                ? prev.filter(c => c !== channel)
+                : [...prev, channel]
+        );
+    };
 
     const loadTemplate = (templateId: string) => {
         const template = templates.find(t => t.id === Number(templateId));
@@ -121,9 +130,11 @@ export function NotificationManager({ users, departments, roles, history, templa
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        if (channels.length === 0) return toast.error("กรุณาเลือกอย่างน้อย 1 ช่องทาง");
+
         const confirmMsg = isScheduled
             ? `ยืนยันการตั้งเวลาส่งในวันที่ ${new Date(scheduledFor).toLocaleString()}?`
-            : "ยืนยันการส่งการแจ้งเตือน? ข้อความจะถูกส่งไปยัง LINE ของผู้ใช้ทันที";
+            : "ยืนยันการส่งการแจ้งเตือน?";
 
         if (!confirm(confirmMsg)) return;
 
@@ -134,6 +145,7 @@ export function NotificationManager({ users, departments, roles, history, templa
         formData.append("imageUrl", imageUrl);
         formData.append("type", type);
         formData.append("targetType", targetType);
+        formData.append("channels", channels.join(","));
 
         if (targetId) formData.append("targetId", targetId.toString());
         if (targetIds.length > 0) formData.append("targetIds", targetIds.join(","));
@@ -303,14 +315,29 @@ export function NotificationManager({ users, departments, roles, history, templa
                                     </div>
                                 </div>
 
-                                <div className="form-control max-w-xs">
-                                    <label className="label"><span className="label-text">ประเภทการแจ้งเตือน</span></label>
-                                    <select className="select select-bordered select-sm" value={type} onChange={(e) => setType(e.target.value as any)}>
-                                        <option value="INFO">Information (Blue)</option>
-                                        <option value="WARNING">Warning (Yellow)</option>
-                                        <option value="SUCCESS">Success (Green)</option>
-                                        <option value="ERROR">Error (Red)</option>
-                                    </select>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text font-bold">ช่องทางการส่ง (Channels)</span></label>
+                                        <div className="flex gap-4 p-2 bg-base-200/50 rounded-lg">
+                                            <label className="cursor-pointer flex items-center gap-2">
+                                                <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={channels.includes("LINE")} onChange={() => toggleChannel("LINE")} />
+                                                <span className="text-sm">LINE</span>
+                                            </label>
+                                            <label className="cursor-pointer flex items-center gap-2">
+                                                <input type="checkbox" className="checkbox checkbox-sm checkbox-primary" checked={channels.includes("WEB")} onChange={() => toggleChannel("WEB")} />
+                                                <span className="text-sm">WebApp (Announcement)</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text font-bold">ประเภทการแจ้งเตือน</span></label>
+                                        <select className="select select-bordered select-sm h-[42px]" value={type} onChange={(e) => setType(e.target.value as any)}>
+                                            <option value="INFO">Information (Blue)</option>
+                                            <option value="WARNING">Warning (Yellow)</option>
+                                            <option value="SUCCESS">Success (Green)</option>
+                                            <option value="ERROR">Error (Red)</option>
+                                        </select>
+                                    </div>
                                 </div>
 
                                 {/* Scheduling */}
@@ -349,7 +376,7 @@ export function NotificationManager({ users, departments, roles, history, templa
                                     </div>
                                     <button type="submit" className="btn btn-primary px-8" disabled={isPending}>
                                         {isPending ? <span className="loading loading-spinner"></span> : <FontAwesomeIcon icon={isScheduled ? faClock : faPaperPlane} />}
-                                        {isScheduled ? "บันทึกกำหนดการ" : "ส่งเข้า LINE ทันที"}
+                                        {isScheduled ? "บันทึกกำหนดการ" : "ส่งการแจ้งเตือน"}
                                     </button>
                                 </div>
                             </form>
