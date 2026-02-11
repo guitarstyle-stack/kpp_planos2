@@ -15,6 +15,19 @@ interface UpdateItem {
 
 const updates: UpdateItem[] = [
     {
+        version: "1.3.0",
+        date: "11 ก.พ. 2026",
+        title: "System Stability & Database Optimization",
+        description: "ปรับปรุงความเสถียรของระบบ แก้ไขปัญหาคอขวดของฐานข้อมูล และเพิ่มประสิทธิภาพการส่งข้อความ LINE",
+        changes: [
+            { type: "IMPROVEMENT", text: "เพิ่ม Connection Pool และ Request Memoization ด้วย React cache() เพื่อลดภาระฐานข้อมูล" },
+            { type: "FIX", text: "แก้ไข Infinite Loop ในหน้าค้นหาโครงการที่ทำให้เกิด Request ซ้ำซ้อน" },
+            { type: "IMPROVEMENT", text: "รองรับการส่ง LINE Multicast (ส่งหลายคนพร้อมกัน) แทนการส่งทีละคน" },
+            { type: "IMPROVEMENT", text: "ปรับปรุง AI Service ให้รองรับ Native JSON Mode เพื่อความเสถียรสูงขึ้น" },
+            { type: "IMPROVEMENT", text: "ตรวจสอบและยืนยันความเสถียรของระบบทั้งหมด (System-wide Audit)" }
+        ]
+    },
+    {
         version: "1.2.1",
         date: "11 ก.พ. 2026",
         title: "Performance Optimization & Dashboard Rollback",
