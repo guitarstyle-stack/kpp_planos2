@@ -15,6 +15,19 @@ interface UpdateItem {
 
 const updates: UpdateItem[] = [
     {
+        version: "1.4.0",
+        date: "11 ก.พ. 2026",
+        title: "Multimedia Optimization & Admin Controls",
+        description: "ยกระดับประสบการณ์การใช้งานด้วยระบบบจัดการสื่ออัจฉริยะและการควบคุมระดับสูงสำหรับผู้ดูแลระบบ",
+        changes: [
+            { type: "FEATURE", text: "ระบบย่อขนาดภาพอัตโนมัติ (Image Compression) เมื่อไฟล์ภาพมีขนาด > 1MB เพื่อความรวดเร็วในการอัปโหลด" },
+            { type: "IMPROVEMENT", text: "ปรับปรุง Logic การซิงค์ข้อมูลรายงานโครงการ (Sync Logic) ให้ยึดตามปีงบประมาณและรอบรายงานล่าสุด" },
+            { type: "FEATURE", text: "เพิ่มปุ่มลบโครงการโดยตรงในหน้า Admin Projects พร้อมระบบยืนยัน (Confirmation)" },
+            { type: "FIX", text: "แก้ไขลำดับการลบข้อมูล (Delete Order) ในฐานข้อมูลเพื่อรองรับการลบโครงการแบบไม่มีติดขัด" },
+            { type: "IMPROVEMENT", text: "เปลี่ยนระบบการแจ้งเตือนหลักเป็น Sonner เพื่อความสวยงามและลื่นไหลของ UI" }
+        ]
+    },
+    {
         version: "1.3.0",
         date: "11 ก.พ. 2026",
         title: "System Stability & Database Optimization",

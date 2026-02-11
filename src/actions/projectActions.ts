@@ -395,40 +395,66 @@ export async function deleteProjectAction(id: number) {
             return { message: "Unauthorized: You can only delete projects you own" };
         }
 
-        // Delete related data first to avoid foreign key constraints
-        // Delete indicators (and their results will cascade if configured)
-        await db.indicator.deleteMany({
-            where: { projectId: id }
-        });
+        // Use transaction to ensure atomic deletion and proper order for constraints
+        await db.$transaction(async (tx) => {
+            // 1. Delete IndicatorResults (Individual report entries)
+            // Need to find all indicator IDs for this project first
+            const indicators = await tx.indicator.findMany({
+                where: { projectId: id },
+                select: { id: true }
+            });
+            const indicatorIds = indicators.map(i => i.id);
 
-        // Delete reports
-        await db.report.deleteMany({
-            where: { projectId: id }
-        });
+            if (indicatorIds.length > 0) {
+                await tx.indicatorResult.deleteMany({
+                    where: { indicatorId: { in: indicatorIds } }
+                });
 
-        // Delete attachments
-        await db.projectAttachment.deleteMany({
-            where: { projectId: id }
-        });
+                // Note: ReportIndicatorResult will be deleted via Cascade when Report is deleted
+                // But we can delete them explicitly if needed to be ultra safe
+                await tx.reportIndicatorResult.deleteMany({
+                    where: { indicatorId: { in: indicatorIds } }
+                });
+            }
 
-        // Now delete the project
-        await db.project.delete({
-            where: { id },
-        });
+            // 2. Delete Reports (Cascade will handle ReportIndicatorResult)
+            await tx.report.deleteMany({
+                where: { projectId: id }
+            });
 
-        await createAuditLog({
-            action: "DELETE",
-            entityType: "Project",
-            entityId: id,
-            description: `Deleted project: ${project.name} (${project.code})`,
-            userId: user.id,
+            // 3. Delete attachments
+            await tx.projectAttachment.deleteMany({
+                where: { projectId: id }
+            });
+
+            // 4. Delete indicators
+            await tx.indicator.deleteMany({
+                where: { projectId: id }
+            });
+
+            // 5. Finally delete the project
+            await tx.project.delete({
+                where: { id },
+            });
+
+            await createAuditLog({
+                action: "DELETE",
+                entityType: "Project",
+                entityId: id,
+                userId: user.id,
+                description: `Deleted project: ${project.name} (${project.code})`,
+            });
         });
 
         revalidatePath("/projects");
+        revalidatePath("/admin/projects");
+        revalidatePath("/dashboard");
+        revalidatePath("/", "layout");
+
         return { success: true };
     } catch (error) {
-        console.error(error);
-        return { message: "Failed to delete project" };
+        console.error("Delete project error:", error);
+        return { message: "Failed to delete project due to data dependencies. Please contact admin." };
     }
 }
 

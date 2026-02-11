@@ -2,7 +2,10 @@
 
 import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { deleteProjectAction } from '@/actions/projectActions';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 const STATUS_MAP: Record<string, { label: string, color: string }> = {
     "NOT_STARTED": { label: "ยังไม่เริ่ม", color: "badge-ghost" },
@@ -30,6 +33,8 @@ const formatMoney = (amount: number) =>
     amount.toLocaleString("th-TH", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
 export function ResponsiveProjectsList({ projects }: ResponsiveProjectsListProps) {
+    const [isDeleting, setIsDeleting] = useState<number | null>(null);
+
     if (projects.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 opacity-50">
@@ -39,6 +44,20 @@ export function ResponsiveProjectsList({ projects }: ResponsiveProjectsListProps
             </div>
         );
     }
+
+    const handleDelete = async (id: number, name: string) => {
+        if (!confirm(`คุณต้องการลบโครงการ "${name}" หรือไม่?\nการดำเนินการนี้จะลบข้อมูลที่เกี่ยวข้องทั้งหมดคืนไม่ได้`)) return;
+
+        setIsDeleting(id);
+        const result = await deleteProjectAction(id);
+        setIsDeleting(null);
+
+        if (result.success) {
+            toast.success('ลบโครงการเรียบร้อยแล้ว');
+        } else {
+            toast.error(result.message || 'เกิดข้อผิดพลาดในการลบโครงการ');
+        }
+    };
 
     return (
         <>
@@ -95,12 +114,21 @@ export function ResponsiveProjectsList({ projects }: ResponsiveProjectsListProps
                                     {project.budgetTotal ? formatMoney(project.budgetTotal) : "-"}
                                 </td>
                                 <td className="text-right">
-                                    <Link
-                                        href={`/projects/${project.id}`}
-                                        className="btn btn-ghost btn-xs text-primary"
-                                    >
-                                        ดูรายละเอียด
-                                    </Link>
+                                    <div className="flex justify-end gap-1">
+                                        <Link
+                                            href={`/projects/${project.id}`}
+                                            className="btn btn-ghost btn-xs text-primary"
+                                        >
+                                            ดูรายละเอียด
+                                        </Link>
+                                        <button
+                                            onClick={() => handleDelete(project.id, project.name)}
+                                            className="btn btn-ghost btn-xs text-error"
+                                            disabled={isDeleting === project.id}
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -163,13 +191,23 @@ export function ResponsiveProjectsList({ projects }: ResponsiveProjectsListProps
                                 </div>
                             )}
 
-                            {/* Action Button */}
-                            <Link
-                                href={`/projects/${project.id}`}
-                                className="btn btn-primary btn-sm w-full"
-                            >
-                                ดูรายละเอียด
-                            </Link>
+                            {/* Action Buttons */}
+                            <div className="flex gap-2">
+                                <Link
+                                    href={`/projects/${project.id}`}
+                                    className="btn btn-primary btn-sm flex-1"
+                                >
+                                    ดูรายละเอียด
+                                </Link>
+                                <button
+                                    onClick={() => handleDelete(project.id, project.name)}
+                                    className="btn btn-error btn-outline btn-sm"
+                                    disabled={isDeleting === project.id}
+                                    title="ลบโครงการ"
+                                >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}
