@@ -44,58 +44,57 @@ async function getMenuItems() {
                     href: "/conversations",
                     icon: faEnvelope,
                 },
-            ]
                 {
-            title: "รายงานอัพเดท",
-            href: "/updates",
-            icon: faScroll,
-        },
-    ]
-}
+                    title: "รายงานอัพเดท",
+                    href: "/updates",
+                    icon: faScroll,
+                },
+            ]
+        }
     ];
 
-if (admin) {
-    menuGroups.push({
-        label: "การจัดการระบบ",
-        items: [
-            {
-                title: "ผู้ใช้งาน",
-                href: "/users",
-                icon: faUsers,
-            },
-            {
-                title: "ตั้งค่า",
-                href: "/settings",
-                icon: faCog,
-            },
-            {
-                title: "จัดการแจ้งเตือน",
-                href: "/admin/notifications",
-                icon: faBullhorn,
-            },
-            {
-                title: "จัดการข้อความ",
-                href: "/admin/conversations",
-                icon: faEnvelope,
-            },
-        ]
-    });
-}
+    if (admin) {
+        menuGroups.push({
+            label: "การจัดการระบบ",
+            items: [
+                {
+                    title: "ผู้ใช้งาน",
+                    href: "/users",
+                    icon: faUsers,
+                },
+                {
+                    title: "ตั้งค่า",
+                    href: "/settings",
+                    icon: faCog,
+                },
+                {
+                    title: "จัดการแจ้งเตือน",
+                    href: "/admin/notifications",
+                    icon: faBullhorn,
+                },
+                {
+                    title: "จัดการข้อความ",
+                    href: "/admin/conversations",
+                    icon: faEnvelope,
+                },
+            ]
+        });
+    }
 
-if (sysAdmin) {
-    menuGroups.push({
-        label: "ความปลอดภัย",
-        items: [
-            {
-                title: "ประวัติการใช้งาน",
-                href: "/admin/audit-logs",
-                icon: faShieldAlt,
-            },
-        ]
-    });
-}
+    if (sysAdmin) {
+        menuGroups.push({
+            label: "ความปลอดภัย",
+            items: [
+                {
+                    title: "ประวัติการใช้งาน",
+                    href: "/admin/audit-logs",
+                    icon: faShieldAlt,
+                },
+            ]
+        });
+    }
 
-return menuGroups;
+    return menuGroups;
 }
 
 export async function Sidebar() {
