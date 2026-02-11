@@ -115,48 +115,6 @@ export const aiService = {
     },
 
     /**
-     * สร้างบทสรุปผู้บริหารจากข้อมูลสถิติรวม (Dashboard Stats)
-     */
-    async generateExecutiveBriefing(stats: any): Promise<{ briefing: string, sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE", highlights: string[] }> {
-        const prompt = `
-            Act as a Strategic Advisor. Analyze these dashboard stats and write a short executive briefing (3-4 sentences) in Thai.
-            
-            Stats:
-            - Total Projects: ${stats.totalProjects}
-            - Average Progress: ${stats.avgProgress}%
-            - Total Budget: ${stats.totalBudget} (Spent: ${stats.totalSpent})
-            - Pending Reports: ${stats.pendingReports}
-            - Completed Projects: ${stats.statusCounts?.COMPLETED || 0}
-            - Projects with Risk/Issues: ${stats.projectsWithIssuesCount || 0}
-
-            Style: Professional, Insightful, Encouraging but realistic.
-            
-            Return JSON:
-            {
-                "briefing": "สรุปสถานการณ์ภาพรวม...",
-                "sentiment": "POSITIVE" | "NEUTRAL" | "NEGATIVE",
-                "highlights": ["Project X is doing great", "Budget is tight"]
-            }
-        `;
-
-        try {
-            const response = await this.callAIProvider(prompt);
-            return {
-                briefing: response?.briefing || "นำเสนอข้อมูลภาพรวมโครงการ",
-                sentiment: response?.sentiment || "NEUTRAL",
-                highlights: Array.isArray(response?.highlights) ? response.highlights : []
-            };
-        } catch (error) {
-            console.error("AI Briefing Error:", error);
-            return {
-                briefing: "ระบบ AI กำลังประมวลผลข้อมูล...",
-                sentiment: "NEUTRAL",
-                highlights: []
-            };
-        }
-    },
-
-    /**
      * ฟังก์ชันภายในสำหรับเรียก AI API (Gemini)
      * ปรับปรุง: ใช้ Native JSON Mode และเพิ่ม Retry Logic
      */

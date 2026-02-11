@@ -8,7 +8,7 @@ import { faFolder, faChartLine, faMoneyBillTrendUp, faClock, faArrowRight } from
 import { StatusChart, DepartmentChart, FiscalYearChart, BudgetChart, ProgressDistributionChart, KPIChart, StrategicChart, RiskSummaryCard, DepartmentProgressChart } from "@/components/dashboard/Charts";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 
-import { AIExecutiveBriefing } from "@/components/dashboard/AIExecutiveBriefing";
+
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const resolvedSearchParams = await searchParams;
@@ -45,11 +45,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
                 <p className="text-sm opacity-70">
                     สรุปข้อมูลโครงการและสถานะการดำเนินงาน
                 </p>
-            </div>
-
-            {/* AI Executive Briefing */}
-            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
-                <AIExecutiveBriefing stats={stats} />
             </div>
 
             {/* Filters */}
