@@ -352,13 +352,25 @@ export async function getTemplates() {
         orderBy: { name: "asc" },
     });
 }
-
-export async function createTemplate(data: { name: string; title: string; message: string; link?: string; type?: string }) {
+export async function createTemplate(data: { name: string; title: string; message: string; link?: string; type?: string; imageUrl?: string }) {
     return await db.notificationTemplate.create({
         data: {
             ...data,
             type: data.type || "INFO",
         }
+    });
+}
+
+export async function updateTemplate(id: number, data: { name?: string; title?: string; message?: string; link?: string; type?: string; imageUrl?: string }) {
+    return await db.notificationTemplate.update({
+        where: { id },
+        data
+    });
+}
+
+export async function deleteTemplate(id: number) {
+    return await db.notificationTemplate.delete({
+        where: { id }
     });
 }
 
@@ -383,6 +395,33 @@ export async function createSchedule(data: {
             targetIds: data.targetIds || [],
             channels: data.channels || ["LINE", "WEB"],
         }
+    });
+}
+
+export async function getAllSchedules() {
+    return await db.notificationSchedule.findMany({
+        orderBy: { scheduledFor: "desc" },
+    });
+}
+
+export async function updateSchedule(id: number, data: {
+    title?: string;
+    message?: string;
+    link?: string;
+    imageUrl?: string;
+    type?: string;
+    scheduledFor?: Date;
+    status?: string;
+}) {
+    return await db.notificationSchedule.update({
+        where: { id },
+        data
+    });
+}
+
+export async function deleteSchedule(id: number) {
+    return await db.notificationSchedule.delete({
+        where: { id }
     });
 }
 
@@ -411,7 +450,7 @@ export async function processDueSchedules() {
                 link: schedule.link || "",
                 type: schedule.type as "INFO" | "WARNING" | "SUCCESS" | "ERROR",
                 imageUrl: schedule.imageUrl || undefined,
-                channels: schedule.channels,
+                channels: schedule.channels as string[] || ["LINE", "WEB"],
             };
 
             if (schedule.targetType === "BROADCAST") {

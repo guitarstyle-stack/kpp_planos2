@@ -3,21 +3,22 @@ import { NotificationManager } from "@/components/admin/NotificationManager";
 import { NotificationAnalytics } from "@/components/admin/NotificationAnalytics";
 import { getUsers } from "@/services/userService";
 import { getDepartments } from "@/services/masterDataService";
-import { getAllNotifications, getTemplates, getNotificationStats, getRoles } from "@/services/notificationService";
+import { getAllNotifications, getTemplates, getNotificationStats, getRoles, getAllSchedules } from "@/services/notificationService";
 import { getLineQuota, getLineConsumption } from "@/services/lineService";
 
 export default async function AdminNotificationsPage() {
     await requireAdmin();
 
-    const [users, departments, history, templates, stats, quota, consumption, roles] = await Promise.all([
+    const [users, departments, history, templates, stats, quota, consumption, roles, schedules] = await Promise.all([
         getUsers(),
         getDepartments(),
-        getAllNotifications(20),
+        getAllNotifications(100), // Increase limit for history
         getTemplates(),
         getNotificationStats(),
         getLineQuota(),
         getLineConsumption(),
         getRoles(),
+        getAllSchedules(),
     ]);
 
     const lineStats = quota ? {
@@ -43,6 +44,7 @@ export default async function AdminNotificationsPage() {
                 roles={roles}
                 history={history}
                 templates={templates}
+                schedules={schedules}
             />
         </div>
     );

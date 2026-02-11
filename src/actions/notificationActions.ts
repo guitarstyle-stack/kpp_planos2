@@ -9,7 +9,12 @@ import {
     createSchedule,
     sendNotificationToRoles,
     sendNotificationToMultipleUsers,
-    sendNotificationToMultipleDepartments
+    sendNotificationToMultipleDepartments,
+    deleteNotification,
+    updateTemplate,
+    deleteTemplate,
+    updateSchedule,
+    deleteSchedule
 } from "@/services/notificationService";
 import { requireAdmin } from "@/lib/rbac";
 import { revalidatePath } from "next/cache";
@@ -139,6 +144,60 @@ export async function createTemplateAction(formData: FormData) {
         name, title, message, link, type
     });
 
+    revalidatePath("/admin/notifications");
+    return { success: true };
+}
+
+export async function deleteNotificationAction(id: number) {
+    await requireAdmin();
+    await deleteNotification(id);
+    revalidatePath("/admin/notifications");
+    return { success: true };
+}
+
+export async function updateTemplateAction(id: number, formData: FormData) {
+    await requireAdmin();
+    const name = formData.get("name") as string;
+    const title = formData.get("title") as string;
+    const message = formData.get("message") as string;
+    const link = formData.get("link") as string;
+    const type = formData.get("type") as string;
+    const imageUrl = formData.get("imageUrl") as string;
+
+    await updateTemplate(id, { name, title, message, link, type, imageUrl });
+    revalidatePath("/admin/notifications");
+    return { success: true };
+}
+
+export async function deleteTemplateAction(id: number) {
+    await requireAdmin();
+    await deleteTemplate(id);
+    revalidatePath("/admin/notifications");
+    return { success: true };
+}
+
+export async function updateScheduleAction(id: number, formData: FormData) {
+    await requireAdmin();
+    const title = formData.get("title") as string;
+    const message = formData.get("message") as string;
+    const link = formData.get("link") as string;
+    const type = formData.get("type") as string;
+    const imageUrl = formData.get("imageUrl") as string;
+    const scheduledFor = formData.get("scheduledFor") as string;
+    const status = formData.get("status") as string;
+
+    await updateSchedule(id, {
+        title, message, link, type, imageUrl,
+        scheduledFor: scheduledFor ? new Date(scheduledFor) : undefined,
+        status: status || undefined
+    });
+    revalidatePath("/admin/notifications");
+    return { success: true };
+}
+
+export async function deleteScheduleAction(id: number) {
+    await requireAdmin();
+    await deleteSchedule(id);
     revalidatePath("/admin/notifications");
     return { success: true };
 }

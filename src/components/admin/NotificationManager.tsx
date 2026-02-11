@@ -3,9 +3,13 @@
 import { useState, useTransition, useMemo } from "react";
 import {
     sendAdvancedNotificationAction,
-    createTemplateAction
+    createTemplateAction,
+    deleteNotificationAction,
+    updateTemplateAction,
+    deleteTemplateAction,
+    updateScheduleAction,
+    deleteScheduleAction
 } from "@/actions/notificationActions";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
     faPaperPlane,
     faBullhorn,
@@ -17,8 +21,12 @@ import {
     faImage,
     faLink,
     faCheckDouble,
-    faUserShield
+    faUserShield,
+    faTrash,
+    faEdit,
+    faListUl
 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { toast } from "sonner";
 
 interface User {
@@ -46,7 +54,18 @@ interface Template {
     title: string;
     message: string;
     link?: string | null;
+    imageUrl?: string | null;
     type: string;
+}
+
+interface Schedule {
+    id: number;
+    title: string;
+    message: string;
+    type: string;
+    targetType: string;
+    status: string;
+    scheduledFor: Date | string;
 }
 
 interface NotificationManagerProps {
@@ -55,10 +74,11 @@ interface NotificationManagerProps {
     roles: Role[];
     history: any[];
     templates: Template[];
+    schedules: Schedule[];
 }
 
-export function NotificationManager({ users, departments, roles, history, templates }: NotificationManagerProps) {
-    const [activeTab, setActiveTab] = useState<"send" | "history">("send");
+export function NotificationManager({ users, departments, roles, history, templates, schedules }: NotificationManagerProps) {
+    const [activeTab, setActiveTab] = useState<"send" | "history" | "schedules" | "templates">("send");
     const [targetType, setTargetType] = useState<"all" | "department" | "user" | "role" | "multi_user" | "multi_dept">("all");
     const [targetId, setTargetId] = useState<number | "">("");
     const [targetIds, setTargetIds] = useState<number[]>([]);
@@ -87,12 +107,49 @@ export function NotificationManager({ users, departments, roles, history, templa
         );
     };
 
+    const handleDeleteNotification = (id: number) => {
+        if (!confirm("คุณต้องการลบประวัติแจ้งเตือนนี้ใช่หรือไม่?")) return;
+        startTransition(async () => {
+            try {
+                const result = await deleteNotificationAction(id);
+                if (result.success) toast.success("ลบประวัติการแจ้งเตือนสำเร็จ");
+            } catch (error) {
+                toast.error("ลบประวัติไม่สำเร็จ");
+            }
+        });
+    };
+
+    const handleDeleteTemplate = (id: number) => {
+        if (!confirm("คุณต้องการลบเทมเพลตนี้ใช่หรือไม่?")) return;
+        startTransition(async () => {
+            try {
+                const result = await deleteTemplateAction(id);
+                if (result.success) toast.success("ลบเทมเพลตสำเร็จ");
+            } catch (error) {
+                toast.error("ลบเทมเพลตไม่สำเร็จ");
+            }
+        });
+    };
+
+    const handleDeleteSchedule = (id: number) => {
+        if (!confirm("คุณต้องการยกเลิกและลบตารางเวลานี้ใช่หรือไม่?")) return;
+        startTransition(async () => {
+            try {
+                const result = await deleteScheduleAction(id);
+                if (result.success) toast.success("ลบตารางเวลาสำเร็จ");
+            } catch (error) {
+                toast.error("ลบตารางเวลาไม่สำเร็จ");
+            }
+        });
+    };
+
     const loadTemplate = (templateId: string) => {
         const template = templates.find(t => t.id === Number(templateId));
         if (template) {
             setTitle(template.title);
             setMessage(template.message);
             setLink(template.link || "");
+            setImageUrl(template.imageUrl || "");
             setType(template.type as any);
             toast.success(`โหลด Template: ${template.name}`);
         }
@@ -197,6 +254,12 @@ export function NotificationManager({ users, departments, roles, history, templa
                     </a>
                     <a role="tab" className={`tab ${activeTab === "history" ? "tab-active" : ""}`} onClick={() => setActiveTab("history")}>
                         <FontAwesomeIcon icon={faHistory} className="mr-2" /> ประวัติการส่ง
+                    </a>
+                    <a role="tab" className={`tab ${activeTab === "schedules" ? "tab-active" : ""}`} onClick={() => setActiveTab("schedules")}>
+                        <FontAwesomeIcon icon={faClock} className="mr-2" /> ตารางส่ง
+                    </a>
+                    <a role="tab" className={`tab ${activeTab === "templates" ? "tab-active" : ""}`} onClick={() => setActiveTab("templates")}>
+                        <FontAwesomeIcon icon={faListUl} className="mr-2" /> เทมเพลต
                     </a>
                 </div>
 
@@ -423,6 +486,7 @@ export function NotificationManager({ users, departments, roles, history, templa
                                             <th>Recipient</th>
                                             <th>Title</th>
                                             <th>Type</th>
+                                            <th>Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -447,13 +511,108 @@ export function NotificationManager({ users, departments, roles, history, templa
                                                 </td>
                                                 <td className="text-xs font-medium">{n.title}</td>
                                                 <td>
-                                                    <span className={`badge badge-xs ${n.type === 'SUCCESS' ? 'badge-success' :
-                                                        n.type === 'ERROR' ? 'badge-error' :
-                                                            n.type === 'WARNING' ? 'badge-warning' : 'badge-info'
-                                                        } text-white font-bold`}>{n.type}</span>
+                                                    <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDeleteNotification(n.id)}>
+                                                        <FontAwesomeIcon icon={faTrash} />
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
+                                        {history.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="text-center py-4 opacity-50">ไม่มีประวัติการส่งในขณะนี้</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "schedules" && (
+                    <div className="card bg-base-100 shadow-xl border border-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title mb-4">ตารางเวลาส่งข้อความ</h2>
+                            <div className="overflow-x-auto">
+                                <table className="table table-sm">
+                                    <thead>
+                                        <tr className="bg-base-200/50">
+                                            <th>Scheduled For</th>
+                                            <th>Title</th>
+                                            <th>Target</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {schedules.map((s) => (
+                                            <tr key={s.id} className="hover">
+                                                <td className="text-[10px] opacity-70">
+                                                    {new Date(s.scheduledFor).toLocaleString()}
+                                                </td>
+                                                <td className="text-xs font-bold">{s.title}</td>
+                                                <td className="text-[10px]">{s.targetType}</td>
+                                                <td>
+                                                    <span className={`badge badge-xs ${s.status === 'SENT' ? 'badge-success' :
+                                                        s.status === 'FAILED' ? 'badge-error' : 'badge-warning'
+                                                        }`}>{s.status}</span>
+                                                </td>
+                                                <td className="flex gap-1">
+                                                    <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDeleteSchedule(s.id)}>
+                                                        <FontAwesomeIcon icon={faTrash} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {schedules.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="text-center py-4 opacity-50">ไม่มีตารางเวลาในขณะนี้</td>
+                                            </tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === "templates" && (
+                    <div className="card bg-base-100 shadow-xl border border-base-200">
+                        <div className="card-body">
+                            <h2 className="card-title mb-4">รายชื่อ Template</h2>
+                            <div className="overflow-x-auto">
+                                <table className="table table-sm">
+                                    <thead>
+                                        <tr className="bg-base-200/50">
+                                            <th>Template Name</th>
+                                            <th>Title Preview</th>
+                                            <th>Type</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {templates.map((t) => (
+                                            <tr key={t.id} className="hover">
+                                                <td className="text-xs font-bold">{t.name}</td>
+                                                <td className="text-xs opacity-70">{t.title}</td>
+                                                <td>
+                                                    <span className="badge badge-xs badge-ghost">{t.type}</span>
+                                                </td>
+                                                <td className="flex gap-1">
+                                                    <button className="btn btn-ghost btn-xs text-primary" onClick={() => loadTemplate(t.id.toString())}>
+                                                        <FontAwesomeIcon icon={faPaperPlane} /> ดึงข้อมูล
+                                                    </button>
+                                                    <button className="btn btn-ghost btn-xs text-error" onClick={() => handleDeleteTemplate(t.id)}>
+                                                        <FontAwesomeIcon icon={faTrash} />
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {templates.length === 0 && (
+                                            <tr>
+                                                <td colSpan={4} className="text-center py-4 opacity-50">ไม่มีเทมเพลตในขณะนี้</td>
+                                            </tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
