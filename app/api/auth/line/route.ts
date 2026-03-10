@@ -112,8 +112,8 @@ export async function GET(req: NextRequest) {
 
         return NextResponse.redirect(new URL('/projects', req.url))
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Login Error:', error)
-        return NextResponse.redirect(new URL('/?error=server_error', req.url))
+        return NextResponse.redirect(new URL(`/?error=server_error&details=${encodeURIComponent(error?.message || 'unknown')}`, req.url))
     }
 }
