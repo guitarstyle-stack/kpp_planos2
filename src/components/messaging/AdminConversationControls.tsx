@@ -200,7 +200,7 @@ export function AdminConversationControls({
                     {/* Edit Modal */}
                     {showEditModal && (
                         <div className="modal modal-open z-[1000]">
-                            <div className="modal-box">
+                            <div className="modal-box w-11/12 max-w-md">
                                 <h3 className="font-bold text-lg mb-4">แก้ไขการสนทนา</h3>
 
                                 <div className="form-control mb-4">
@@ -262,7 +262,7 @@ export function AdminConversationControls({
                     {/* Delete Confirmation Modal */}
                     {showDeleteConfirm && (
                         <div className="modal modal-open z-[1000]">
-                            <div className="modal-box">
+                            <div className="modal-box w-11/12 max-w-md">
                                 <h3 className="font-bold text-lg mb-4">ยืนยันการลบการสนทนา</h3>
                                 <p className="mb-4">
                                     คุณแน่ใจหรือไม่ที่จะลบการสนทนานี้? การกระทำนี้ไม่สามารถย้อนกลับได้
