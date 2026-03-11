@@ -25,7 +25,7 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
 
     return (
         <aside className={cn(
-            "bg-base-200 text-base-content min-h-screen p-4 font-header flex flex-col transition-all duration-300 relative overflow-visible",
+            "bg-base-200 text-base-content h-screen p-4 font-header flex flex-col transition-all duration-300 relative overflow-visible sticky top-0",
             isCollapsed ? "w-20" : "w-80"
         )}>
             {/* Logo */}
