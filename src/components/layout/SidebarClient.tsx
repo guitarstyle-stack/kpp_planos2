@@ -25,7 +25,7 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
 
     return (
         <aside className={cn(
-            "bg-base-200 text-base-content min-h-screen p-4 font-header flex flex-col transition-all duration-300 relative",
+            "bg-base-200 text-base-content min-h-screen p-4 font-header flex flex-col transition-all duration-300 relative overflow-visible",
             isCollapsed ? "w-20" : "w-80"
         )}>
             {/* Logo */}
@@ -101,14 +101,14 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
                 <button
                     onClick={onToggle}
                     className={cn(
-                        "absolute -right-4 top-1/2 -translate-y-1/2 z-50 hidden lg:flex",
-                        "btn btn-circle btn-sm bg-base-100 border-base-300 hover:bg-primary hover:text-white shadow-lg transition-all duration-300 group"
+                        "absolute left-full top-1/2 -translate-y-1/2 -translate-x-1/2 z-[100] hidden lg:flex",
+                        "btn btn-circle btn-xs sm:btn-sm btn-primary shadow-xl border-2 border-base-100 transition-all duration-300 group"
                     )}
                     aria-label={isCollapsed ? "ขยาย sidebar" : "ย่อ sidebar"}
                 >
                     <FontAwesomeIcon
                         icon={isCollapsed ? faChevronRight : faChevronLeft}
-                        className="w-4 h-4 transition-transform group-hover:scale-125"
+                        className="w-3.5 h-3.5 transition-transform group-hover:scale-125"
                     />
                 </button>
             )}
