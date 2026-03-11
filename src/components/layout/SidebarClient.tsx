@@ -108,7 +108,7 @@ export function SidebarClient({ menuGroups, isCollapsed = false, onToggle }: Sid
                 >
                     <FontAwesomeIcon
                         icon={isCollapsed ? faChevronRight : faChevronLeft}
-                        className="w-3.5 h-3.5 transition-transform group-hover:scale-125"
+                        className="w-4 h-4 transition-transform group-hover:scale-125"
                     />
                 </button>
             )}

@@ -50,7 +50,10 @@ export function DeleteButton({ id, itemName, deleteAction, planId }: DeleteButto
 
     return (
         <button
-            onClick={handleDelete}
+            onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+            }}
             disabled={isDeleting}
             className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 disabled:opacity-50"
             title="ลบ"
