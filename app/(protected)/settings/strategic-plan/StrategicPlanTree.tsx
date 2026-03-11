@@ -132,7 +132,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                             <input name="name" value={formData.name ?? ""} placeholder="ชื่อแผน (เช่น แผนพัฒนาฯ 2568)" className="input input-bordered w-full" onChange={handleChange} autoFocus />
                             <input name="fiscalYear" value={formData.fiscalYear ?? ""} type="number" placeholder="ปีงบประมาณ" className="input input-bordered w-32" onChange={handleChange} />
                             <button className="btn btn-primary" onClick={submitPlan}><FontAwesomeIcon icon={faSave} /> บันทึก</button>
-                            <button className="btn btn-ghost" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /></button>
+                            <button className="btn btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /> ยกเลิก</button>
                         </div>
                     </div>
                 ) : (
@@ -155,8 +155,8 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                     <div className="flex gap-2 items-center relative z-20" onClick={e => e.stopPropagation()}>
                                         <input name="name" value={formData.name ?? ""} className="input input-sm input-bordered" onChange={handleChange} />
                                         <input name="fiscalYear" value={formData.fiscalYear ?? ""} className="input input-sm input-bordered w-20" type="number" onChange={handleChange} />
-                                        <button type="button" className="btn btn-xs btn-primary text-white" onClick={submitPlan}><FontAwesomeIcon icon={faSave} /></button>
-                                        <button type="button" className="btn btn-xs btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /></button>
+                                        <button type="button" className="btn btn-xs btn-primary" onClick={submitPlan}><FontAwesomeIcon icon={faSave} /> บันทึก</button>
+                                        <button type="button" className="btn btn-xs btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /> ยกเลิก</button>
                                     </div>
                                 ) : (
                                     <span>{plan.name} <span className="text-sm font-normal text-base-content/60">(ปีงบ {plan.fiscalYear})</span></span>
@@ -165,7 +165,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
 
                             {/* Plan Actions */}
                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10" onClick={e => e.stopPropagation()}>
-                                <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'plan', id: plan.id }); setFormData({ name: plan.name, fiscalYear: plan.fiscalYear }); }}>
+                                <button className="btn btn-ghost btn-xs text-info" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'plan', id: plan.id }); setFormData({ name: plan.name, fiscalYear: plan.fiscalYear }); }}>
                                     <FontAwesomeIcon icon={faEdit} />
                                 </button>
                                 <DeleteButton id={plan.id} itemName={plan.name} deleteAction={deleteAnnualPlanAction} />
@@ -183,15 +183,15 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                 <div className="flex gap-2 items-center w-full relative z-20" onClick={e => e.stopPropagation()}>
                                                     <input name="code" value={formData.code ?? ""} className="input input-xs input-bordered w-20" placeholder="รหัส" onChange={handleChange} />
                                                     <input name="name" value={formData.name ?? ""} className="input input-xs input-bordered w-full" placeholder="ชื่อประเด็น" onChange={handleChange} />
-                                                    <button type="button" className="btn btn-xs btn-primary" onClick={submitIssue}><FontAwesomeIcon icon={faSave} /></button>
-                                                    <button type="button" className="btn btn-xs btn-ghost" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /></button>
+                                                    <button type="button" className="btn btn-xs btn-primary" onClick={submitIssue}><FontAwesomeIcon icon={faSave} /> บันทึก</button>
+                                                    <button type="button" className="btn btn-xs btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /> ยกเลิก</button>
                                                 </div>
                                             ) : (
                                                 <>
                                                     <div className="badge badge-neutral badge-outline font-mono text-xs mr-2">{issue.code}</div>
                                                     <span className="flex-1">{issue.name}</span>
                                                     <div className="flex gap-1 relative z-10" onClick={e => e.stopPropagation()}>
-                                                        <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'issue', id: issue.id, parentId: plan.id }); setFormData({ code: issue.code, name: issue.name, description: issue.description }); }}>
+                                                        <button className="btn btn-ghost btn-xs text-info" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'issue', id: issue.id, parentId: plan.id }); setFormData({ code: issue.code, name: issue.name, description: issue.description }); }}>
                                                             <FontAwesomeIcon icon={faEdit} />
                                                         </button>
                                                         <DeleteButton id={issue.id} itemName={issue.name} deleteAction={deleteIssueAction} />
@@ -213,8 +213,8 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                                 </div>
                                                                 <textarea name="description" value={formData.description ?? ""} className="textarea textarea-xs textarea-bordered w-full" placeholder="รายละเอียดเพิ่มเติม" onChange={handleChange}></textarea>
                                                                 <div className="flex justify-end gap-2">
-                                                                    <button type="button" className="btn btn-xs btn-ghost" onClick={handleReset}>ยกเลิก</button>
-                                                                    <button type="button" className="btn btn-xs btn-primary" onClick={submitGoal}>บันทึก</button>
+                                                                    <button type="button" className="btn btn-xs btn-primary" onClick={submitGoal}><FontAwesomeIcon icon={faSave} /> บันทึก</button>
+                                                                    <button type="button" className="btn btn-xs btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /> ยกเลิก</button>
                                                                 </div>
                                                             </div>
                                                         ) : (
@@ -226,7 +226,7 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                                         <span className="text-base-content">{goal.name}</span>
                                                                     </div>
                                                                     <div className="flex gap-1 opacity-0 group-hover/goal:opacity-100 transition-opacity">
-                                                                        <button className="btn btn-ghost btn-xs text-info" onClick={() => { setEditingItem({ type: 'goal', id: goal.id, parentId: issue.id }); setFormData({ code: goal.code, name: goal.name, description: goal.description }); }}>
+                                                                        <button className="btn btn-ghost btn-xs text-info" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'goal', id: goal.id, parentId: issue.id }); setFormData({ code: goal.code, name: goal.name, description: goal.description }); }}>
                                                                             <FontAwesomeIcon icon={faEdit} />
                                                                         </button>
                                                                         <DeleteButton id={goal.id} itemName={goal.name} deleteAction={deleteGoalAction} />
@@ -258,13 +258,13 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                                                 <input name="targetValue" value={formData.targetValue ?? ""} type="number" placeholder="เป้าหมาย" className="input input-xs input-bordered w-full" onChange={handleChange} />
                                                                             </div>
                                                                             <div className="flex justify-end gap-1">
-                                                                                <button className="btn btn-xs btn-ghost" onClick={handleReset}>ยกเลิก</button>
-                                                                                <button className="btn btn-xs btn-primary" onClick={submitIndicator}>เพิ่ม</button>
+                                                                                <button type="button" className="btn btn-xs btn-primary" onClick={submitIndicator}><FontAwesomeIcon icon={faSave} /> บันทึก</button>
+                                                                                <button type="button" className="btn btn-xs btn-ghost text-error" onClick={handleReset}><FontAwesomeIcon icon={faTimes} /> ยกเลิก</button>
                                                                             </div>
                                                                         </div>
                                                                     ) : (
-                                                                        <button className="btn btn-xs btn-ghost text-base-content/50 hover:text-primary w-full text-left" onClick={() => { setEditingItem({ type: 'indicator', id: 'new', parentId: goal.id }); setFormData({}); }}>
-                                                                            + เพิ่มตัวชี้วัด
+                                                                        <button className="btn btn-xs btn-ghost text-primary w-full justify-start font-medium hover:bg-primary/10" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'indicator', id: 'new', parentId: goal.id }); setFormData({}); }}>
+                                                                            <FontAwesomeIcon icon={faPlus} className="mr-1" /> เพิ่มตัวชี้วัด
                                                                         </button>
                                                                     )}
                                                                 </div>
@@ -289,8 +289,8 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <button className="btn btn-xs btn-outline btn-dashed w-full border-base-300 hover:border-primary hover:text-primary" onClick={() => { setEditingItem({ type: 'goal', id: 'new', parentId: issue.id }); setFormData({}); }}>
-                                                        <FontAwesomeIcon icon={faPlus} /> เพิ่มเป้าหมาย
+                                                    <button className="btn btn-xs btn-outline btn-dashed w-full border-base-300 hover:border-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'goal', id: 'new', parentId: issue.id }); setFormData({}); }}>
+                                                        <FontAwesomeIcon icon={faPlus} className="mr-1" /> เพิ่มเป้าหมาย
                                                     </button>
                                                 )}
                                             </div>
@@ -309,8 +309,8 @@ export function StrategicPlanTree({ initialPlans }: StrategicPlanTreeProps) {
                                         <button className="btn btn-sm btn-ghost" onClick={handleReset}>ยกเลิก</button>
                                     </div>
                                 ) : (
-                                    <button className="btn btn-sm btn-outline w-full border-dashed" onClick={() => { setEditingItem({ type: 'issue', id: 'new', parentId: plan.id }); setFormData({}); }}>
-                                        <FontAwesomeIcon icon={faPlus} /> เพิ่มประเด็นการพัฒนา
+                                    <button className="btn btn-sm btn-outline btn-dashed w-full border-base-300 hover:border-primary hover:text-primary" onClick={(e) => { e.stopPropagation(); setEditingItem({ type: 'issue', id: 'new', parentId: plan.id }); setFormData({}); }}>
+                                        <FontAwesomeIcon icon={faPlus} className="mr-1" /> เพิ่มประเด็นการพัฒนา
                                     </button>
                                 )}
                             </div>

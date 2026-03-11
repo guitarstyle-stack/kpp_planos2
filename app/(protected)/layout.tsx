@@ -47,7 +47,7 @@ export default async function ProtectedLayout({
             </div>
 
             {/* Drawer Side */}
-            <div className="drawer-side z-50">
+            <div className="drawer-side z-50 overflow-visible">
                 <label htmlFor="main-drawer" aria-label="close sidebar" className="drawer-overlay"></label>
                 <Sidebar />
             </div>

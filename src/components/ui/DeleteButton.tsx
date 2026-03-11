@@ -55,7 +55,7 @@ export function DeleteButton({ id, itemName, deleteAction, planId }: DeleteButto
                 handleDelete();
             }}
             disabled={isDeleting}
-            className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-1 disabled:opacity-50"
+            className="btn btn-ghost btn-xs text-error disabled:opacity-50"
             title="ลบ"
         >
             <FontAwesomeIcon icon={faTrash} />
