@@ -62,13 +62,15 @@ export async function GET(req: NextRequest) {
         // SYSTEM DECISION: We will attempt to create with default department ID 1.
         // The user (boss) should ensure DB has department 1.
 
-        // Check if ID 1 exists, if not create dummy
-        let defaultDept = await db.department.findFirst()
+        // Check if TEMP department exists, if not create it
+        let defaultDept = await db.department.findUnique({
+            where: { code: 'TEMP' }
+        })
         if (!defaultDept) {
             defaultDept = await db.department.create({
                 data: {
                     code: 'TEMP',
-                    name: 'Unassigned',
+                    name: 'Unassigned (Temp)',
                     isActive: true
                 }
             })
