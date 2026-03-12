@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  allowedDevOrigins: ["localhost:3000"],
   env: {
     NEXT_PUBLIC_APP_VERSION: "0.1.1",
     NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || "dev",
