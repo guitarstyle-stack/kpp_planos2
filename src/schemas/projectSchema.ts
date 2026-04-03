@@ -34,7 +34,7 @@ export type IndicatorFormData = z.infer<typeof IndicatorSchema>;
 
 // Admin Project Schema - เพิ่มฟิลด์ ownerId สำหรับ Admin
 export const AdminProjectSchema = ProjectSchema.extend({
-    ownerId: z.coerce.number().min(1, "กรุณาเลือกผู้รับผิดชอบโครงการ"),
+    ownerId: z.coerce.number().optional().nullable(),
 });
 
 export type AdminProjectFormData = z.infer<typeof AdminProjectSchema>;

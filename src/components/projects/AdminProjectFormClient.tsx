@@ -77,7 +77,7 @@ export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormC
                         <div className="form-control">
                             <label className="label">
                                 <span className="label-text">
-                                    ผู้รับผิดชอบโครงการ <span className="text-error">*</span>
+                                    ผู้รับผิดชอบโครงการ (สามารถระบุภายหลังได้)
                                 </span>
                             </label>
                             <select
@@ -87,7 +87,7 @@ export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormC
                                 disabled={!selectedDepartmentId}
                             >
                                 <option value="">
-                                    {selectedDepartmentId ? "เลือกผู้รับผิดชอบ" : "กรุณาเลือกหน่วยงานก่อน"}
+                                    {selectedDepartmentId ? "-- ไม่ระบุ (กำหนดภายหลัง) --" : "กรุณาเลือกหน่วยงานก่อน"}
                                 </option>
                                 {filteredUsers.map((user) => (
                                     <option key={user.id} value={user.id}>
@@ -114,7 +114,7 @@ export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormC
             </div>
 
             {/* ProjectForm Component */}
-            {selectedDepartmentId && selectedOwnerId ? (
+            {selectedDepartmentId ? (
                 <ProjectForm
                     masterData={{
                         departments: masterData.departments.filter(d => d.id === selectedDepartmentId),
@@ -124,13 +124,14 @@ export function AdminProjectFormClient({ masterData, userId }: AdminProjectFormC
                         departmentId: selectedDepartmentId
                     }}
                     userId={userId}
-                    adminOwnerId={selectedOwnerId}
+                    adminOwnerId={selectedOwnerId ?? undefined}
+                    isAdminMode={true}
                 />
             ) : (
                 <div className="card bg-base-100 shadow-sm border border-base-200">
                     <div className="card-body">
                         <div className="text-center py-12 opacity-50">
-                            <p>กรุณาเลือกหน่วยงานและผู้รับผิดชอบก่อนกรอกข้อมูลโครงการ</p>
+                            <p>กรุณาเลือกหน่วยงานก่อนกรอกข้อมูลโครงการ</p>
                         </div>
                     </div>
                 </div>

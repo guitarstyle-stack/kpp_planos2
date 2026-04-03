@@ -212,8 +212,8 @@ model Project {
   departmentId Int
   department   Department @relation(fields: [departmentId], references: [id])
 
-  ownerUserId Int
-  ownerUser   User @relation("ProjectOwner", fields: [ownerUserId], references: [id])
+  ownerUserId Int?
+  ownerUser   User? @relation("ProjectOwner", fields: [ownerUserId], references: [id])
 
   developmentGoalId Int?
   developmentGoal   DevelopmentGoal? @relation(fields: [developmentGoalId], references: [id])

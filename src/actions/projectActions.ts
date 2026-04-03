@@ -190,7 +190,7 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
             targetGroup: formData.get("targetGroup"),
             startDate: formData.get("startDate"),
             endDate: formData.get("endDate"),
-            ownerId: formData.get("ownerId"), // เพิ่มฟิลด์ ownerId
+            ownerId: formData.get("ownerId") ? Number(formData.get("ownerId")) : undefined, // จัดการ null/empty str
             indicators: indicators
         };
 
@@ -204,7 +204,7 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
             data: {
                 ...projectData,
                 code: projectData.code || code,
-                ownerUserId: ownerId, // ใช้ ownerId ที่เลือกจากฟอร์ม
+                ownerUserId: ownerId ?? null, // ใช้ ownerId ที่เลือกจากฟอร์ม (หรือ null ถ้าไม่มี)
                 startDate: projectData.startDate ? new Date(projectData.startDate) : null,
                 endDate: projectData.endDate ? new Date(projectData.endDate) : null,
                 indicators: {

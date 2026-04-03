@@ -55,9 +55,10 @@ interface ProjectFormProps {
     masterData: MasterData;
     userId: number; // For ownership
     adminOwnerId?: number; // Optional: For admin mode to specify project owner
+    isAdminMode?: boolean; // Optional: Indicate if it's in Admin Mode
 }
 
-export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: ProjectFormProps): React.JSX.Element {
+export function ProjectForm({ initialData, masterData, userId, adminOwnerId, isAdminMode }: ProjectFormProps): React.JSX.Element {
     const router = useRouter();
 
     // Default values for form - Use Input type (strings for dates)
@@ -161,8 +162,8 @@ export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: P
             }
         });
 
-        // เพิ่ม ownerId สำหรับ Admin mode
-        if (adminOwnerId) {
+        // เพิ่ม ownerId สำหรับ Admin mode (ถ้าระบุ)
+        if (isAdminMode && adminOwnerId) {
             formData.append('ownerId', adminOwnerId.toString());
         }
 
@@ -173,7 +174,7 @@ export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: P
                 res = await updateProjectAction(initialData.id, formData);
             } else {
                 // ใช้ createProjectAsAdmin ถ้าอยู่ใน Admin mode
-                if (adminOwnerId) {
+                if (isAdminMode) {
                     const { createProjectAsAdmin } = await import("@/actions/projectActions");
                     res = await createProjectAsAdmin(null, formData);
                 } else {
@@ -185,7 +186,7 @@ export function ProjectForm({ initialData, masterData, userId, adminOwnerId }: P
             if (res?.success) {
                 toast.success(initialData?.id ? "อัปเดตโครงการสำเร็จ" : "สร้างโครงการสำเร็จ");
                 // Redirect ไปที่หน้าที่เหมาะสม
-                if (adminOwnerId) {
+                if (isAdminMode) {
                     router.push("/admin/projects");
                 } else {
                     router.push("/projects");
