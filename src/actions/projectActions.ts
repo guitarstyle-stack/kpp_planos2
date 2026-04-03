@@ -14,6 +14,38 @@ import { hasRole } from "@/services/userRoleService";
 
 // Removed local schema definitions
 
+async function generateUniqueProjectCode(prefix: string): Promise<string> {
+    let nextSeq = 1;
+    const latestProject = await db.project.findFirst({
+        where: { code: { startsWith: `${prefix}-` } },
+        orderBy: { code: 'desc' },
+        select: { code: true }
+    });
+    
+    if (latestProject) {
+        const parts = latestProject.code.split('-');
+        const lastPart = parts[parts.length - 1];
+        const seq = parseInt(lastPart, 10);
+        if (!isNaN(seq)) {
+            nextSeq = seq + 1;
+        }
+    }
+    
+    let newCode = `${prefix}-${nextSeq.toString().padStart(3, '0')}`;
+    let isUnique = false;
+    let retries = 0;
+    while (!isUnique && retries < 100) {
+        const existing = await db.project.findUnique({ where: { code: newCode } });
+        if (!existing) {
+            isUnique = true;
+        } else {
+            nextSeq++;
+            newCode = `${prefix}-${nextSeq.toString().padStart(3, '0')}`;
+            retries++;
+        }
+    }
+    return newCode;
+}
 
 export async function createProjectAction(prevState: any, formData: FormData) {
     try {
@@ -48,19 +80,13 @@ export async function createProjectAction(prevState: any, formData: FormData) {
             });
 
             if (goal) {
-                const count = await db.project.count({
-                    where: { developmentGoalId }
-                });
-                code = `${goal.code}-${(count + 1).toString().padStart(3, '0')}`;
+                code = await generateUniqueProjectCode(goal.code);
             }
         }
 
         // Fallback Code: FY-[001]
         if (!code) {
-            const count = await db.project.count({
-                where: { fiscalYear }
-            });
-            code = `${fiscalYear}-${(count + 1).toString().padStart(3, '0')}`;
+            code = await generateUniqueProjectCode(fiscalYear.toString());
         }
 
         const rawData = {
@@ -161,19 +187,13 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
             });
 
             if (goal) {
-                const count = await db.project.count({
-                    where: { developmentGoalId }
-                });
-                code = `${goal.code}-${(count + 1).toString().padStart(3, '0')}`;
+                code = await generateUniqueProjectCode(goal.code);
             }
         }
 
         // Fallback Code: FY-[001]
         if (!code) {
-            const count = await db.project.count({
-                where: { fiscalYear }
-            });
-            code = `${fiscalYear}-${(count + 1).toString().padStart(3, '0')}`;
+            code = await generateUniqueProjectCode(fiscalYear.toString());
         }
 
         const rawData = {
