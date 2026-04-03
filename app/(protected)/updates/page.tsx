@@ -15,6 +15,18 @@ interface UpdateItem {
 
 const updates: UpdateItem[] = [
     {
+        version: "1.5.0",
+        date: "03 เม.ย. 2026",
+        title: "Project Creation & Dashboard Synchronization",
+        description: "ปรับปรุงระบบการสร้างโครงการให้มีความเสถียรสูงสุดและแก้ไขการแสดงผล Dashboard ให้แม่นยำ",
+        changes: [
+            { type: "FIX", text: "แก้ไขปัญหา Unique Constraint (code) โดยใช้ระบบตรวจสอบรหัสซ้ำซ้อนก่อนบันทึกจริง" },
+            { type: "IMPROVEMENT", text: "เพิ่มระบบ Revalidation เพื่อให้ Dashboard อัปเดตข้อมูลทันทีหลังมีการแก้ไขหรือสร้างโครงการ" },
+            { type: "FIX", text: "ปรับปรุงตัวกรองประเด็นการพัฒนา (Development Issue) ให้แสดงผลสัมพันธ์ตามปีงบประมาณที่เลือก" },
+            { type: "FIX", text: "ตรวจสอบและแก้ไขความถูกต้องของข้อมูลปีงบประมาณรายโครงการ เพื่อให้การนับจำนวนบน Dashboard แม่นยำ" }
+        ]
+    },
+    {
         version: "1.4.0",
         date: "11 ก.พ. 2026",
         title: "Multimedia Optimization & Admin Controls",
