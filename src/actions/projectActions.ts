@@ -136,6 +136,7 @@ export async function createProjectAction(prevState: any, formData: FormData) {
         });
 
         revalidatePath("/projects");
+        revalidatePath("/dashboard");
         return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
@@ -244,6 +245,7 @@ export async function createProjectAsAdmin(prevState: any, formData: FormData) {
 
         revalidatePath("/admin/projects");
         revalidatePath("/projects");
+        revalidatePath("/dashboard");
         return createSuccessResponse(null, "สร้างโครงการสำเร็จ");
     } catch (error) {
         console.error(error);
@@ -388,6 +390,7 @@ export async function updateProjectAction(id: number, formData: FormData) {
         });
 
         revalidatePath("/projects");
+        revalidatePath("/dashboard");
         return createSuccessResponse(null, "อัปเดตโครงการสำเร็จ");
     } catch (error) {
         console.error(error);

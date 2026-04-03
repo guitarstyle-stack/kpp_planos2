@@ -20,7 +20,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         getProjects(), // Note: List is not filtered by default as per UI design (usually keeps list full, but stats filtered). If list should also be filtered, we need to update getProjects too.
         getProjectStats({ fiscalYear, departmentId, issueId }),
         getDepartments(),
-        getDevelopmentIssues(),
+        fiscalYear 
+            ? db.developmentIssue.findMany({ 
+                where: { annualPlan: { fiscalYear } },
+                include: { annualPlan: true },
+                orderBy: { code: 'asc' } 
+            }) 
+            : getDevelopmentIssues(),
         db.project.findMany({ select: { fiscalYear: true }, distinct: ['fiscalYear'], orderBy: { fiscalYear: 'desc' } }),
     ]);
 
