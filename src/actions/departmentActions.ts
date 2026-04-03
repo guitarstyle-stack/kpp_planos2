@@ -16,16 +16,16 @@ const DepartmentSchema = z.object({
 
 // Helper function to generate department code from name
 function generateDepartmentCode(name: string): string {
-    // Extract Thai/English characters and convert to uppercase
+    // Extract only English characters and numbers, and convert to uppercase
     const cleaned = name
-        .replace(/[^\u0E00-\u0E7Fa-zA-Z0-9]/g, '') // Keep only Thai, English, numbers
+        .replace(/[^a-zA-Z0-9]/g, '') // Keep only English, numbers (no Thai)
         .toUpperCase();
 
-    // Take first 4 characters or less
+    // Take first 4 characters. If no English letters found, default to 'DEPT'
     const prefix = cleaned.substring(0, 4) || 'DEPT';
 
-    // Add random 2-digit number for uniqueness
-    const suffix = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+    // Add random 3-digit number for uniqueness
+    const suffix = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
 
     return `${prefix}-${suffix}`;
 }

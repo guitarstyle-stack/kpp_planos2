@@ -64,13 +64,20 @@ export function ProjectForm({ initialData, masterData, userId, adminOwnerId, isA
     // Default values for form - Use Input type (strings for dates)
     // We need to transform initialData dates to strings YYYY-MM-DD
     const defaultValues: Partial<ProjectFormData> = useMemo(() => {
-        if (!initialData) return {
-            indicators: [],
-            budgetTotal: 0,
-            targetGroup: "",
-            progressPercent: 0,
-            fiscalYear: new Date().getFullYear() + 543
-        };
+        if (!initialData) {
+            const currentYearAd = new Date().getFullYear();
+            const startYearAd = currentYearAd - 1;
+            
+            return {
+                indicators: [],
+                budgetTotal: 0,
+                targetGroup: "",
+                progressPercent: 0,
+                fiscalYear: currentYearAd + 543,
+                startDate: `${startYearAd}-10-01`,
+                endDate: `${currentYearAd}-09-30`
+            };
+        }
 
         return {
             ...initialData,
